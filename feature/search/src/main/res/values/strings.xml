@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_hint">Songs, artists, albums, playlists</string>
+    <string name="search_clear">Clear</string>
+    <string name="search_recent">Recent searches</string>
+    <string name="search_clear_history">Clear all</string>
+    <string name="search_remove">Remove from history</string>
+    <string name="search_empty_title">Search for music</string>
+    <string name="search_empty_body">Find songs, artists, albums and playlists. Your searches stay on this device.</string>
+    <string name="search_no_results">No results for “%1$s”</string>
+    <string name="search_did_you_mean">Did you mean “%1$s”?</string>
+    <string name="search_filter_all">All</string>
+    <string name="search_filter_songs">Songs</string>
+    <string name="search_filter_albums">Albums</string>
+    <string name="search_filter_artists">Artists</string>
+    <string name="search_filter_playlists">Playlists</string>
+    <string name="search_type_artist">Artist</string>
+    <string name="search_type_album">Album</string>
+    <string name="search_type_playlist">Playlist</string>
+</resources>

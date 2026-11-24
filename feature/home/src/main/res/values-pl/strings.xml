@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_good_morning">Dzień dobry</string>
+    <string name="home_good_afternoon">Miłego popołudnia</string>
+    <string name="home_good_evening">Dobry wieczór</string>
+    <string name="home_good_night">Nocne słuchanie</string>
+    <string name="home_search">Szukaj</string>
+    <string name="home_settings">Ustawienia</string>
+    <string name="home_continue_listening">Kontynuuj słuchanie</string>
+    <string name="home_recently_played">Ostatnio odtwarzane</string>
+    <string name="home_quick_picks">Szybki wybór</string>
+    <string name="home_for_you">Dla Ciebie</string>
+    <string name="home_your_mixes">Twoje miksy</string>
+    <string name="home_mix_title">Miks: %1$s</string>
+    <string name="home_recommended_albums">Polecane albumy</string>
+    <string name="home_favorite_artists">Twoi ulubieni wykonawcy</string>
+    <string name="home_on_repeat">W kółko</string>
+    <string name="home_trending">Popularne utwory</string>
+    <string name="home_new_releases">Nowości</string>
+    <string name="home_discover">Odkryj nową muzykę</string>
+    <string name="home_discover_sub">Wykonawcy, których jeszcze nie słuchałeś</string>
+    <string name="home_artists_you_may_like">Wykonawcy, którzy mogą Ci się spodobać</string>
+    <string name="home_offline">Jesteś offline. Twoja biblioteka i muzyka lokalna są nadal dostępne.</string>
+    <string name="home_online_disabled_title">Muzyka online jest wyłączona</string>
+    <string name="home_online_disabled_body">Włącz dostawcę muzyki w Ustawieniach, aby otrzymywać rekomendacje. Muzyka lokalna nadal działa.</string>
+    <string name="home_open_settings">Otwórz ustawienia</string>
+    <string name="home_welcome_title">Witaj w MusicFlow</string>
+    <string name="home_welcome_body">Odtwórz kilka utworów, a MusicFlow nauczy się, co lubisz. Personalizacja odbywa się wyłącznie na Twoim urządzeniu.</string>
+    <string name="home_find_music">Znajdź muzykę</string>
+    <plurals name="home_tracks">
+        <item quantity="one">%d utwór</item>
+        <item quantity="few">%d utwory</item>
+        <item quantity="many">%d utworów</item>
+        <item quantity="other">%d utworu</item>
+    </plurals>
+</resources>

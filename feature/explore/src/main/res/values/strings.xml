@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="explore_title">Explore</string>
+    <string name="explore_back">Back</string>
+    <string name="explore_playlists">Playlists</string>
+    <string name="explore_songs">Songs</string>
+    <string name="explore_play">Play</string>
+    <string name="explore_shuffle">Shuffle</string>
+    <string name="explore_newest">Newest first</string>
+    <string name="explore_empty">Nothing found for this category right now.</string>
+    <string name="group_all">All</string>
+    <string name="group_genre">Genres</string>
+    <string name="group_mood">Moods</string>
+    <string name="group_decade">Decades</string>
+    <string name="group_charts">Charts &amp; new</string>
+    <string name="cat_electronic">Electronic</string>
+    <string name="cat_dance">Dance</string>
+    <string name="cat_edm">EDM</string>
+    <string name="cat_house">House</string>
+    <string name="cat_trance">Trance</string>
+    <string name="cat_techno">Techno</string>
+    <string name="cat_pop">Pop</string>
+    <string name="cat_rock">Rock</string>
+    <string name="cat_hiphop">Hip-hop</string>
+    <string name="cat_rnb">R&amp;B</string>
+    <string name="cat_chill">Chill</string>
+    <string name="cat_workout">Workout</string>
+    <string name="cat_80s">80s hits</string>
+    <string name="cat_90s">90s hits</string>
+    <string name="cat_2000s">2000s hits</string>
+    <string name="cat_new_releases">New releases</string>
+    <string name="cat_uk_charts">UK charts</string>
+    <string name="cat_global_charts">Global charts</string>
+</resources>
