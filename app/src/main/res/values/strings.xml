@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">MusicFlow</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_explore">Explore</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_library">Library</string>
+    <string name="link_not_supported">This link is not supported</string>
+    <string name="playback_error">Playback problem: %1$s</string>
+</resources>

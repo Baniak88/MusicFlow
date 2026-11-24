@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="player_play">Play</string>
+    <string name="player_pause">Pause</string>
+    <string name="player_next">Next track</string>
+    <string name="player_previous">Previous track</string>
+    <string name="player_collapse">Minimise player</string>
+    <string name="player_now_playing">NOW PLAYING</string>
+    <string name="player_more">More options</string>
+    <string name="player_shuffle">Shuffle</string>
+    <string name="player_repeat_off">Repeat off</string>
+    <string name="player_repeat_all">Repeat playlist</string>
+    <string name="player_repeat_one">Repeat track</string>
+    <string name="player_like">Like</string>
+    <string name="player_unlike">Remove from liked songs</string>
+    <string name="player_lyrics">Lyrics</string>
+    <string name="player_queue">Up next</string>
+    <string name="player_clear_queue">Clear</string>
+    <string name="player_remove_from_queue">Remove from queue</string>
+    <string name="player_reorder">Drag to reorder</string>
+    <string name="player_add_to_playlist">Add to playlist</string>
+    <string name="player_track_options">Track options</string>
+    <string name="player_sleep_timer">Sleep timer</string>
+    <string name="player_sleep_active">Stops in about %1$d min</string>
+    <string name="player_sleep_eot_active">Stops at the end of this track</string>
+    <string name="player_minutes">%1$d minutes</string>
+    <string name="player_end_of_track">End of track</string>
+    <string name="player_turn_off">Turn off</string>
+    <string name="player_close">Close</string>
+    <string name="player_apply">Apply</string>
+    <string name="player_speed">Playback speed</string>
+    <string name="player_equalizer">Equaliser</string>
+    <string name="player_back">Back</string>
+    <string name="player_no_lyrics">No lyrics found for this song.</string>
+    <string name="player_lyrics_failed">Lyrics could not be loaded</string>
+    <string name="player_lyrics_source">Lyrics provided by %1$s</string>
+    <string name="player_eq_unavailable">Equaliser not available yet</string>
+    <string name="player_eq_unavailable_body">Start playing a song. Some devices do not support audio effects.</string>
+    <string name="player_system_eq">Open system equaliser</string>
+    <string name="player_eq_note">Settings apply to MusicFlow playback only.</string>
+</resources>

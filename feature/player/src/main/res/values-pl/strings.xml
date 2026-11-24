@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="player_play">Odtwórz</string>
+    <string name="player_pause">Wstrzymaj</string>
+    <string name="player_next">Następny utwór</string>
+    <string name="player_previous">Poprzedni utwór</string>
+    <string name="player_collapse">Zminimalizuj odtwarzacz</string>
+    <string name="player_now_playing">TERAZ ODTWARZANE</string>
+    <string name="player_more">Więcej opcji</string>
+    <string name="player_shuffle">Losowo</string>
+    <string name="player_repeat_off">Powtarzanie wyłączone</string>
+    <string name="player_repeat_all">Powtarzaj playlistę</string>
+    <string name="player_repeat_one">Powtarzaj utwór</string>
+    <string name="player_like">Polub</string>
+    <string name="player_unlike">Usuń z polubionych</string>
+    <string name="player_lyrics">Tekst</string>
+    <string name="player_queue">Następne</string>
+    <string name="player_clear_queue">Wyczyść</string>
+    <string name="player_remove_from_queue">Usuń z kolejki</string>
+    <string name="player_reorder">Przeciągnij, aby zmienić kolejność</string>
+    <string name="player_add_to_playlist">Dodaj do playlisty</string>
+    <string name="player_track_options">Opcje utworu</string>
+    <string name="player_sleep_timer">Wyłącznik czasowy</string>
+    <string name="player_sleep_active">Zatrzymanie za około %1$d min</string>
+    <string name="player_sleep_eot_active">Zatrzymanie po zakończeniu tego utworu</string>
+    <string name="player_minutes">%1$d minut</string>
+    <string name="player_end_of_track">Koniec utworu</string>
+    <string name="player_turn_off">Wyłącz</string>
+    <string name="player_close">Zamknij</string>
+    <string name="player_apply">Zastosuj</string>
+    <string name="player_speed">Prędkość odtwarzania</string>
+    <string name="player_equalizer">Korektor</string>
+    <string name="player_back">Wstecz</string>
+    <string name="player_no_lyrics">Nie znaleziono tekstu tego utworu.</string>
+    <string name="player_lyrics_failed">Nie udało się wczytać tekstu</string>
+    <string name="player_lyrics_source">Tekst dostarczony przez %1$s</string>
+    <string name="player_eq_unavailable">Korektor jeszcze niedostępny</string>
+    <string name="player_eq_unavailable_body">Rozpocznij odtwarzanie utworu. Niektóre urządzenia nie obsługują efektów dźwiękowych.</string>
+    <string name="player_system_eq">Otwórz korektor systemowy</string>
+    <string name="player_eq_note">Ustawienia dotyczą tylko odtwarzania w MusicFlow.</string>
+</resources>

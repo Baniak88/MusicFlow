@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_home">Główna</string>
+    <string name="nav_explore">Odkrywaj</string>
+    <string name="nav_search">Szukaj</string>
+    <string name="nav_library">Biblioteka</string>
+    <string name="link_not_supported">Ten link nie jest obsługiwany</string>
+    <string name="playback_error">Problem z odtwarzaniem: %1$s</string>
+</resources>

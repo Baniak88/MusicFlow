@@ -78,23 +78,23 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
 
     suspend fun current(): UserSettings = settings.first()
 
-    suspend fun setThemeMode(v: ThemeMode) = store.edit { it[K.theme] = v.name }
-    suspend fun setAmoled(v: Boolean) = store.edit { it[K.amoled] = v }
-    suspend fun setDynamicColor(v: Boolean) = store.edit { it[K.dynamic] = v }
-    suspend fun setArtworkColors(v: Boolean) = store.edit { it[K.artworkColors] = v }
-    suspend fun setLanguage(tag: String) = store.edit { it[K.language] = tag }
-    suspend fun setQualityWifi(v: AudioQuality) = store.edit { it[K.qWifi] = v.name }
-    suspend fun setQualityMobile(v: AudioQuality) = store.edit { it[K.qMobile] = v.name }
-    suspend fun setCacheSizeMb(v: Int) = store.edit { it[K.cache] = v.coerceIn(64, 4096) }
-    suspend fun setAutoContinue(v: Boolean) = store.edit { it[K.autoContinue] = v }
-    suspend fun setVolumeLeveling(v: Boolean) = store.edit { it[K.leveling] = v }
-    suspend fun setSkipSilence(v: Boolean) = store.edit { it[K.skipSilence] = v }
-    suspend fun setPauseOnDisconnect(v: Boolean) = store.edit { it[K.pauseOnDisconnect] = v }
-    suspend fun setResumeOnBluetooth(v: Boolean) = store.edit { it[K.resumeBt] = v }
-    suspend fun setDiscoveryMode(v: Boolean) = store.edit { it[K.discovery] = v }
-    suspend fun setYouTubeEnabled(v: Boolean) = store.edit { it[K.yt] = v }
-    suspend fun setHistoryEnabled(v: Boolean) = store.edit { it[K.history] = v }
-    suspend fun setDiagnosticsEnabled(v: Boolean) = store.edit { it[K.diagnostics] = v }
-    suspend fun setBufferProfile(v: BufferProfile) = store.edit { it[K.buffer] = v.name }
-    suspend fun setContentCountry(v: String) = store.edit { it[K.country] = v.uppercase().take(2) }
+    suspend fun setThemeMode(v: ThemeMode) { store.edit { it[K.theme] = v.name } }
+    suspend fun setAmoled(v: Boolean) { store.edit { it[K.amoled] = v } }
+    suspend fun setDynamicColor(v: Boolean) { store.edit { it[K.dynamic] = v } }
+    suspend fun setArtworkColors(v: Boolean) { store.edit { it[K.artworkColors] = v } }
+    suspend fun setLanguage(tag: String) { store.edit { it[K.language] = tag } }
+    suspend fun setQualityWifi(v: AudioQuality) { store.edit { it[K.qWifi] = v.name } }
+    suspend fun setQualityMobile(v: AudioQuality) { store.edit { it[K.qMobile] = v.name } }
+    suspend fun setCacheSizeMb(v: Int) { store.edit { it[K.cache] = v.coerceIn(64, 4096) } }
+    suspend fun setAutoContinue(v: Boolean) { store.edit { it[K.autoContinue] = v } }
+    suspend fun setVolumeLeveling(v: Boolean) { store.edit { it[K.leveling] = v } }
+    suspend fun setSkipSilence(v: Boolean) { store.edit { it[K.skipSilence] = v } }
+    suspend fun setPauseOnDisconnect(v: Boolean) { store.edit { it[K.pauseOnDisconnect] = v } }
+    suspend fun setResumeOnBluetooth(v: Boolean) { store.edit { it[K.resumeBt] = v } }
+    suspend fun setDiscoveryMode(v: Boolean) { store.edit { it[K.discovery] = v } }
+    suspend fun setYouTubeEnabled(v: Boolean) { store.edit { it[K.yt] = v } }
+    suspend fun setHistoryEnabled(v: Boolean) { store.edit { it[K.history] = v } }
+    suspend fun setDiagnosticsEnabled(v: Boolean) { store.edit { it[K.diagnostics] = v } }
+    suspend fun setBufferProfile(v: BufferProfile) { store.edit { it[K.buffer] = v.name } }
+    suspend fun setContentCountry(v: String) { store.edit { it[K.country] = v.uppercase().take(2) } }
 }
