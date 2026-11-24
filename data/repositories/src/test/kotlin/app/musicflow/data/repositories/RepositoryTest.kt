@@ -39,6 +39,7 @@ class FakeProvider : MusicProvider, PlaylistProvider, SearchProvider {
     override val id = "yt"
     override val displayName = "Fake"
     override val isExperimental = false
+    override val isOnlineCatalog = true
     override val ownedPrefixes = setOf("yt", "ytpl")
     override val playlists: PlaylistProvider get() = this
     override val search: SearchProvider get() = this

@@ -36,7 +36,9 @@ class CatalogRepository @Inject constructor(
     }
 
     suspend fun searchItems(query: String, filter: SearchFilter): List<MediaItemSummary> {
-        val p = registry.primaryCatalog() ?: throw ProviderError.NotSupported("No online provider enabled")
+        val p = registry.primaryCatalog()
+            ?: registry.enabled().firstOrNull { it.search != null } // offline: on-device music
+            ?: throw ProviderError.NotSupported("No search provider enabled")
         return registry.call(p, "searchItems") { it.search!!.search(query, filter).items }
     }
 
@@ -46,5 +48,5 @@ class CatalogRepository @Inject constructor(
     suspend fun track(id: MediaId): Track = library.cachedTrack(id)
         ?: registry.callFor(id, "track") { p -> p.metadata?.track(id) ?: throw ProviderError.NotSupported() }
 
-    fun hasOnlineCatalog(): Boolean = registry.primaryCatalog()?.let { it.id != "local" } == true
+    fun hasOnlineCatalog(): Boolean = registry.primaryCatalog() != null
 }

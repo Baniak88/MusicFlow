@@ -43,5 +43,6 @@ class AudioCacheHolder @Inject constructor(
 object PlaybackModule {
     @Provides
     @Singleton
+    @androidx.annotation.OptIn(UnstableApi::class)
     fun engine(impl: app.musicflow.playback.engine.MediaControllerEngine): app.musicflow.playback.engine.PlaybackEngine = impl
 }

@@ -68,6 +68,7 @@ class YouTubeMusicProvider(
     override val id = YouTubeIds.TRACK
     override val displayName = "YouTube Music"
     override val isExperimental = true
+    override val isOnlineCatalog = true
     override val ownedPrefixes = setOf(YouTubeIds.TRACK, YouTubeIds.PLAYLIST, YouTubeIds.CHANNEL)
 
     override val search: SearchProvider get() = this

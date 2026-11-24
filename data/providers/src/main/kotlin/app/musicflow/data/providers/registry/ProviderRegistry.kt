@@ -74,9 +74,15 @@ class ProviderRegistry @Inject constructor(
 
     fun forMedia(id: MediaId): MusicProvider? = all.firstOrNull { it.owns(id) }
 
-    /** The provider used for search/discovery: first enabled provider that supports search. */
-    fun primaryCatalog(): MusicProvider? = enabled().firstOrNull { it.search != null && !isOpen(it.id) }
-        ?: enabled().firstOrNull { it.search != null }
+    /**
+     * The online catalogue used for search and discovery: the first enabled online catalogue
+     * whose circuit is closed, else any enabled one. `null` when no online catalogue is enabled
+     * (callers then fall back to on-device music).
+     */
+    fun primaryCatalog(): MusicProvider? {
+        val online = enabled().filter { it.isOnlineCatalog && it.search != null }
+        return online.firstOrNull { !isOpen(it.id) } ?: online.firstOrNull()
+    }
 
     private fun isOpen(providerId: String): Boolean {
         val until = _health.value[providerId]?.openUntil ?: return false

@@ -91,7 +91,15 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
             }
 
             when (val o = online) {
-                is OnlineState.Loaded -> onlineSections(o.home, vm, menu::open)
+                is OnlineState.Loaded -> {
+                    val h = o.home
+                    val empty = h.quickPicks.isEmpty() && h.mixes.isEmpty() && h.recommendedAlbums.isEmpty() && h.trending.isEmpty() &&
+                        h.newReleases.isEmpty() && h.discover.isEmpty()
+                    if (empty && h.failures.isNotEmpty()) {
+                        // Every online section failed: say so instead of silently showing nothing.
+                        item(key = "error") { ErrorState(errorMessage(h.failures.first()), onRetry = vm::refresh) }
+                    } else onlineSections(h, vm, menu::open)
+                }
                 OnlineState.Loading -> item(key = "skeleton") {
                     Column { SectionHeader(stringResource(R.string.home_quick_picks)); SkeletonCardRow(); SectionHeader(stringResource(R.string.home_recommended_albums)); SkeletonCardRow() }
                 }

@@ -68,6 +68,9 @@ interface MusicProvider {
     /** Experimental providers depend on undocumented third-party endpoints and may break. */
     val isExperimental: Boolean
 
+    /** True for remote music catalogues used for discovery (search, home, explore). */
+    val isOnlineCatalog: Boolean get() = false
+
     /** Additional [MediaId.providerId] prefixes this provider owns (e.g. playlists, channels). */
     val ownedPrefixes: Set<String> get() = setOf(id)
 

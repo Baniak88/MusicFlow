@@ -39,7 +39,7 @@ class SearchRepository @Inject constructor(
      * on-device music so search still works offline.
      */
     suspend fun search(query: String, filter: SearchFilter, pageToken: String? = null): SearchPage {
-        val provider = registry.primaryCatalog()?.takeIf { it !is LocalMusicProvider }
+        val provider = registry.primaryCatalog()
             ?: registry.enabled().filterIsInstance<LocalMusicProvider>().firstOrNull()
             ?: throw ProviderError.NotSupported("No search provider enabled")
         return registry.call(provider, "search") { it.search!!.search(query, filter, pageToken) }

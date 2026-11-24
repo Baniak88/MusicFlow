@@ -54,7 +54,7 @@ class LocalMusicProvider(private val context: Context) : MusicProvider, SearchPr
         val tracks = mutableListOf<Track>()
         context.contentResolver.query(
             collection, projection,
-            "${MediaStore.Audio.Media.IS_MUSIC} != 0", null,
+            "COALESCE(${MediaStore.Audio.Media.IS_MUSIC}, 1) != 0", null,
             "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC",
         )?.use { c ->
             val idCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
@@ -103,7 +103,7 @@ class LocalMusicProvider(private val context: Context) : MusicProvider, SearchPr
             ?: throw ProviderError.Unavailable("The file is no longer on this device")
         return ResolvedStream(
             mediaId = id, url = uri.toString(), mimeType = mime,
-            codec = mime.substringAfter('/').substringBefore(';'),
+            codec = mime.substringAfter('/').substringBefore(';').removePrefix("x-"),
             bitrateKbps = null, sampleRateHz = null, expiresAtMillis = null,
             isLossless = mime.contains("flac") || mime.contains("wav") || mime.contains("alac"),
             cacheKey = "local:$mediaId",

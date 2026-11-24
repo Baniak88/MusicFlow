@@ -17,6 +17,8 @@ import app.musicflow.playback.service.MusicService
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +55,8 @@ class MediaControllerEngine @Inject constructor(
     private fun connect() {
         if (controller != null || connecting) return
         connecting = true
-        scope.launch {
+        // MediaController is bound to the thread that builds it: always use the main thread.
+        scope.launch(Dispatchers.Main.immediate) {
             runCatching {
                 val token = SessionToken(context, ComponentName(context, MusicService::class.java))
                 MediaController.Builder(context, token).buildAsync().await()
@@ -83,7 +86,13 @@ class MediaControllerEngine @Inject constructor(
         c.prepare()
     }
 
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
     private fun withController(block: (MediaController) -> Unit) {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            mainHandler.post { withController(block) }
+            return
+        }
         val c = controller
         if (c != null) block(c) else { pending.addLast(block); connect() }
     }
@@ -122,13 +131,13 @@ class MediaControllerEngine @Inject constructor(
             if (c != null) emit(Progress(c.currentPosition.coerceAtLeast(0), c.bufferedPosition, c.duration.takeIf { it > 0 }))
             delay(if (c?.isPlaying == true) 250 else 1_000)
         }
-    }
+    }.flowOn(Dispatchers.Main.immediate)
 
     private fun items(tracks: List<Track>): List<MediaItem> = tracks.map(MediaItems::toMediaItem)
 
     override fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean) {
         if (tracks.isEmpty()) return
-        scope.launch { runCatching { library.rememberAll(tracks) } }
+        scope.launch { runCatching { library.rememberAll(tracks) } } // DB work off the main thread
         withController { c ->
             c.shuffleModeEnabled = shuffle
             val start = if (shuffle && startIndex == 0) tracks.indices.random() else startIndex.coerceIn(0, tracks.lastIndex)

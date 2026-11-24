@@ -77,6 +77,28 @@ class ProviderRegistryTest {
         assertThat(registry.enabled().map { it.id }).containsExactly("b")
     }
 
+    @Test fun primaryCatalogIsTheOnlineProviderNotLocalMusic() {
+        // Regression: local music also implements search and is non-experimental, but must not
+        // win over the online catalogue (found on a device run).
+        val local = object : MusicProvider, app.musicflow.data.providers.api.SearchProvider {
+            override val id = "local"; override val displayName = "local"; override val isExperimental = false
+            override val search get() = this
+            override suspend fun search(query: String, filter: app.musicflow.core.model.SearchFilter, pageToken: String?) = error("unused")
+            override suspend fun suggestions(query: String) = emptyList<String>()
+        }
+        val online = object : MusicProvider, app.musicflow.data.providers.api.SearchProvider {
+            override val id = "yt"; override val displayName = "online"; override val isExperimental = true
+            override val isOnlineCatalog = true
+            override val search get() = this
+            override suspend fun search(query: String, filter: app.musicflow.core.model.SearchFilter, pageToken: String?) = error("unused")
+            override suspend fun suggestions(query: String) = emptyList<String>()
+        }
+        val r = ProviderRegistry(setOf(local, online), DiagnosticsLog())
+        assertThat(r.primaryCatalog()).isSameInstanceAs(online)
+        r.setEnabled("yt", false)
+        assertThat(r.primaryCatalog()).isNull()
+    }
+
     @Test fun routesMediaIdsToOwningProvider() {
         val direct = DirectUrlProvider()
         val r = ProviderRegistry(setOf(direct, a), DiagnosticsLog())
