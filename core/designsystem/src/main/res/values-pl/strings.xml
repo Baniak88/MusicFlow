@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mf_more_options">Więcej opcji</string>
+    <string name="mf_see_all">Zobacz wszystko</string>
+    <string name="mf_retry">Spróbuj ponownie</string>
+    <string name="mf_error_title">Coś poszło nie tak</string>
+    <string name="mf_error_network">Wygląda na to, że jesteś offline. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="mf_error_rate_limited">Dostawca muzyki tymczasowo ogranicza żądania z Twojej sieci. Spróbuj ponownie za kilka minut.</string>
+    <string name="mf_error_unavailable">Ta zawartość jest niedostępna.</string>
+    <string name="mf_error_restricted_geo">Ta zawartość nie jest dostępna w Twoim kraju.</string>
+    <string name="mf_error_restricted_age">Ta zawartość ma ograniczenie wiekowe i wymaga zalogowania, czego MusicFlow nie obsługuje.</string>
+    <string name="mf_error_restricted_paid">Ta zawartość wymaga płatnej subskrypcji u dostawcy.</string>
+    <string name="mf_error_parsing">Dostawca muzyki zmienił format danych. Muzyka lokalna i zapisana nadal działa. Sprawdź aktualizację aplikacji.</string>
+    <string name="mf_error_not_supported">Ta akcja nie jest obsługiwana przez bieżące źródło.</string>
+    <string name="mf_error_auth">Dostawca wymaga zalogowania.</string>
+    <string name="mf_error_expired">Link do strumienia wygasł. Odświeżanie…</string>
+    <string name="mf_error_unknown">Wystąpił nieoczekiwany błąd.</string>
+    <string name="mf_provider_disabled">Muzyka online jest wyłączona. Włącz YouTube Music w Ustawienia → Dostawcy.</string>
+</resources>

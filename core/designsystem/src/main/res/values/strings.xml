@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mf_more_options">More options</string>
+    <string name="mf_see_all">See all</string>
+    <string name="mf_retry">Try again</string>
+    <string name="mf_error_title">Something went wrong</string>
+    <string name="mf_error_network">You appear to be offline. Check your connection and try again.</string>
+    <string name="mf_error_rate_limited">The music provider is temporarily limiting requests from your network. Please try again in a few minutes.</string>
+    <string name="mf_error_unavailable">This content is unavailable.</string>
+    <string name="mf_error_restricted_geo">This content is not available in your country.</string>
+    <string name="mf_error_restricted_age">This content is age-restricted and requires signing in, which MusicFlow does not support.</string>
+    <string name="mf_error_restricted_paid">This content requires a paid subscription from the provider.</string>
+    <string name="mf_error_parsing">The music provider changed its format. Playback of local and saved music still works. Check for an app update.</string>
+    <string name="mf_error_not_supported">This action is not supported by the current source.</string>
+    <string name="mf_error_auth">The provider requires signing in.</string>
+    <string name="mf_error_expired">The stream link expired. Refreshing…</string>
+    <string name="mf_error_unknown">An unexpected error occurred.</string>
+    <string name="mf_provider_disabled">Online music is turned off. Enable YouTube Music in Settings → Providers.</string>
+</resources>

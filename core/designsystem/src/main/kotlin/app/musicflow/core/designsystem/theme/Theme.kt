@@ -1,0 +1,110 @@
+package app.musicflow.core.designsystem.theme
+
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import app.musicflow.core.model.ThemeMode
+
+fun mfDarkScheme(amoled: Boolean): ColorScheme = darkColorScheme(
+    primary = MfColors.Accent,
+    onPrimary = Color.White,
+    primaryContainer = MfColors.AccentContainer,
+    onPrimaryContainer = MfColors.OnAccentContainer,
+    secondary = MfColors.AccentSecondary,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFF23264F),
+    onSecondaryContainer = Color(0xFFDADCFF),
+    tertiary = Color(0xFF22D3EE),
+    background = if (amoled) MfColors.PureBlack else MfColors.Background,
+    onBackground = MfColors.TextPrimary,
+    surface = if (amoled) MfColors.PureBlack else MfColors.Background,
+    onSurface = MfColors.TextPrimary,
+    surfaceVariant = MfColors.SurfaceElevated,
+    onSurfaceVariant = MfColors.TextSecondary,
+    surfaceContainerLowest = if (amoled) MfColors.PureBlack else MfColors.Background,
+    surfaceContainerLow = if (amoled) Color(0xFF0B0C0F) else MfColors.BackgroundSecondary,
+    surfaceContainer = MfColors.BackgroundSecondary,
+    surfaceContainerHigh = MfColors.SurfaceElevated,
+    surfaceContainerHighest = MfColors.SurfaceHighest,
+    outline = MfColors.Outline,
+    outlineVariant = Color(0xFF1F232A),
+    error = MfColors.Error,
+    onError = Color.Black,
+    inverseSurface = Color(0xFFE8E8EE),
+    inverseOnSurface = MfColors.Background,
+)
+
+fun mfLightScheme(): ColorScheme = lightColorScheme(
+    primary = MfColors.LightAccent,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFE9E0FF),
+    onPrimaryContainer = Color(0xFF21005D),
+    secondary = MfColors.AccentSecondary,
+    background = MfColors.LightBackground,
+    onBackground = MfColors.LightText,
+    surface = MfColors.LightBackground,
+    onSurface = MfColors.LightText,
+    surfaceVariant = MfColors.LightSurfaceVariant,
+    onSurfaceVariant = MfColors.LightTextSecondary,
+    surfaceContainerLowest = Color.White,
+    surfaceContainerLow = MfColors.LightSurface,
+    surfaceContainer = Color(0xFFF1F1F6),
+    surfaceContainerHigh = MfColors.LightSurfaceVariant,
+    surfaceContainerHighest = Color(0xFFE2E2EA),
+    outline = Color(0xFFC9CAD3),
+    error = Color(0xFFD32F2F),
+)
+
+val MfShapes = Shapes(
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(14.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
+)
+
+@Immutable
+data class MfExtras(val isDark: Boolean, val gradientTop: Color, val success: Color, val warning: Color)
+
+val LocalMfExtras = staticCompositionLocalOf { MfExtras(true, MfColors.AccentContainer, MfColors.Success, MfColors.Warning) }
+
+@Composable
+fun MusicFlowTheme(
+    themeMode: ThemeMode = ThemeMode.DARK,
+    amoled: Boolean = false,
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val dark = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+    }
+    val context = LocalContext.current
+    val scheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= 31 && dark -> dynamicDarkColorScheme(context).let {
+            if (amoled) it.copy(background = Color.Black, surface = Color.Black, surfaceContainerLowest = Color.Black) else it
+        }
+        dynamicColor && Build.VERSION.SDK_INT >= 31 -> dynamicLightColorScheme(context)
+        dark -> mfDarkScheme(amoled)
+        else -> mfLightScheme()
+    }
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalMfExtras provides MfExtras(dark, scheme.primaryContainer, MfColors.Success, MfColors.Warning),
+    ) {
+        MaterialTheme(colorScheme = scheme, typography = MfTypography, shapes = MfShapes, content = content)
+    }
+}

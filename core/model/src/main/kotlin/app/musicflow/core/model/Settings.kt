@@ -15,7 +15,6 @@ data class UserSettings(
     val qualityMobile: AudioQuality = AudioQuality.STANDARD,
     val cacheSizeMb: Int = 512,
     val autoContinueQueue: Boolean = true,
-    val gaplessPlayback: Boolean = true,
     val volumeLeveling: Boolean = false,
     val skipSilence: Boolean = false,
     val pauseOnDisconnect: Boolean = true,
