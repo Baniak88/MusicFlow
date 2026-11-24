@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name_short" translatable="false">MusicFlow</string>
+    <string name="playback_favorite">Favourite</string>
+    <string name="auto_recent">Recently played</string>
+    <string name="auto_favorites">Favourites</string>
+    <string name="auto_most_played">Most played</string>
+    <string name="auto_playlists">Playlists</string>
+</resources>

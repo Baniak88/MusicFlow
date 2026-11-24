@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="playback_favorite">Ulubione</string>
+    <string name="auto_recent">Ostatnio odtwarzane</string>
+    <string name="auto_favorites">Ulubione</string>
+    <string name="auto_most_played">Najczęściej odtwarzane</string>
+    <string name="auto_playlists">Playlisty</string>
+</resources>
