@@ -118,15 +118,16 @@ fun ConfirmDialog(title: String, body: String, confirm: String, onDismiss: () ->
 fun LibraryEventsEffect(events: Flow<LibraryEvent>, onOpenPlaylist: (Long) -> Unit = {}) {
     val host = LocalSnackbarHost.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     LaunchedEffect(events) {
         events.collect { e ->
             val msg = when (e) {
-                is LibraryEvent.Imported -> context.resources.getQuantityString(R.plurals.lib_imported, e.count, e.count) +
-                    if (e.skipped > 0) " " + context.resources.getQuantityString(R.plurals.lib_skipped, e.skipped, e.skipped) else ""
-                is LibraryEvent.Failed -> context.getString((e.error as? ProviderError)?.messageRes() ?: app.musicflow.core.designsystem.R.string.mf_error_unknown)
-                is LibraryEvent.Added -> if (e.result.added == 0 && e.result.duplicates.isNotEmpty()) context.getString(R.string.lib_already_in_playlist, e.playlistName)
-                    else context.getString(R.string.lib_added_to, e.playlistName)
-                LibraryEvent.Exported -> context.getString(R.string.lib_exported)
+                is LibraryEvent.Imported -> resources.getQuantityString(R.plurals.lib_imported, e.count, e.count) +
+                    if (e.skipped > 0) " " + resources.getQuantityString(R.plurals.lib_skipped, e.skipped, e.skipped) else ""
+                is LibraryEvent.Failed -> resources.getString((e.error as? ProviderError)?.messageRes() ?: app.musicflow.core.designsystem.R.string.mf_error_unknown)
+                is LibraryEvent.Added -> if (e.result.added == 0 && e.result.duplicates.isNotEmpty()) resources.getString(R.string.lib_already_in_playlist, e.playlistName)
+                    else resources.getString(R.string.lib_added_to, e.playlistName)
+                LibraryEvent.Exported -> resources.getString(R.string.lib_exported)
                 is LibraryEvent.OpenPlaylist -> { onOpenPlaylist(e.id); null }
             }
             msg?.let { host.showSnackbar(it) }

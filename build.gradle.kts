@@ -63,6 +63,8 @@ subprojects {
     }
 
     tasks.withType<Test>().configureEach {
+        // Modules such as pure UI features may legitimately have no JVM tests yet.
+        failOnNoDiscoveredTests.set(false)
         // Live provider tests hit real YouTube Music endpoints. They are opt-in
         // (-PliveTests) so CI is not flaky; see TESTING.md.
         systemProperty("musicflow.liveTests", project.findProperty("liveTests")?.toString() ?: "false")

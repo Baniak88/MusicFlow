@@ -13,7 +13,6 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -145,7 +144,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
             }
 
             // Artwork: swipe horizontally to change track.
-            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 var dragX by remember { mutableFloatStateOf(0f) }
                 AnimatedContent(track, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "art") { t ->
                     Artwork(

@@ -128,13 +128,14 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
     val playback by playerVm.state.collectAsStateWithLifecycle()
     val backStack by nav.currentBackStackEntryAsState()
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
 
     LaunchedEffect(events) {
         events.collect { e ->
             when (e) {
                 is ShellEvent.OpenCollection -> navigator.openCollection(e.id)
                 ShellEvent.OpenPlayer -> playerOpen = true
-                ShellEvent.Unsupported -> snackbar.showSnackbar(context.getString(R.string.link_not_supported))
+                ShellEvent.Unsupported -> snackbar.showSnackbar(resources.getString(R.string.link_not_supported))
             }
         }
     }

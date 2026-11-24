@@ -76,6 +76,7 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
     val nav = LocalNavigator.current
     val host = LocalSnackbarHost.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     var dialog by rememberSaveable { mutableStateOf<String?>(null) }
     val backup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { it?.let(vm::backup) }
     val restore = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { it?.let(vm::restore) }
@@ -84,8 +85,8 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
         vm.events.collect { e ->
             host.showSnackbar(
                 when (e) {
-                    is SettingsEvent.Message -> if (e.arg != null) context.getString(e.res, e.arg) else context.getString(e.res)
-                    is SettingsEvent.Error -> context.getString((e.error as? ProviderError)?.messageRes() ?: app.musicflow.core.designsystem.R.string.mf_error_unknown)
+                    is SettingsEvent.Message -> if (e.arg != null) resources.getString(e.res, e.arg) else resources.getString(e.res)
+                    is SettingsEvent.Error -> resources.getString((e.error as? ProviderError)?.messageRes() ?: app.musicflow.core.designsystem.R.string.mf_error_unknown)
                 },
             )
         }

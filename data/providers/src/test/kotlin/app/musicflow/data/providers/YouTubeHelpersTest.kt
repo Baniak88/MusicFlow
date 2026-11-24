@@ -79,6 +79,11 @@ class DerivativeFilterTest {
         val r = app.musicflow.data.providers.youtube.YouTubeMusicProvider.DERIVATIVE
         listOf("Avicii - Heaven (432Hz)", "Song (Sped Up)", "Song slowed + reverb", "Nightcore - X", "Song 10 Hours")
             .forEach { com.google.common.truth.Truth.assertWithMessage(it).that(r.containsMatchIn(it)).isTrue() }
+        val p = app.musicflow.data.providers.youtube.YouTubeMusicProvider
+        com.google.common.truth.Truth.assertThat(p.isDerivative("waiting for love - avicii (s l o w e d + r e v e r b)")).isTrue()
+        com.google.common.truth.Truth.assertThat(p.isDerivative("Heroes x Levels (Mashup)")).isTrue()
+        com.google.common.truth.Truth.assertThat(p.isDerivative("Wake Me Up")).isFalse()
+        com.google.common.truth.Truth.assertThat(p.isDerivative("Reverberation (Original Mix)")).isFalse()
         listOf("Levels", "One More Time", "Hertz Song").forEach {
             com.google.common.truth.Truth.assertWithMessage(it).that(r.containsMatchIn(it)).isFalse()
         }

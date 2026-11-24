@@ -348,7 +348,7 @@ class YouTubeMusicProvider(
             }
         }
         return tracks
-            .filterNot { DERIVATIVE.containsMatchIn(it.title) }
+            .filterNot { isDerivative(it.title) }
             .filter { it.id != seed && (it.durationMs ?: 180_000L) in 60_000L..900_000L }
             .distinctBy { TextMatching.trackKey(it.title, it.primaryArtist) }
             .take(limit)
@@ -362,9 +362,15 @@ class YouTubeMusicProvider(
     }
 
     companion object {
+        /** True for sped-up/slowed/8D/etc. re-uploads, including letter-spaced spellings. */
+        fun isDerivative(title: String): Boolean =
+            DERIVATIVE.containsMatchIn(title) || DERIVATIVE_COMPACT.containsMatchIn(title.replace(" ", "").lowercase())
+
+        private val DERIVATIVE_COMPACT = Regex("""(slowed|spedup|nightcore|reverb(?!erat)|bassboosted|8daudio|\d{3}hz|mashup)""")
+
         /** Re-uploads that are not the original recording; excluded from radio/autoplay. */
         val DERIVATIVE = Regex(
-            """\b(\d{3}\s?hz|sped\s?up|slowed|nightcore|8d audio|reverb|bass\s?boosted|1 hour|10 hours|karaoke|instrumental cover|tiktok)\b""",
+            """\b(\d{3}\s?hz|sped\s?up|slowed|nightcore|8d audio|reverb|bass\s?boosted|1 hour|10 hours|karaoke|instrumental cover|tiktok|mashup)\b""",
             RegexOption.IGNORE_CASE,
         )
     }

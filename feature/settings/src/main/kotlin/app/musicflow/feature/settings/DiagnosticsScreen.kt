@@ -51,8 +51,9 @@ fun DiagnosticsScreen(contentPadding: PaddingValues, vm: DiagnosticsViewModel = 
     val playback by vm.playback.collectAsStateWithLifecycle()
     val host = LocalSnackbarHost.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { it?.let(vm::export) }
-    LaunchedEffect(Unit) { vm.exported.collect { host.showSnackbar(context.getString(if (it) R.string.diag_exported else R.string.diag_export_failed)) } }
+    LaunchedEffect(Unit) { vm.exported.collect { host.showSnackbar(resources.getString(if (it) R.string.diag_exported else R.string.diag_export_failed)) } }
     val fmt = SimpleDateFormat("HH:mm:ss", Locale.US)
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp)) {

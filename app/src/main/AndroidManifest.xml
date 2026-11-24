@@ -48,6 +48,18 @@
             </intent-filter>
         </activity>
 
+        <!-- Playback service (declared in :playback; repeated here so the merged manifest
+             and Android Auto lint see the MediaBrowserService filter). -->
+        <service
+            android:name="app.musicflow.playback.service.MusicService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
         <!-- Android Auto media app declaration -->
         <meta-data android:name="com.google.android.gms.car.application" android:resource="@xml/automotive_app_desc" />
 

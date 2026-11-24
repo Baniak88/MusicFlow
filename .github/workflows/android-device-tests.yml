@@ -1,0 +1,50 @@
+name: Device tests (emulator)
+
+# Instrumented smoke tests on real Android system images. Runs on demand and weekly,
+# because emulator jobs are slow; see TESTING.md for the manual device test plan.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [28, 34]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.0 build-tools;36.0.0 platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          target: default
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: ./gradlew :app:connectedDebugAndroidTest --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: device-test-reports-api${{ matrix.api-level }}
+          path: app/build/reports/androidTests/
+          if-no-files-found: ignore
