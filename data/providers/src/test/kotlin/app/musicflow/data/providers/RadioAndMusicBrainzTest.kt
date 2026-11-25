@@ -221,7 +221,7 @@ class MusicBrainzRankingTest {
             assertThat(app.musicflow.data.providers.musicbrainz.MusicBrainzProvider::class.java).isNotNull()
             val p = MusicBrainzProvider(OkHttpClient(), DiagnosticsLog(), null, "UA", s.url("/ws/2/"), minIntervalMs = 0, clock = { 0L })
             assertThat(p.search("bohemian rhapsody queen", SearchFilter.SONGS).items.map { it.id.value })
-                .containsExactly("mbr:orig", "mbr:live", "mbr:medley", "mbr:cover").inOrder()
+                .containsExactly("mbr:orig", "mbr:live", "mbr:medley", "mbr:cover").inOrder() // non-fitting ones by popularity
             val sent = okhttp3.HttpUrl.Companion.run { s.takeRequest().requestUrl!!.queryParameter("query") }
             assertThat(sent).isEqualTo("recording:(bohemian rhapsody queen)^2 OR artist:(bohemian rhapsody queen)")
             // Without an artist in the query, the most released version still wins over a one-off cover.

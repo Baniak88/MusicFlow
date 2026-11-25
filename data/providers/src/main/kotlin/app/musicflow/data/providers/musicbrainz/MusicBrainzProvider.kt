@@ -280,6 +280,14 @@ internal object MbMapper {
         }
     }
 
+    /**
+     * The item is what was typed: its title is the whole query ("ok computer"), or the query is
+     * its artist plus its title ("karma police radiohead"). Among fitting items the most released
+     * version wins, so famous recordings beat covers, live takes and namesakes.
+     */
+    private fun fits(query: String, title: String, credit: String): Boolean =
+        titleFit(query, title, "") == 2 || (mentions(query, credit) && titleFit(query, title, credit) >= 1)
+
     /** Whether the user typed this artist's name (e.g. "karma police radiohead"). */
     private fun mentions(query: String, credit: String): Boolean {
         val c = TextMatching.normalize(credit)
@@ -293,18 +301,15 @@ internal object MbMapper {
      */
     fun rankRecordings(query: String, items: List<MbRecording>): List<MbRecording> = items.filter { !it.video }
         .sortedWith(
-            compareByDescending<MbRecording> { mentions(query, credit(it.artistCredit)) }
-                .thenByDescending { titleFit(query, it.title, credit(it.artistCredit)) }
-                .thenByDescending { (it.score ?: 0) / 10 }
+            compareByDescending<MbRecording> { fits(query, it.title, credit(it.artistCredit)) }
                 .thenByDescending { it.releases.size }
-                .thenByDescending { it.releases.any { r -> r.status == "Official" } },
+                .thenByDescending { it.score ?: 0 },
         )
 
     fun rankGroups(query: String, items: List<MbReleaseGroupRef>): List<MbReleaseGroupRef> = items.sortedWith(
-        compareByDescending<MbReleaseGroupRef> { mentions(query, credit(it.artistCredit)) }
-            .thenByDescending { titleFit(query, it.title, credit(it.artistCredit)) }
-            .thenByDescending { (it.score ?: 0) / 10 }
-            .thenByDescending { it.releases.size },
+        compareByDescending<MbReleaseGroupRef> { fits(query, it.title, credit(it.artistCredit)) }
+            .thenByDescending { it.releases.size }
+            .thenByDescending { it.score ?: 0 },
     )
 
     fun credit(credits: List<MbCredit>) = credits.joinToString("") { it.name + it.joinPhrase }.trim()
