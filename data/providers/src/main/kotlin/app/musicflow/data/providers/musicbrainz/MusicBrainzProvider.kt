@@ -145,10 +145,16 @@ class MusicBrainzProvider(
         // Recordings: fetch the API maximum and rank it, so the well-known version is among them
         // (a famous song has hundreds of live takes, remasters and karaoke recordings).
         val recQuery = page + ("query" to "recording:($terms)^2 OR artist:($terms)") + ("limit" to RECORDING_PAGE.toString())
+        // Studio-first variant: only recordings released on an album/single/EP, none live-only.
+        val studioQuery = recQuery + ("query" to "(recording:($terms)^2 OR artist:($terms)) AND primarytype:(album OR single OR ep) AND NOT secondarytype:live")
+        suspend fun recordings(params: Map<String, String>): MbRecordingSearch {
+            val studio = runCatching { get("recording", studioQuery + params, MbRecordingSearch.serializer()) }.getOrNull()
+            return studio?.takeIf { it.recordings.isNotEmpty() } ?: get("recording", recQuery + params, MbRecordingSearch.serializer())
+        }
         val rgQuery = page + ("query" to "releasegroup:($terms)^2 OR artist:($terms)")
         fun next(count: Int, size: Int) = (offset + size).takeIf { size > 0 && it < count }?.toString()
         return when (filter) {
-            SearchFilter.SONGS -> get("recording", recQuery, MbRecordingSearch.serializer()).let { r ->
+            SearchFilter.SONGS -> recordings(emptyMap()).let { r ->
                 SearchPage(q, filter, MbMapper.rankRecordings(q, r.recordings).take(PAGE).map { MediaItemSummary.TrackItem(MbMapper.track(it)) }, next(r.count, r.recordings.size))
             }
             SearchFilter.ALBUMS -> get("release-group", rgQuery, MbReleaseGroupSearch.serializer()).let { r ->
@@ -161,7 +167,7 @@ class MusicBrainzProvider(
             SearchFilter.ALL -> coroutineScope {
                 // Sequential under the rate limit anyway; artists and albums first, best matches only.
                 val artists = runCatching { get("artist", mapOf("query" to q, "limit" to "3"), MbArtistSearch.serializer()).artists.filter { (it.score ?: 0) >= 90 } }.getOrDefault(emptyList())
-                val songs = async { MbMapper.rankRecordings(q, get("recording", recQuery + ("offset" to "0"), MbRecordingSearch.serializer()).recordings).take(20) }
+                val songs = async { MbMapper.rankRecordings(q, recordings(mapOf("offset" to "0")).recordings).take(20) }
                 val albums = runCatching { MbMapper.rankGroups(q, get("release-group", rgQuery + ("limit" to "15") + ("offset" to "0"), MbReleaseGroupSearch.serializer()).releaseGroups).take(8) }.getOrDefault(emptyList())
                 val items = artists.take(2).map { MediaItemSummary.ArtistItem(MbMapper.artist(it)) } +
                     songs.await().map { MediaItemSummary.TrackItem(MbMapper.track(it)) } +

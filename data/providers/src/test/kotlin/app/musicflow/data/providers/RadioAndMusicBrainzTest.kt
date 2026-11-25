@@ -202,10 +202,11 @@ class MusicBrainzRetryTest {
         MockWebServer().apply {
             enqueue(MockResponse().setResponseCode(503).setHeader("Retry-After", "0"))
             enqueue(MockResponse().setBody("""{"count":0,"offset":0,"recordings":[]}"""))
+            enqueue(MockResponse().setBody("""{"count":0,"offset":0,"recordings":[]}""")) // broad fallback after an empty studio search
         }.use { s ->
             val p = MusicBrainzProvider(OkHttpClient(), DiagnosticsLog(), null, "UA", s.url("/ws/2/"), minIntervalMs = 0, clock = { 0L })
             assertThat(p.search("x", SearchFilter.SONGS).items).isEmpty()
-            assertThat(s.requestCount).isEqualTo(2)
+            assertThat(s.requestCount).isEqualTo(3)
         }
     }
 }
@@ -235,7 +236,7 @@ class MusicBrainzRankingTest {
             assertThat(p.search("bohemian rhapsody queen", SearchFilter.SONGS).items.map { it.id.value })
                 .containsExactly("mbr:orig", "mbr:live", "mbr:medley", "mbr:cover").inOrder() // non-fitting ones by popularity
             val sent = okhttp3.HttpUrl.Companion.run { s.takeRequest().requestUrl!!.queryParameter("query") }
-            assertThat(sent).isEqualTo("recording:(bohemian rhapsody queen)^2 OR artist:(bohemian rhapsody queen)")
+            assertThat(sent).isEqualTo("(recording:(bohemian rhapsody queen)^2 OR artist:(bohemian rhapsody queen)) AND primarytype:(album OR single OR ep) AND NOT secondarytype:live")
             // Without an artist in the query, the most released version still wins over a one-off cover.
             assertThat(p.search("bohemian rhapsody", SearchFilter.SONGS).items.first().id.value).isEqualTo("mbr:orig")
         }
