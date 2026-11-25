@@ -85,7 +85,7 @@ class RadioMusicBrainzLiveTest {
             val found = radio.search(query, SearchFilter.ALL).items.tracks()
             println("$query: " + found.take(6).map { "${it.title} / ${it.artistLine}" })
             val hit = found.first()
-            assertThat(hit.title.lowercase()).contains(expect)
+            assertThat(app.musicflow.core.common.TextMatching.normalize(hit.title)).contains(expect)
             val stream = radio.resolve(hit.id, AudioQuality.BEST)
             val marker = if (stream.allowCleartext) mapOf(app.musicflow.core.network.CleartextGuard.ALLOW_HEADER to "radio") else emptyMap()
             guarded.newCall(Request.Builder().url(stream.url).headers(okhttp3.Headers.headersOf(*(stream.requestHeaders + marker).flatMap { listOf(it.key, it.value) }.toTypedArray())).build()).execute().use { r ->
