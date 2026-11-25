@@ -112,7 +112,7 @@ class RadioSearchDiagnosisLiveTest {
         val re = Regex(""""name":"([^"]*)".*?"url_resolved":"([^"]*)".*?"tags":"([^"]*)".*?"countrycode":"([^"]*)".*?"state":"([^"]*)".*?"lastcheckok":(\d)""")
         for (p in listOf("name=fama", "name=radio%20fama%20kielce", "name=kielce", "tag=kielce", "state=kielce&countrycode=PL", "name=fama&is_https=true", "countrycode=PL&limit=1000&hidebroken=true")) {
             val body = q(p)
-            val rows = re.findAll(body).map { m -> m.groupValues.drop(1).let { (n, u, t, c, s, ok) -> "$n | ${u.take(60)} | tags=$t | $c/$s | ok=$ok" } }.toList()
+            val rows = re.findAll(body).map { m -> val g = m.groupValues; "${g[1]} | ${g[2].take(60)} | tags=${g[3]} | ${g[4]}/${g[5]} | ok=${g[6]}" }.toList()
             println("[$p] ${rows.size} stations" + if (p.startsWith("countrycode")) " (https: ${rows.count { "| https://" in it }})" else "")
             if (!p.startsWith("countrycode")) rows.take(12).forEach { println("    $it") }
         }
