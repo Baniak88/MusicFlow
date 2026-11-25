@@ -74,6 +74,21 @@ class SoundCloudLiveTest {
         assertThat(pl.search("qxzvbnmlkjhgfdsa poiuytrewq zzqqxx", SearchFilter.ARTISTS).items).isEmpty()
     }
 
+    /** Reported: "Move On Baby" (Dynamic Waves) found but "content unavailable" on play. */
+    @Test fun reportedTrackStreamsAsOnThePhone() = runBlocking {
+        val t = provider.search("Dynamic Waves move on baby", SearchFilter.SONGS).items.tracks().first()
+        println("reported track: ${t.id} ${t.title} / ${t.artistLine}")
+        val r = runCatching { provider.resolve(t.id, AudioQuality.BEST) }
+        println("reported resolve: ${r.getOrNull()?.codec} ${r.getOrNull()?.bitrateKbps} error=${r.exceptionOrNull()}")
+        // What SoundCloud itself offers (NewPipe skips encrypted / DRM variants).
+        val cid = org.schabi.newpipe.extractor.services.soundcloud.SoundcloudParsingHelper.clientId()
+        val raw = client.newCall(Request.Builder().url("https://api-v2.soundcloud.com/resolve?url=https://${t.id.key}&client_id=$cid").build()).execute().use { it.body!!.string() }
+        Regex("""\{"url":"[^"]*","preset":"([^"]*)","duration":\d+,"snipped":(\w+),"format":\{"protocol":"([^"]*)","mime_type":"([^"]*)"\}""").findAll(raw).forEach {
+            println("  transcoding: preset=${it.groupValues[1]} snipped=${it.groupValues[2]} protocol=${it.groupValues[3]} mime=${it.groupValues[4]}")
+        }
+        println("  policy=" + Regex(""""policy":"([^"]*)"""").find(raw)?.groupValues?.get(1) + " monetization=" + Regex(""""monetization_model":"([^"]*)"""").find(raw)?.groupValues?.get(1))
+    }
+
     @Test fun metadataPlaylistsArtistsAndRelated() = runBlocking {
         val track = provider.search("odesza say my name", SearchFilter.SONGS).items.tracks().first()
         val full = provider.track(track.id)

@@ -11,22 +11,13 @@ import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class CategoryGroup { RADIO, GENRE, MOOD, DECADE, CHARTS }
+enum class CategoryGroup { GENRE, MOOD, DECADE, CHARTS, RADIO }
 
 /**
  * Explore categories. Content comes from the provider's own search for a descriptive query,
  * so everything shown is real catalogue data (no curated fake lists).
  */
 enum class ExploreCategory(val group: CategoryGroup, val query: String, val color: Long) {
-    /** Internet radio (Radio Browser): stations, not songs. Queries: "@local", "@world" or a genre tag. */
-    RADIO_LOCAL(CategoryGroup.RADIO, "@local", 0xFFC45BF6),
-    RADIO_WORLD(CategoryGroup.RADIO, "@world", 0xFF8B5CF6),
-    RADIO_POP(CategoryGroup.RADIO, "pop", 0xFFF43F5E),
-    RADIO_ROCK(CategoryGroup.RADIO, "rock", 0xFFDC2626),
-    RADIO_DANCE(CategoryGroup.RADIO, "dance", 0xFFEC4899),
-    RADIO_JAZZ(CategoryGroup.RADIO, "jazz", 0xFFF59E0B),
-    RADIO_CLASSICAL(CategoryGroup.RADIO, "classical", 0xFF14B8A6),
-    RADIO_NEWS(CategoryGroup.RADIO, "news", 0xFF64748B),
     ELECTRONIC(CategoryGroup.GENRE, "electronic music", 0xFF3B82F6),
     DANCE(CategoryGroup.GENRE, "dance hits", 0xFFEC4899),
     EDM(CategoryGroup.GENRE, "edm", 0xFF8B5CF6),
@@ -44,7 +35,16 @@ enum class ExploreCategory(val group: CategoryGroup, val query: String, val colo
     HITS_2000S(CategoryGroup.DECADE, "2000s hits", 0xFF0EA5E9),
     NEW_RELEASES(CategoryGroup.CHARTS, "new music {year}", 0xFF22C55E),
     UK_CHARTS(CategoryGroup.CHARTS, "uk top 40 official chart", 0xFF1D4ED8),
-    GLOBAL_CHARTS(CategoryGroup.CHARTS, "global top 50 {year}", 0xFF7C3AED);
+    GLOBAL_CHARTS(CategoryGroup.CHARTS, "global top 50 {year}", 0xFF7C3AED),
+    /** Internet radio (Radio Browser): stations, not songs. Queries: "@local", "@world" or a genre tag. */
+    RADIO_LOCAL(CategoryGroup.RADIO, "@local", 0xFFC45BF6),
+    RADIO_WORLD(CategoryGroup.RADIO, "@world", 0xFF8B5CF6),
+    RADIO_POP(CategoryGroup.RADIO, "pop", 0xFFF43F5E),
+    RADIO_ROCK(CategoryGroup.RADIO, "rock", 0xFFDC2626),
+    RADIO_DANCE(CategoryGroup.RADIO, "dance", 0xFFEC4899),
+    RADIO_JAZZ(CategoryGroup.RADIO, "jazz", 0xFFF59E0B),
+    RADIO_CLASSICAL(CategoryGroup.RADIO, "classical", 0xFF14B8A6),
+    RADIO_NEWS(CategoryGroup.RADIO, "news", 0xFF64748B);
 
     fun resolvedQuery(year: Int = Calendar.getInstance().get(Calendar.YEAR)) = query.replace("{year}", year.toString())
 }

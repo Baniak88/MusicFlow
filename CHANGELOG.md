@@ -3,6 +3,19 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.11] - 2026-11-25
+
+### Added
+- **Internet radio (Radio Browser)**: ~50 000 stations — search by name or genre, Explore → Radio
+  (popular in your country, worldwide, pop/rock/dance/jazz/classical/news), live playback (HTTPS
+  only, never cached), the current song from the station shown as now playing.
+- **MusicBrainz**: search recordings, albums and artists; albums with tracklists and Cover Art
+  Archive covers; artist discographies and facts; *About · MusicBrainz* on YouTube/SoundCloud artist
+  pages (exact matches only). MusicBrainz tracks play through YouTube Music only when title, artist
+  and duration agree — otherwise they are reported as unavailable, never guessed.
+- Search source chips now: YouTube Music · SoundCloud · Radio Browser · MusicBrainz; switches for
+  each in Settings → Providers.
+
 ## [1.0.0-beta.10] - 2026-11-25
 
 ### Fixed

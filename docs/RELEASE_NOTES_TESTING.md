@@ -1,5 +1,17 @@
 ## MusicFlow — wersja testowa / test build
 
+**Nowości w beta.11:**
+- **Radio internetowe (Radio Browser, ok. 50 000 stacji):** w wyszukiwarce wybierz źródło
+  „Radio Browser” (nazwa stacji albo gatunek, np. „jazz”), albo Odkrywaj → Radio (popularne
+  w Polsce, na świecie, pop/rock/dance/jazz/klasyka/wiadomości). Odtwarzanie na żywo, a w
+  powiadomieniu i na ekranie blokady tytuł utworu, który aktualnie gra stacja.
+- **MusicBrainz (otwarta encyklopedia muzyki):** źródło „MusicBrainz” w wyszukiwarce — utwory,
+  albumy z okładkami i pełną listą utworów, dyskografie wykonawców. Na stronach wykonawców z
+  YouTube/SoundCloud pojawia się sekcja „O wykonawcy · MusicBrainz” (rodzaj, pochodzenie, lata
+  aktywności, gatunki). Utwory z MusicBrainz grają przez YouTube Music tylko wtedy, gdy tytuł,
+  wykonawca i długość się zgadzają — inaczej aplikacja uczciwie mówi, że nie znalazła nagrania.
+- Każde źródło można wyłączyć w Ustawieniach → Źródła muzyki.
+
 **Poprawki w beta.10:**
 - SoundCloud: wyszukiwanie nie kończy się już błędem „Wystąpił nieoczekiwany błąd”, gdy w którejś
   kategorii nic nie znaleziono — pokazuje to, co znalazło. Jeśli pojawi się jakiś nieoczekiwany

@@ -6,6 +6,8 @@
 | Direct audio URL | `url` | Stable | Streams (HTTPS; MP3/AAC/Opus/FLAC/WAV/HLS) | the URL's host |
 | YouTube Music (NewPipe Extractor) | `yt`, `ytpl`, `ytch` | **Experimental**, optional | Search, suggestions, albums/playlists, artists, related/radio, trending, streams | YouTube hosts |
 | SoundCloud (NewPipe Extractor) | `sc`, `scpl`, `scu` | **Experimental**, optional | Search (tracks, users, sets), suggestions, sets/albums, artists, related, links, streams (HLS) | SoundCloud hosts |
+| Radio Browser | `radio` | Stable, optional | Station search (name and genre tag), popular by country/worldwide/genre, live streams (HTTPS only), ICY now-playing | `*.api.radio-browser.info`, station hosts |
+| MusicBrainz (+ Cover Art Archive) | `mbr`, `mbrg`, `mba` | Stable, optional | Search recordings/albums/artists, album tracklists, discographies, artist facts; playback via a verified YouTube Music match | `musicbrainz.org`, `coverartarchive.org`, `archive.org` |
 | LRCLIB | — | Stable | Synced and plain lyrics | `lrclib.net` |
 
 ## YouTube Music (experimental)
@@ -104,6 +106,41 @@ Built on the same NewPipe Extractor as YouTube Music (shared initialisation in
   *restricted (paid)* instead of being played as if complete; geo-blocked tracks likewise.
 * **Live check**: `SoundCloudLiveTest` (opt-in) — run it on GitHub with the *Provider live tests*
   workflow (this repo's CI network can reach SoundCloud).
+
+## Radio Browser
+
+Community directory of internet radio (public API, no key, open data). `RadioBrowserProvider`:
+
+* **Search** (source chip *Radio Browser*): station names, plus genre-tag matches on the first page
+  (e.g. "jazz"); albums/artists filters return nothing. **Explore → Radio**: popular stations in
+  your country (device locale), worldwide, and by genre.
+* **HTTPS only**: queried with `is_https=true&hidebroken=true`; a station whose current URL is plain
+  HTTP is reported as not supported (MusicFlow refuses cleartext, see PRIVACY.md).
+* **Mirrors**: `de1`, `fi1`, `de2`, `nl1.api.radio-browser.info`, tried in order.
+* **Clicks**: playing a station calls `/json/url/<uuid>` (station id only), as the API asks, which
+  also returns the current stream URL.
+* **Playback**: live (`ResolvedStream.isLive`) → no disk cache (`TRANSPORT_LIVE` route), no
+  crossfade (no duration). HLS stations are queued as `radio:hls/<uuid>`. ICY `StreamTitle`
+  updates the now-playing title (notification, lock screen, Android Auto) without interrupting.
+
+## MusicBrainz
+
+The open music encyclopedia (core data CC0). `MusicBrainzProvider`:
+
+* **Search** (source chip *MusicBrainz*): recordings, albums (release groups), artists. MusicBrainz
+  ranks by text only, so results are re-ranked: the item that *is* what was typed (title, or artist
+  + title) first, then recordings on studio releases, then the most released versions. Recording
+  queries search title and artist fields, studio releases first (broad fallback).
+* **Albums**: tracklist of the most representative release (official, earliest); covers from the
+  Cover Art Archive (`/release-group/<id>/front-250|500`; may be missing → placeholder).
+* **Artists**: discography (albums; singles & EPs; no live/compilation/remix), and a factual line
+  (type · area · years · genres). On YouTube/SoundCloud artist pages an *About · MusicBrainz*
+  section appears when the name matches exactly with a high score — never for a guess.
+* **Playback**: MusicBrainz has no audio. A recording is searched on YouTube Music and played only
+  if title, artist and duration (±7 s) agree (`TextMatching.isReliableMatch`); otherwise it is
+  reported as unavailable. Not available while YouTube Music is turned off.
+* **API etiquette**: identifying User-Agent (`MusicFlow/<version> ( github URL )`), ≤ 1 request/s,
+  503/`Retry-After` honoured with up to 3 retries.
 
 ## Local music
 

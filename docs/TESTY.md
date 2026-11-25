@@ -73,6 +73,16 @@ Zaznacz ✅ / ❌ i dopisz uwagi.
       wersja, w ciągu kilku godzin powinna zainstalować się sama (Android 12+) albo pojawić się
       baner „Zainstaluj”. Biblioteka i ustawienia zostają.
 
+**Radio i MusicBrainz**
+- [ ] Odkrywaj → Radio → „Popularne radia w Twoim kraju”: stacja gra, w powiadomieniu po chwili
+      pojawia się tytuł aktualnego utworu.
+- [ ] Wyszukaj „rmf” albo „jazz” i wybierz źródło „Radio Browser”.
+- [ ] Wyszukaj „OK Computer” ze źródłem „MusicBrainz” → album Radiohead z okładką i listą
+      utworów; utwór z albumu gra (przez YouTube Music) albo pojawia się komunikat, że nie
+      znaleziono pewnego nagrania.
+- [ ] Strona wykonawcy z YouTube (np. Radiohead): sekcja „O wykonawcy · MusicBrainz” i link
+      „Pełna dyskografia w MusicBrainz”.
+
 **SoundCloud**
 - [ ] Wyszukaj coś, w wynikach wybierz „SoundCloud”: utwory, wykonawcy, playlisty.
 - [ ] Odtwarzanie utworu z SoundCloud (także w tle i z przenikaniem), strona wykonawcy, playlista.

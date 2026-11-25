@@ -29,5 +29,9 @@ Reference projects studied (no code copied): OuterTune (GPL-3.0), InnerTune (GPL
 dependency version baseline follows OuterTune's build configuration.
 
 Services: LRCLIB (lrclib.net) lyrics; YouTube / YouTube Music content is © its respective owners
-and is not distributed with MusicFlow. "YouTube" is a trademark of Google LLC; MusicFlow is not
+and is not distributed with MusicFlow. SoundCloud content is © its owners; "SoundCloud" is a
+trademark of SoundCloud Global Limited & Co. KG. Station directory data: Radio Browser
+(radio-browser.info, community-maintained, public domain); streams belong to their broadcasters.
+Music metadata: MusicBrainz (musicbrainz.org) core data, CC0 1.0, by the MetaBrainz Foundation and
+contributors; cover images: Cover Art Archive (coverartarchive.org), © their respective owners. "YouTube" is a trademark of Google LLC; MusicFlow is not
 affiliated with or endorsed by Google.
