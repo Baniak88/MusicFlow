@@ -56,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.musicflow.core.designsystem.component.Artwork
 import app.musicflow.core.designsystem.component.ErrorState
+import app.musicflow.core.designsystem.component.PillChip
 import app.musicflow.core.designsystem.component.MessageState
 import app.musicflow.core.designsystem.component.SkeletonTrackRows
 import app.musicflow.core.designsystem.component.TrackRow
@@ -171,7 +172,7 @@ private fun Results(state: ResultsState, padding: PaddingValues, vm: SearchViewM
     LazyColumn(state = listState, contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp)) {
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(SearchFilter.entries) { f -> FilterChip(selected = state.filter == f, onClick = { vm.setFilter(f) }, label = { Text(filterLabel(f)) }) }
+                items(SearchFilter.entries) { f -> PillChip(filterLabel(f), state.filter == f, { vm.setFilter(f) }) }
             }
         }
         state.correctedQuery?.let { c ->

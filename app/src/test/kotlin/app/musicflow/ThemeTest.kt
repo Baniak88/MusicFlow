@@ -60,3 +60,23 @@ class ThemeTest {
         assertThat(contrast(MfColors.LightText, MfColors.LightBackground)).isAtLeast(4.5)
     }
 }
+
+/** Regression: text on the transparent, gradient-backed screens must use the theme's light text colour. */
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
+class TransparentContainerTextTest {
+    @get:org.junit.Rule val compose = androidx.compose.ui.test.junit4.createComposeRule()
+
+    @org.junit.Test fun scaffoldWithTransparentContainerKeepsLightText() {
+        var content = androidx.compose.ui.graphics.Color.Unspecified
+        compose.setContent {
+            app.musicflow.core.designsystem.theme.MusicFlowTheme(themeMode = app.musicflow.core.model.ThemeMode.DARK) {
+                androidx.compose.material3.Scaffold(
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onBackground,
+                ) { content = androidx.compose.material3.LocalContentColor.current }
+            }
+        }
+        compose.waitForIdle()
+        com.google.common.truth.Truth.assertThat(content).isEqualTo(app.musicflow.core.designsystem.theme.MfColors.TextPrimary)
+    }
+}

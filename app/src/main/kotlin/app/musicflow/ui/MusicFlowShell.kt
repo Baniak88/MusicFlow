@@ -21,6 +21,17 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.draw.clip
+import app.musicflow.core.designsystem.component.appBackground
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Search
@@ -103,14 +114,67 @@ object Routes {
     fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 }
 
-private data class Tab(val route: String, val target: String, val label: Int, val icon: ImageVector)
+private data class Tab(val route: String, val target: String, val label: Int, val icon: ImageVector, val selectedIcon: ImageVector)
 
 private val tabs = listOf(
-    Tab(Routes.HOME, Routes.HOME, R.string.nav_home, Icons.Rounded.Home),
-    Tab(Routes.EXPLORE, Routes.EXPLORE, R.string.nav_explore, Icons.Rounded.Explore),
-    Tab(Routes.SEARCH, "search?q=", R.string.nav_search, Icons.Rounded.Search),
-    Tab(Routes.LIBRARY, Routes.LIBRARY, R.string.nav_library, Icons.Rounded.LibraryMusic),
+    Tab(Routes.HOME, Routes.HOME, R.string.nav_home, Icons.Outlined.Home, Icons.Rounded.Home),
+    Tab(Routes.EXPLORE, Routes.EXPLORE, R.string.nav_explore, Icons.Outlined.Explore, Icons.Rounded.Explore),
+    Tab(Routes.SEARCH, "search?q=", R.string.nav_search, Icons.Outlined.Search, Icons.Rounded.Search),
+    Tab(Routes.LIBRARY, Routes.LIBRARY, R.string.nav_library, Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
 )
+
+/** One rounded card holding the mini player and the navigation, as in the app's design. */
+@Composable
+private fun BottomDock(showMini: Boolean, mini: @Composable () -> Unit, selected: String, onSelect: (String) -> Unit) {
+    androidx.compose.material3.Surface(
+        color = app.musicflow.core.designsystem.theme.LocalMfExtras.current.dock,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shadowElevation = 12.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.navigationBarsPadding()) {
+            if (showMini) {
+                Box(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Box(Modifier.size(width = 36.dp, height = 4.dp).clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.colorScheme.outline))
+                }
+                mini()
+            }
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly,
+            ) {
+                tabs.forEach { tab ->
+                    val isSel = selected == tab.route
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                            .selectable(selected = isSel, role = androidx.compose.ui.semantics.Role.Tab, onClick = { onSelect(tab.route) })
+                            .testTag("tab_${tab.route.substringBefore('?')}")
+                            .padding(vertical = 4.dp),
+                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                    ) {
+                        Box(
+                            Modifier
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(if (isSel) MaterialTheme.colorScheme.surfaceContainerHighest else androidx.compose.ui.graphics.Color.Transparent)
+                                .padding(horizontal = 18.dp, vertical = 6.dp),
+                        ) {
+                            Icon(if (isSel) tab.selectedIcon else tab.icon, null, Modifier.size(24.dp),
+                                tint = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(
+                            stringResource(tab.label), style = MaterialTheme.typography.labelSmall,
+                            color = if (isSel) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 /**
  * Bottom-bar behaviour (like Spotify / YouTube Music):
@@ -214,25 +278,19 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
         TrackMenuHost {
             Box(Modifier.fillMaxSize()) {
                 Scaffold(
+                    modifier = Modifier.appBackground(),
                     snackbarHost = { SnackbarHost(snackbar) },
-                    containerColor = MaterialTheme.colorScheme.background,
                     contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    // Transparent container (gradient shows through) → content colour must be explicit.
+                    contentColor = MaterialTheme.colorScheme.onBackground,
                     bottomBar = {
-                        Column {
-                            if (playback.current != null) MiniPlayer(playerVm, onExpand = { playerOpen = true })
-                            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
-                                tabs.forEach { tab ->
-                                    NavigationBarItem(
-                                        selected = tabsNav.selected == tab.route,
-                                        onClick = { tabsNav.select(tab.route) },
-                                        icon = { Icon(tab.icon, null) },
-                                        label = { Text(stringResource(tab.label)) },
-                                        colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer),
-                                        modifier = Modifier.testTag("tab_${tab.route.substringBefore('?')}"),
-                                    )
-                                }
-                            }
-                        }
+                        BottomDock(
+                            showMini = playback.current != null,
+                            mini = { MiniPlayer(playerVm, onExpand = { playerOpen = true }) },
+                            selected = tabsNav.selected,
+                            onSelect = tabsNav::select,
+                        )
                     },
                 ) { padding ->
                     val content = PaddingValues(bottom = padding.calculateBottomPadding())
@@ -266,7 +324,7 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
                 Box(
                     Modifier.fillMaxWidth()
                         .windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars)
-                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
+                        .background(app.musicflow.core.designsystem.theme.LocalMfExtras.current.gradientTop.copy(alpha = 0.94f))
                         .testTag("status_bar_scrim"),
                 )
                 AnimatedVisibility(

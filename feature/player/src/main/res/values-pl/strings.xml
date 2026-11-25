@@ -53,4 +53,13 @@
     <string name="player_q_best_hint">najwyższy bitrate oferowany przez źródło</string>
     <string name="player_norm_applied">Normalizacja: %1$s dB (głośność utworu %2$s LUFS)</string>
     <string name="player_norm_none">Normalizacja: nie zastosowano (wyłączona lub brak danych o głośności utworu)</string>
+    <string name="player_playing_on">Odtwarzanie na</string>
+    <string name="player_playing_from">Odtwarzanie z</string>
+    <string name="player_queue_default">Twoja kolejka</string>
+    <string name="player_out_phone">Ten telefon</string>
+    <string name="player_out_wired">Słuchawki przewodowe</string>
+    <string name="player_out_usb">Dźwięk USB</string>
+    <string name="player_out_bluetooth">Urządzenie Bluetooth</string>
+    <string name="player_share">Udostępnij</string>
+    <string name="player_drag_to_close">Przesuń w dół, aby zamknąć</string>
 </resources>

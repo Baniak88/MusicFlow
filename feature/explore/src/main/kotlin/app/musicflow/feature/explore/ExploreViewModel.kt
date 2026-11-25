@@ -53,6 +53,6 @@ class CategoryViewModel @Inject constructor(
     fun sorted(tracks: List<Track>, newest: Boolean) =
         if (newest && canSortByDate(tracks)) tracks.sortedByDescending { it.releaseYear ?: Int.MIN_VALUE } else tracks
 
-    fun play(tracks: List<Track>, index: Int) = playback.play(tracks, index)
-    fun shuffle(tracks: List<Track>) = playback.play(tracks, 0, shuffle = true)
+    fun play(tracks: List<Track>, index: Int, source: String? = null) = playback.play(tracks, index, source = source)
+    fun shuffle(tracks: List<Track>, source: String? = null) = playback.play(tracks, 0, shuffle = true, source = source)
 }

@@ -102,6 +102,6 @@ class SearchViewModel @Inject constructor(
         // Play the tapped song, followed by the other songs in the results.
         val tracks = _results.value.items.filterIsInstance<MediaItemSummary.TrackItem>().map { it.track }
         val idx = tracks.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
-        playback.play(if (tracks.isEmpty()) listOf(track) else tracks, idx)
+        playback.play(if (tracks.isEmpty()) listOf(track) else tracks, idx, source = "“${_results.value.query}”")
     }
 }

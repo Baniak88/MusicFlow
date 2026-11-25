@@ -50,7 +50,9 @@ class PlayerViewModel @Inject constructor(
     private val effects: AudioEffects,
     private val settings: SettingsRepository,
     private val connectivity: app.musicflow.core.network.ConnectivityMonitor,
+    audioOutput: app.musicflow.playback.AudioOutputMonitor,
 ) : ViewModel() {
+    val output: StateFlow<app.musicflow.playback.AudioOutput> = audioOutput.output
     val state: StateFlow<PlaybackState> = engine.state
     val progress: Flow<Progress> = engine.progress
     val engineStatus: StateFlow<EngineStatus> = runtime.status

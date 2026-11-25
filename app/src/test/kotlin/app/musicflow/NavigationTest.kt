@@ -150,10 +150,9 @@ class TabNavigationTest {
         tab("explore").assertIsSelected()
     }
 
-    @Test fun homeSearchIconSwitchesToSearchTabAndBackReturnsHome() {
+    @Test fun searchTabFromHomeAndBackReturnsHome() {
         waitForText("Welcome to MusicFlow")
-        compose.onNode(androidx.compose.ui.test.hasContentDescription("Search") and androidx.compose.ui.test.hasClickAction() and androidx.compose.ui.test.hasTestTag("tab_search").not())
-            .performClick()
+        tab("search").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithTag("search_field").fetchSemanticsNodes().isNotEmpty() }
         tab("search").assertIsSelected()
         tab("home").assertIsNotSelected()

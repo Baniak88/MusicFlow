@@ -31,4 +31,9 @@
         <item quantity="one">%d track</item>
         <item quantity="other">%d tracks</item>
     </plurals>
+    <string name="home_filter_all">All</string>
+    <string name="home_filter_songs">Songs</string>
+    <string name="home_filter_albums">Albums</string>
+    <string name="home_filter_artists">Artists</string>
+    <string name="home_more">More options</string>
 </resources>

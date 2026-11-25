@@ -77,9 +77,9 @@ val MfShapes = Shapes(
 )
 
 @Immutable
-data class MfExtras(val isDark: Boolean, val gradientTop: Color, val success: Color, val warning: Color)
+data class MfExtras(val isDark: Boolean, val gradientTop: Color, val success: Color, val warning: Color, val dock: Color)
 
-val LocalMfExtras = staticCompositionLocalOf { MfExtras(true, MfColors.AccentContainer, MfColors.Success, MfColors.Warning) }
+val LocalMfExtras = staticCompositionLocalOf { MfExtras(true, MfColors.BackgroundGlow, MfColors.Success, MfColors.Warning, MfColors.Dock) }
 
 @Composable
 fun MusicFlowTheme(
@@ -103,7 +103,13 @@ fun MusicFlowTheme(
         else -> mfLightScheme()
     }
     androidx.compose.runtime.CompositionLocalProvider(
-        LocalMfExtras provides MfExtras(dark, scheme.primaryContainer, MfColors.Success, MfColors.Warning),
+        LocalMfExtras provides MfExtras(
+            isDark = dark,
+            gradientTop = if (dark) (if (amoled) Color.Black else MfColors.BackgroundGlow) else scheme.primaryContainer,
+            success = MfColors.Success,
+            warning = MfColors.Warning,
+            dock = if (dark) (if (amoled) Color(0xFF0C0A0F) else MfColors.Dock) else scheme.surfaceContainerHigh,
+        ),
     ) {
         MaterialTheme(colorScheme = scheme, typography = MfTypography, shapes = MfShapes, content = content)
     }

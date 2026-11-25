@@ -51,6 +51,7 @@ fun LibrarySectionScreen(contentPadding: PaddingValues, vm: LibrarySectionViewMo
     val nav = LocalNavigator.current
     val menu = LocalTrackMenu.current
     val content by vm.content.collectAsStateWithLifecycle()
+    val title = sectionTitle(vm.section)
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.refresh() }
 
@@ -74,13 +75,13 @@ fun LibrarySectionScreen(contentPadding: PaddingValues, vm: LibrarySectionViewMo
                 else {
                     item {
                         androidx.compose.foundation.layout.Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                            androidx.compose.material3.Button(onClick = { vm.play(c.tracks, 0) }) { Text(stringResource(R.string.lib_play)) }
+                            androidx.compose.material3.Button(onClick = { vm.play(c.tracks, 0, source = title) }) { Text(stringResource(R.string.lib_play)) }
                             androidx.compose.foundation.layout.Spacer(Modifier.padding(4.dp))
-                            androidx.compose.material3.FilledTonalButton(onClick = { vm.play(c.tracks, 0, shuffle = true) }) { Text(stringResource(R.string.lib_shuffle)) }
+                            androidx.compose.material3.FilledTonalButton(onClick = { vm.play(c.tracks, 0, shuffle = true, source = title) }) { Text(stringResource(R.string.lib_shuffle)) }
                         }
                     }
                     itemsIndexed(c.tracks, key = { _, t -> t.id.value }) { i, t ->
-                        TrackRow(t, onClick = { vm.play(c.tracks, i) }, onMore = { menu.open(t) }, leadingIndex = if (vm.section == LibrarySection.MOST_PLAYED) i + 1 else null)
+                        TrackRow(t, onClick = { vm.play(c.tracks, i, source = title) }, onMore = { menu.open(t) }, leadingIndex = if (vm.section == LibrarySection.MOST_PLAYED) i + 1 else null)
                     }
                 }
             }

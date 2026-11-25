@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.musicflow.core.designsystem.component.Artwork
+import app.musicflow.core.designsystem.component.PillChip
 import app.musicflow.core.designsystem.component.MessageState
 import app.musicflow.core.designsystem.component.TrackRow
 import app.musicflow.core.designsystem.navigation.LibrarySection
@@ -104,9 +105,7 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(LibTab.entries) { t ->
-                    FilterChip(selected = tab == t, onClick = { tab = t }, label = {
-                        Text(stringResource(when (t) { LibTab.PLAYLISTS -> R.string.lib_playlists; LibTab.SONGS -> R.string.lib_songs; LibTab.ALBUMS -> R.string.lib_albums; LibTab.ARTISTS -> R.string.lib_artists }))
-                    })
+                    PillChip(stringResource(when (t) { LibTab.PLAYLISTS -> R.string.lib_playlists; LibTab.SONGS -> R.string.lib_songs; LibTab.ALBUMS -> R.string.lib_albums; LibTab.ARTISTS -> R.string.lib_artists }), tab == t, { tab = t })
                 }
             }
         }

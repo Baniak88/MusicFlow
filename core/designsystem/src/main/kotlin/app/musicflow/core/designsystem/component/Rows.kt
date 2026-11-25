@@ -17,7 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Icon
@@ -149,21 +150,24 @@ fun SectionHeader(
     subtitle: String? = null,
     onSeeAll: (() -> Unit)? = null,
 ) {
+    // Title with a chevron (tap the title to see all), as in the app's design language.
     Row(
-        modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 20.dp, bottom = 10.dp),
+        modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 22.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f, fill = false).let { if (onSeeAll != null) it.clickable(onClickLabel = stringResource(R.string.mf_see_all), onClick = onSeeAll) else it }) {
             subtitle?.let { Text(it.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        }
-        if (onSeeAll != null) {
-            TextButton(onClick = onSeeAll) {
-                Text(stringResource(R.string.mf_see_all))
-                Spacer(Modifier.width(4.dp))
-                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                if (onSeeAll != null) {
+                    Spacer(Modifier.width(6.dp))
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, stringResource(R.string.mf_see_all), Modifier.size(22.dp))
+                }
             }
         }
+        Spacer(Modifier.weight(1f))
     }
 }
 

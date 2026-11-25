@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="mf_background">#FF08090B</color>
-    <color name="mf_accent">#FF8B5CF6</color>
+    <color name="mf_background">#FF15101B</color>
+    <color name="mf_accent">#FFC45BF6</color>
     <color name="mf_accent2">#FF6366F1</color>
-    <color name="ic_launcher_background">#FF08090B</color>
+    <color name="ic_launcher_background">#FFA543EE</color>
 </resources>

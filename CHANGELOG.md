@@ -3,6 +3,24 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.5] - 2026-11-25
+
+### Fixed
+- **Crossfade gaps**: the outgoing track's tail is now pre-buffered by the fader ~6 s ahead and
+  the switch happens only once the fader is audibly playing; if it is not ready in time the
+  transition plays gaplessly instead of with a hole. Verified by simulations that check there is
+  sound at every 50 ms step.
+- **Sound quality**: defaults are now Best (Wi-Fi) / High (mobile) — Opus ≈160 kbps instead of
+  AAC 128 kbps on mobile; normalisation on Quiet/Normal only attenuates loud tracks (no limiter in
+  the signal path); boosting quiet tracks is limited to the *Loud* level.
+- Text colours on the new transparent, gradient-backed screens.
+
+### Changed
+- New look: plum gradient theme, pill chips, "Continue listening" rows with now-playing bars,
+  one bottom dock with mini player + navigation, redesigned player ("Playing on <device>",
+  share, thin progress, "Playing from <source>"), new app icon.
+- Real audio output detection (phone, wired, USB, Bluetooth device name, car head units).
+
 ## [1.0.0-beta.4] - 2026-11-25
 
 ### Added

@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -22,9 +24,7 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,30 +37,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.musicflow.core.designsystem.component.Artwork
-import app.musicflow.core.designsystem.theme.rememberArtworkColor
 import app.musicflow.playback.engine.Progress
 
-/** Persistent mini player shown above the bottom navigation. Swipe sideways to change track. */
+/**
+ * Mini player row for the bottom dock: artwork, title, artist, output device, play/pause, next
+ * and a thin progress line. Tap to open the player; swipe sideways to change track.
+ */
 @Composable
 fun MiniPlayer(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier = Modifier) {
     val state by vm.state.collectAsStateWithLifecycle()
     val track = state.current ?: return
     val progress by vm.progress.collectAsStateWithLifecycle(Progress(0, 0, null))
-    val useArt by vm.artworkColors.collectAsStateWithLifecycle()
-    val tint = rememberArtworkColor(track.artworkUrl, MaterialTheme.colorScheme.surfaceContainerHigh, enabled = useArt)
+    val output by vm.output.collectAsStateWithLifecycle()
     var drag by remember { mutableFloatStateOf(0f) }
 
-    Surface(
-        color = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surfaceContainerHigh, tint, 0.55f),
-        shape = MaterialTheme.shapes.medium,
-        modifier = modifier
+    Column(
+        modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onExpand)
             .testTag("mini_player")
             .pointerInput(Unit) {
@@ -68,40 +66,39 @@ fun MiniPlayer(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier = M
                     onDragEnd = { if (drag < -120) vm.next() else if (drag > 120) vm.previous(); drag = 0f },
                     onHorizontalDrag = { _, d -> drag += d },
                 )
-            },
+            }
+            .padding(start = 16.dp, end = 8.dp, top = 4.dp),
     ) {
-        Column {
-            Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Artwork(track.artworkUrl, Modifier.size(44.dp), shape = MaterialTheme.shapes.small)
-                Spacer(Modifier.width(12.dp))
-                AnimatedContent(track, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "mini", modifier = Modifier.weight(1f)) { t ->
-                    Column {
-                        Text(t.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis, color = androidx.compose.ui.graphics.Color.White)
-                        Text(t.artistLine, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.75f))
-                    }
-                }
-                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    if (state.isBuffering && state.playWhenReady) CircularProgressIndicator(Modifier.size(36.dp), strokeWidth = 2.dp, color = androidx.compose.ui.graphics.Color.White)
-                    IconButton(onClick = vm::togglePlay) {
-                        Icon(
-                            if (state.playWhenReady) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            stringResource(if (state.playWhenReady) R.string.player_pause else R.string.player_play),
-                            tint = androidx.compose.ui.graphics.Color.White,
-                        )
-                    }
-                }
-                IconButton(onClick = vm::next, enabled = state.hasNext) {
-                    Icon(Icons.Rounded.SkipNext, stringResource(R.string.player_next), tint = androidx.compose.ui.graphics.Color.White.copy(alpha = if (state.hasNext) 1f else 0.4f))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Artwork(track.artworkUrl, Modifier.size(46.dp), shape = RoundedCornerShape(10.dp))
+            Spacer(Modifier.width(12.dp))
+            AnimatedContent(track, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "mini", modifier = Modifier.weight(1f)) { t ->
+                Column {
+                    Text(t.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(t.artistLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            val duration = progress.durationMs ?: state.durationMs
-            LinearProgressIndicator(
-                progress = { if (duration != null && duration > 0) (progress.positionMs.toFloat() / duration).coerceIn(0f, 1f) else 0f },
-                modifier = Modifier.fillMaxWidth().height(2.dp).padding(horizontal = 12.dp),
-                color = androidx.compose.ui.graphics.Color.White,
-                trackColor = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.2f),
-                drawStopIndicator = {},
-            )
+            outputIcon(output.kind)?.let { icon ->
+                Icon(icon, outputLabel(output), Modifier.padding(horizontal = 6.dp).size(22.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                if (state.isBuffering && state.playWhenReady) CircularProgressIndicator(Modifier.size(34.dp), strokeWidth = 2.dp)
+                IconButton(onClick = vm::togglePlay) {
+                    Icon(
+                        if (state.playWhenReady) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        stringResource(if (state.playWhenReady) R.string.player_pause else R.string.player_play),
+                        Modifier.size(30.dp),
+                    )
+                }
+            }
+            IconButton(onClick = vm::next, enabled = state.hasNext) {
+                Icon(Icons.Rounded.SkipNext, stringResource(R.string.player_next), Modifier.size(26.dp))
+            }
+        }
+        val duration = progress.durationMs ?: state.durationMs
+        val fraction = if (duration != null && duration > 0) (progress.positionMs.toFloat() / duration).coerceIn(0f, 1f) else 0f
+        Box(Modifier.padding(top = 6.dp, end = 8.dp).fillMaxWidth().height(2.dp).clip(RoundedCornerShape(1.dp)).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))) {
+            Box(Modifier.fillMaxWidth(fraction).height(2.dp).background(MaterialTheme.colorScheme.primary))
         }
     }
 }

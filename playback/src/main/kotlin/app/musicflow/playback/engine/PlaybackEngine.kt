@@ -22,6 +22,8 @@ data class PlaybackState(
     val hasNext: Boolean = false,
     val hasPrevious: Boolean = false,
     val errorMessage: String? = null,
+    /** Where the queue came from ("Playing from …"), e.g. an album or playlist name. */
+    val queueTitle: String? = null,
 )
 
 data class Progress(val positionMs: Long, val bufferedMs: Long, val durationMs: Long?)
@@ -33,7 +35,7 @@ interface PlaybackEngine {
     /** Position updates (every ~250 ms while playing, on demand otherwise). */
     val progress: Flow<Progress>
 
-    fun play(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false)
+    fun play(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false, source: String? = null)
     fun playNext(track: Track)
     fun addToQueue(tracks: List<Track>)
     fun togglePlayPause()

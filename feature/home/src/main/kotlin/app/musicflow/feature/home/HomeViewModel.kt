@@ -93,6 +93,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun play(tracks: List<Track>, index: Int = 0) = playback.play(tracks, index)
+    fun play(tracks: List<Track>, index: Int = 0, source: String? = null) = playback.play(tracks, index, source = source)
     fun shuffle(tracks: List<Track>) = playback.play(tracks, 0, shuffle = true)
 }

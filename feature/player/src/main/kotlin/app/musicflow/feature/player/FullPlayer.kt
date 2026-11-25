@@ -26,6 +26,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.IosShare
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
@@ -98,8 +105,10 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
     val status by vm.engineStatus.collectAsStateWithLifecycle()
     val sleep by vm.sleep.collectAsStateWithLifecycle()
     val useArt by vm.artworkColors.collectAsStateWithLifecycle()
+    val output by vm.output.collectAsStateWithLifecycle()
     val nav = LocalNavigator.current
     val menu = LocalTrackMenu.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     var sheet by rememberSaveable { mutableStateOf(PlayerSheet.NONE) }
     var more by remember { mutableStateOf(false) }
     var dragY by remember { mutableFloatStateOf(0f) }
@@ -107,14 +116,15 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
 
     val track = state.current
     val base = MaterialTheme.colorScheme.background
-    val artColor = rememberArtworkColor(track?.artworkUrl, MaterialTheme.colorScheme.primaryContainer, enabled = useArt)
+    val artColor = rememberArtworkColor(track?.artworkUrl, app.musicflow.core.designsystem.theme.LocalMfExtras.current.gradientTop, enabled = useArt)
     val top by animateColorAsState(artColor, tween(600), label = "bg")
+    val muted = Color.White.copy(alpha = 0.65f)
 
     Box(
         Modifier
             .fillMaxSize()
             .offset { IntOffset(0, dragY.coerceAtLeast(0f).roundToInt()) }
-            .background(Brush.verticalGradient(listOf(top, androidx.compose.ui.graphics.lerp(top, base, 0.6f), base)))
+            .background(Brush.verticalGradient(0f to top, 0.55f to androidx.compose.ui.graphics.lerp(top, base, 0.75f), 1f to base))
             .testTag("full_player")
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
@@ -123,27 +133,22 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                 )
             },
     ) {
-        Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp)) {
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onCollapse) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.player_collapse), tint = Color.White) }
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.player_now_playing), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f))
-                    track?.album?.title?.let { album ->
-                        Text(album, style = MaterialTheme.typography.labelLarge, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.clickable(enabled = track.album?.id != null) { MediaId.parseOrNull(track.album?.id)?.let { onCollapse(); nav.openCollection(it) } })
-                    }
-                }
-                Box {
-                    IconButton(onClick = { more = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.player_more), tint = Color.White) }
-                    DropdownMenu(more, { more = false }) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.player_sleep_timer)) }, leadingIcon = { Icon(Icons.Rounded.Bedtime, null) }, onClick = { more = false; sheet = PlayerSheet.SLEEP })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.player_quality)) }, leadingIcon = { Icon(Icons.Rounded.HighQuality, null) }, onClick = { more = false; sheet = PlayerSheet.QUALITY })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.player_speed)) }, leadingIcon = { Icon(Icons.Rounded.Speed, null) }, onClick = { more = false; sheet = PlayerSheet.SPEED })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.player_equalizer)) }, leadingIcon = { Icon(Icons.Rounded.Equalizer, null) }, onClick = { more = false; onCollapse(); nav.openEqualizer() })
-                        track?.let { t -> DropdownMenuItem(text = { Text(stringResource(R.string.player_track_options)) }, leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) }, onClick = { more = false; menu.open(t) }) }
-                    }
-                }
+        Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 28.dp)) {
+            // Drag handle (tap also closes)
+            Box(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 14.dp).clickable(onClickLabel = stringResource(R.string.player_collapse), onClick = onCollapse), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(width = 40.dp, height = 4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.45f)))
             }
+            // "Playing on <device>" + lyrics
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(outputIconOrPhone(output.kind), null, Modifier.size(26.dp), tint = Color.White)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.player_playing_on), style = MaterialTheme.typography.labelSmall, color = muted)
+                    Text(outputLabel(output), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                IconButton(onClick = { sheet = PlayerSheet.LYRICS }) { Icon(Icons.Rounded.Mic, stringResource(R.string.player_lyrics), tint = Color.White) }
+            }
+            Spacer(Modifier.height(20.dp))
 
             // Artwork: swipe horizontally to change track.
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -152,7 +157,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                     Artwork(
                         t?.artworkUrl,
                         Modifier
-                            .widthIn(max = 420.dp)
+                            .widthIn(max = 440.dp)
                             .fillMaxWidth()
                             .aspectRatio(1f)
                             .offset { IntOffset(dragX.roundToInt() / 3, 0) }
@@ -162,19 +167,20 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                                     onHorizontalDrag = { _, d -> dragX += d },
                                 )
                             },
-                        shape = MaterialTheme.shapes.large,
+                        shape = RoundedCornerShape(22.dp),
                         contentDescription = t?.title,
                         iconSize = 96.dp,
                     )
                 }
             }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(26.dp))
 
+            // Title / artist + like + share
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(track?.title.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(track?.title.orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        track?.artistLine.orEmpty(), style = MaterialTheme.typography.titleMedium, color = Color.White.copy(alpha = 0.75f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        track?.artistLine.orEmpty(), style = MaterialTheme.typography.bodyLarge, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.clickable(enabled = track?.artists?.firstOrNull()?.id != null) {
                             MediaId.parseOrNull(track?.artists?.firstOrNull()?.id)?.let { onCollapse(); nav.openArtist(it) }
                         },
@@ -182,50 +188,67 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                 }
                 IconButton(onClick = { vm.toggleFavorite() }) {
                     Icon(if (fav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, stringResource(if (fav) R.string.player_unlike else R.string.player_like),
-                        tint = if (fav) MaterialTheme.colorScheme.primary else Color.White)
+                        Modifier.size(28.dp), tint = if (fav) MaterialTheme.colorScheme.primary else Color.White)
+                }
+                IconButton(onClick = { track?.let { shareTrack(context, it) } }) {
+                    Icon(Icons.Rounded.IosShare, stringResource(R.string.player_share), Modifier.size(26.dp), tint = Color.White)
                 }
             }
 
             ProgressSection(progress, state.durationMs, vm::seek)
             QualityLine(status, onClick = { sheet = PlayerSheet.QUALITY })
 
-            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Transport controls
+            Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = vm::toggleShuffle) {
-                    Icon(Icons.Rounded.Shuffle, stringResource(R.string.player_shuffle), tint = if (state.shuffle) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.8f))
+                    Icon(Icons.Rounded.Shuffle, stringResource(R.string.player_shuffle), tint = if (state.shuffle) MaterialTheme.colorScheme.primary else muted)
                 }
-                IconButton(onClick = vm::previous, modifier = Modifier.size(56.dp)) { Icon(Icons.Rounded.SkipPrevious, stringResource(R.string.player_previous), Modifier.size(36.dp), tint = Color.White) }
-                Box(contentAlignment = Alignment.Center) {
-                    FilledIconButton(
-                        onClick = vm::togglePlay, modifier = Modifier.size(76.dp).testTag("play_pause"), shape = CircleShape,
-                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White, contentColor = Color.Black),
-                    ) {
+                IconButton(onClick = vm::previous, modifier = Modifier.size(56.dp)) { Icon(Icons.Rounded.SkipPrevious, stringResource(R.string.player_previous), Modifier.size(40.dp), tint = Color.White) }
+                Box(Modifier.size(80.dp), contentAlignment = Alignment.Center) {
+                    IconButton(onClick = vm::togglePlay, modifier = Modifier.size(80.dp).testTag("play_pause")) {
                         Icon(if (state.playWhenReady) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            stringResource(if (state.playWhenReady) R.string.player_pause else R.string.player_play), Modifier.size(40.dp))
+                            stringResource(if (state.playWhenReady) R.string.player_pause else R.string.player_play), Modifier.size(64.dp), tint = Color.White)
                     }
-                    if (state.isBuffering && state.playWhenReady) CircularProgressIndicator(Modifier.size(82.dp), color = MaterialTheme.colorScheme.primary, strokeWidth = 3.dp)
+                    if (state.isBuffering && state.playWhenReady) CircularProgressIndicator(Modifier.size(78.dp), color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp)
                 }
                 IconButton(onClick = vm::next, enabled = state.hasNext, modifier = Modifier.size(56.dp)) {
-                    Icon(Icons.Rounded.SkipNext, stringResource(R.string.player_next), Modifier.size(36.dp), tint = Color.White.copy(alpha = if (state.hasNext) 1f else 0.4f))
+                    Icon(Icons.Rounded.SkipNext, stringResource(R.string.player_next), Modifier.size(40.dp), tint = Color.White.copy(alpha = if (state.hasNext) 1f else 0.4f))
                 }
                 IconButton(onClick = vm::cycleRepeat) {
                     Icon(
                         if (state.repeat == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
                         stringResource(when (state.repeat) { RepeatMode.OFF -> R.string.player_repeat_off; RepeatMode.ALL -> R.string.player_repeat_all; RepeatMode.ONE -> R.string.player_repeat_one }),
-                        tint = if (state.repeat != RepeatMode.OFF) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.8f),
+                        tint = if (state.repeat != RepeatMode.OFF) MaterialTheme.colorScheme.primary else muted,
                     )
                 }
             }
 
-            Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                IconButton(onClick = { sheet = PlayerSheet.LYRICS }) { Icon(Icons.Rounded.Lyrics, stringResource(R.string.player_lyrics), tint = Color.White) }
-                IconButton(onClick = { track?.let(menu::open) }) { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, stringResource(R.string.player_add_to_playlist), tint = Color.White) }
-                IconButton(onClick = { sheet = PlayerSheet.SLEEP }) {
-                    Icon(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), tint = if (sleep != SleepTimerState.Off) MaterialTheme.colorScheme.primary else Color.White)
-                }
-                IconButton(onClick = { sheet = PlayerSheet.QUEUE }) { Icon(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.player_queue), tint = Color.White) }
-            }
             status.lastError?.let { err ->
-                Text(stringResource(err.messageRes()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 8.dp).clickable { vm.dismissError() })
+                Text(stringResource(err.messageRes()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 4.dp).clickable { vm.dismissError() })
+            }
+
+            // "Playing from <source>" + queue + more
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 14.dp).clip(RoundedCornerShape(12.dp)).clickable { sheet = PlayerSheet.QUEUE }, verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.player_queue), Modifier.padding(8.dp).size(24.dp), tint = Color.White)
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.player_playing_from), style = MaterialTheme.typography.labelSmall, color = muted)
+                    Text(state.queueTitle ?: stringResource(R.string.player_queue_default), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                if (sleep != SleepTimerState.Off) Icon(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), Modifier.padding(end = 4.dp).size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                Box {
+                    IconButton(onClick = { more = true }) { Icon(Icons.Rounded.MoreHoriz, stringResource(R.string.player_more), tint = Color.White) }
+                    DropdownMenu(more, { more = false }) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.player_quality)) }, leadingIcon = { Icon(Icons.Rounded.HighQuality, null) }, onClick = { more = false; sheet = PlayerSheet.QUALITY })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.player_sleep_timer)) }, leadingIcon = { Icon(Icons.Rounded.Bedtime, null) }, onClick = { more = false; sheet = PlayerSheet.SLEEP })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.player_speed)) }, leadingIcon = { Icon(Icons.Rounded.Speed, null) }, onClick = { more = false; sheet = PlayerSheet.SPEED })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.player_equalizer)) }, leadingIcon = { Icon(Icons.Rounded.Equalizer, null) }, onClick = { more = false; onCollapse(); nav.openEqualizer() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.player_lyrics)) }, leadingIcon = { Icon(Icons.Rounded.Lyrics, null) }, onClick = { more = false; sheet = PlayerSheet.LYRICS })
+                        track?.let { t -> DropdownMenuItem(text = { Text(stringResource(R.string.player_track_options)) }, leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) }, onClick = { more = false; menu.open(t) }) }
+                        track?.album?.id?.let { MediaId.parseOrNull(it) }?.let { albumId ->
+                            DropdownMenuItem(text = { Text(track.album?.title.orEmpty()) }, leadingIcon = { Icon(Icons.Rounded.Album, null) }, onClick = { more = false; onCollapse(); nav.openCollection(albumId) })
+                        }
+                    }
+                }
             }
         }
     }
@@ -240,30 +263,47 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
     }
 }
 
+/** Shares a link to the track (YouTube Music for YouTube tracks, the URL for direct links). */
+private fun shareTrack(context: android.content.Context, t: app.musicflow.core.model.Track) {
+    val link = when (t.id.providerId) {
+        "yt" -> "https://music.youtube.com/watch?v=${t.id.key}"
+        "url" -> t.id.key
+        else -> null
+    }
+    val text = listOfNotNull("${t.artistLine} – ${t.title}".trim(' ', '–'), link).joinToString("\n")
+    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, text)
+    runCatching { context.startActivity(android.content.Intent.createChooser(intent, null).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun ProgressSection(progress: Progress, fallbackDuration: Long?, onSeek: (Long) -> Unit) {
     val duration = progress.durationMs ?: fallbackDuration ?: 0L
     var scrubbing by remember { mutableStateOf<Float?>(null) }
     val fraction = scrubbing ?: if (duration > 0) (progress.positionMs.toFloat() / duration).coerceIn(0f, 1f) else 0f
-    Column(Modifier.padding(top = 12.dp)) {
+    Column(Modifier.padding(top = 14.dp)) {
         Slider(
             value = fraction,
             onValueChange = { scrubbing = it },
             onValueChangeFinished = { scrubbing?.let { onSeek((it * duration).toLong()) }; scrubbing = null },
             enabled = duration > 0,
-            colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = Color.White, inactiveTrackColor = Color.White.copy(alpha = 0.25f)),
-            modifier = Modifier.testTag("seek_bar"),
+            thumb = { Box(Modifier.size(if (scrubbing != null) 14.dp else 10.dp).clip(CircleShape).background(Color.White)) },
+            track = { st ->
+                Box(Modifier.fillMaxWidth().height(3.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.25f))) {
+                    Box(Modifier.fillMaxWidth(st.value).height(3.dp).background(Color.White))
+                }
+            },
+            modifier = Modifier.height(24.dp).testTag("seek_bar"),
         )
         val shown = (fraction * duration).toLong()
         Row {
-            Text(Formatting.duration(shown), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.75f))
+            Text(Formatting.duration(shown), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f))
             Spacer(Modifier.weight(1f))
-            Text(if (duration > 0) "-" + Formatting.duration(duration - shown) else "--:--", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.75f))
+            Text(if (duration > 0) Formatting.duration(duration) else "--:--", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f))
         }
     }
 }
 
-/** Shows only what the source and decoder actually report — never an assumed quality. */
 @Composable
 private fun QualityLine(status: EngineStatus, onClick: () -> Unit) {
     val stream = status.stream

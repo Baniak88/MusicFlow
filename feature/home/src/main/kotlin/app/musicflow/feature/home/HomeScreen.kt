@@ -3,7 +3,6 @@ package app.musicflow.feature.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +29,11 @@ import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.MoreHoriz
+import app.musicflow.core.designsystem.component.PillChip
+import app.musicflow.core.designsystem.component.EqualizerBars
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -40,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,26 +84,42 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
     val network by vm.network.collectAsStateWithLifecycle()
     val nav = LocalNavigator.current
     val menu = LocalTrackMenu.current
+    val playing by vm.playback.state.collectAsStateWithLifecycle()
+    var filter by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(HomeFilter.ALL) }
+    val showSongs = filter == HomeFilter.ALL || filter == HomeFilter.SONGS
+    val showAlbums = filter == HomeFilter.ALL || filter == HomeFilter.ALBUMS
+    val showArtists = filter == HomeFilter.ALL || filter == HomeFilter.ARTISTS
+    val continueList = local.continueListening.ifEmpty { local.recentlyPlayed.take(9) }
+    val continueLabel = stringResource(R.string.home_continue_listening)
 
     PullToRefreshBox(isRefreshing = refreshing, onRefresh = vm::refresh, modifier = Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = contentPadding) {
-            item(key = "header") { Header(vm.greeting, onSearch = { nav.openSearch() }, onSettings = nav::openSettings) }
+            item(key = "header") { Header(vm.greeting, onSettings = nav::openSettings) }
+            item(key = "chips") {
+                LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(HomeFilter.entries) { f -> PillChip(stringResource(f.label), filter == f, { filter = f }) }
+                }
+            }
             if (!network.isConnected) item(key = "offline") { OfflineBanner() }
 
-            if (local.continueListening.isNotEmpty()) {
-                item(key = "continue_h") { SectionHeader(stringResource(R.string.home_continue_listening)) }
-                item(key = "continue") { TrackCardRow(local.continueListening) { i -> vm.play(local.continueListening, i) } }
+            if (showSongs && continueList.isNotEmpty()) {
+                item(key = "continue_h") { SectionHeader(continueLabel, onSeeAll = { nav.openLibrarySection(LibrarySection.RECENT) }) }
+                item(key = "continue") {
+                    TrackRowsPager(continueList, playing.current?.id, playing.isPlaying, onPlay = { i -> vm.play(continueList, i, continueLabel) }, onMore = menu::open)
+                }
             }
 
             when (val o = online) {
-                is OnlineState.Loaded -> {
+                is OnlineState.Loaded -> if (filter != HomeFilter.ALL) {
+                    filteredOnline(o.home, filter, vm, playing.current?.id, playing.isPlaying, menu::open)
+                } else {
                     val h = o.home
                     val empty = h.quickPicks.isEmpty() && h.mixes.isEmpty() && h.recommendedAlbums.isEmpty() && h.trending.isEmpty() &&
                         h.newReleases.isEmpty() && h.discover.isEmpty()
                     if (empty && h.failures.isNotEmpty()) {
                         // Every online section failed: say so instead of silently showing nothing.
                         item(key = "error") { ErrorState(errorMessage(h.failures.first()), onRetry = vm::refresh) }
-                    } else onlineSections(h, vm, menu::open)
+                    } else onlineSections(h, vm, playing.current?.id, playing.isPlaying, menu::open)
                 }
                 OnlineState.Loading -> item(key = "skeleton") {
                     Column { SectionHeader(stringResource(R.string.home_quick_picks)); SkeletonCardRow(); SectionHeader(stringResource(R.string.home_recommended_albums)); SkeletonCardRow() }
@@ -110,11 +131,11 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
                 }
             }
 
-            if (local.recentlyPlayed.isNotEmpty()) {
+            if (showSongs && local.recentlyPlayed.isNotEmpty()) {
                 item(key = "recent_h") { SectionHeader(stringResource(R.string.home_recently_played), onSeeAll = { nav.openLibrarySection(LibrarySection.RECENT) }) }
-                item(key = "recent") { TrackCardRow(local.recentlyPlayed) { i -> vm.play(local.recentlyPlayed, i) } }
+                item(key = "recent") { val label = stringResource(R.string.home_recently_played); TrackCardRow(local.recentlyPlayed) { i -> vm.play(local.recentlyPlayed, i, label) } }
             }
-            if (local.favoriteArtists.isNotEmpty()) {
+            if (showArtists && local.favoriteArtists.isNotEmpty()) {
                 item(key = "artists_h") { SectionHeader(stringResource(R.string.home_favorite_artists)) }
                 item(key = "artists") {
                     LazyRow(contentPadding = HorizontalListPadding, horizontalArrangement = HorizontalListSpacing) {
@@ -122,9 +143,9 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
                     }
                 }
             }
-            if (local.mostPlayed.isNotEmpty()) {
+            if (showSongs && local.mostPlayed.isNotEmpty()) {
                 item(key = "most_h") { SectionHeader(stringResource(R.string.home_on_repeat), onSeeAll = { nav.openLibrarySection(LibrarySection.MOST_PLAYED) }) }
-                item(key = "most") { TrackCardRow(local.mostPlayed) { i -> vm.play(local.mostPlayed, i) } }
+                item(key = "most") { val label = stringResource(R.string.home_on_repeat); TrackCardRow(local.mostPlayed) { i -> vm.play(local.mostPlayed, i, label) } }
             }
             val isColdStart = local.recentlyPlayed.isEmpty() && local.favoritesCount == 0
             if (isColdStart) item(key = "welcome") { Welcome(onSearch = { nav.openSearch() }) }
@@ -133,17 +154,43 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.onlineSections(h: app.musicflow.data.repositories.OnlineHome, vm: HomeViewModel, onMore: (Track) -> Unit) {
-    if (h.quickPicks.isNotEmpty()) {
-        item(key = "qp_h") { SectionHeader(stringResource(R.string.home_quick_picks), subtitle = stringResource(R.string.home_for_you)) }
-        item(key = "qp") { QuickPicks(h.quickPicks, onPlay = { i -> vm.play(h.quickPicks, i) }, onMore = onMore) }
-    }
+/** Sections shown when a filter chip other than "All" is selected. */
+private fun androidx.compose.foundation.lazy.LazyListScope.filteredOnline(
+    h: app.musicflow.data.repositories.OnlineHome, filter: HomeFilter, vm: HomeViewModel,
+    currentId: app.musicflow.core.model.MediaId?, isPlaying: Boolean, onMore: (Track) -> Unit,
+) = onlineSections(
+    h.copy(
+        quickPicks = if (filter == HomeFilter.SONGS) h.quickPicks else emptyList(),
+        mixes = if (filter == HomeFilter.ALBUMS) h.mixes else emptyList(),
+        recommendedAlbums = if (filter == HomeFilter.ALBUMS) h.recommendedAlbums else emptyList(),
+        trending = if (filter == HomeFilter.SONGS) h.trending else emptyList(),
+        newReleases = if (filter == HomeFilter.ALBUMS) h.newReleases else emptyList(),
+        discover = if (filter == HomeFilter.SONGS) h.discover else emptyList(),
+        suggestedArtists = if (filter == HomeFilter.ARTISTS) h.suggestedArtists else emptyList(),
+    ),
+    vm, currentId, isPlaying, onMore,
+)
+
+private fun androidx.compose.foundation.lazy.LazyListScope.onlineSections(
+    h: app.musicflow.data.repositories.OnlineHome, vm: HomeViewModel,
+    currentId: app.musicflow.core.model.MediaId?, isPlaying: Boolean, onMore: (Track) -> Unit,
+) {
     if (h.mixes.isNotEmpty()) {
-        item(key = "mix_h") { SectionHeader(stringResource(R.string.home_your_mixes)) }
+        item(key = "mix_h") { SectionHeader(stringResource(R.string.home_for_you)) }
         item(key = "mix") {
             LazyRow(contentPadding = HorizontalListPadding, horizontalArrangement = HorizontalListSpacing) {
-                items(h.mixes, key = { "mix" + it.title }) { m -> MixCard(m) { vm.play(m.tracks) } }
+                items(h.mixes, key = { "mix" + it.title }) { m ->
+                    val label = stringResource(R.string.home_mix_title, m.title)
+                    MixCard(m) { vm.play(m.tracks, 0, label) }
+                }
             }
+        }
+    }
+    if (h.quickPicks.isNotEmpty()) {
+        item(key = "qp_h") { SectionHeader(stringResource(R.string.home_quick_picks)) }
+        item(key = "qp") {
+            val label = stringResource(R.string.home_quick_picks)
+            TrackRowsPager(h.quickPicks, currentId, isPlaying, onPlay = { i -> vm.play(h.quickPicks, i, label) }, onMore = onMore)
         }
     }
     if (h.recommendedAlbums.isNotEmpty()) {
@@ -158,7 +205,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.onlineSections(h: app
     if (h.trending.isNotEmpty()) {
         item(key = "tr_h") { SectionHeader(stringResource(R.string.home_trending)) }
         itemsIndexed(h.trending.take(10), key = { _, t -> "tr" + t.id.value }) { i, t ->
-            TrackRow(t, onClick = { vm.play(h.trending, i) }, leadingIndex = i + 1, onMore = { onMore(t) })
+            val label = stringResource(R.string.home_trending)
+            TrackRow(t, onClick = { vm.play(h.trending, i, label) }, leadingIndex = i + 1, isPlaying = t.id == currentId, onMore = { onMore(t) })
         }
     }
     if (h.newReleases.isNotEmpty()) {
@@ -172,7 +220,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.onlineSections(h: app
     }
     if (h.discover.isNotEmpty()) {
         item(key = "disc_h") { SectionHeader(stringResource(R.string.home_discover), subtitle = stringResource(R.string.home_discover_sub)) }
-        item(key = "disc") { TrackCardRow(h.discover) { i -> vm.play(h.discover, i) } }
+        item(key = "disc") { val label = stringResource(R.string.home_discover); TrackCardRow(h.discover) { i -> vm.play(h.discover, i, label) } }
     }
     if (h.suggestedArtists.isNotEmpty()) {
         item(key = "sa_h") { SectionHeader(stringResource(R.string.home_artists_you_may_like)) }
@@ -186,7 +234,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.onlineSections(h: app
 }
 
 @Composable
-private fun Header(greeting: Greeting, onSearch: () -> Unit, onSettings: () -> Unit) {
+private fun Header(greeting: Greeting, onSettings: () -> Unit) {
     val text = stringResource(
         when (greeting) {
             Greeting.MORNING -> R.string.home_good_morning
@@ -195,19 +243,17 @@ private fun Header(greeting: Greeting, onSearch: () -> Unit, onSettings: () -> U
             Greeting.NIGHT -> R.string.home_good_night
         },
     )
-    Box(
-        Modifier.fillMaxWidth().background(
-            Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialTheme.colorScheme.background)),
-        ),
+    Row(
+        Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 16.dp, top = 22.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 8.dp, top = 20.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-            IconButton(onClick = onSearch) { Icon(Icons.Rounded.Search, stringResource(R.string.home_search)) }
-            IconButton(onClick = onSettings) { Icon(Icons.Rounded.Settings, stringResource(R.string.home_settings)) }
-        }
+        Text(text, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Box(
+            Modifier.size(44.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .clickable(onClickLabel = stringResource(R.string.home_settings), onClick = onSettings),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Rounded.Person, stringResource(R.string.home_settings), tint = MaterialTheme.colorScheme.onSurface) }
     }
 }
 
@@ -228,6 +274,7 @@ private fun OfflineBanner() {
 
 @Composable
 private fun TrackCardRow(tracks: List<Track>, onPlay: (Int) -> Unit) {
+    // Made-for-you style cards
     LazyRow(contentPadding = HorizontalListPadding, horizontalArrangement = HorizontalListSpacing) {
         itemsIndexed(tracks, key = { _, t -> t.id.value }) { i, t ->
             MediaCard(t.title, t.artistLine, t.artworkUrl, onClick = { onPlay(i) })
@@ -235,16 +282,34 @@ private fun TrackCardRow(tracks: List<Track>, onPlay: (Int) -> Unit) {
     }
 }
 
-/** Pages of four compact rows, like a quick-pick shelf. */
+enum class HomeFilter(val label: Int) { ALL(R.string.home_filter_all), SONGS(R.string.home_filter_songs), ALBUMS(R.string.home_filter_albums), ARTISTS(R.string.home_filter_artists) }
+
+/** Pages of three rows (artwork, title, artist, now-playing bars or ⋯), swiped horizontally. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun QuickPicks(tracks: List<Track>, onPlay: (Int) -> Unit, onMore: (Track) -> Unit) {
-    val pages = tracks.chunked(4)
+private fun TrackRowsPager(tracks: List<Track>, currentId: app.musicflow.core.model.MediaId?, isPlaying: Boolean, onPlay: (Int) -> Unit, onMore: (Track) -> Unit) {
+    val pages = tracks.chunked(3)
     val pager = rememberPagerState { pages.size }
-    HorizontalPager(pager, pageSize = PageSize.Fixed(320.dp), contentPadding = PaddingValues(start = 0.dp, end = 32.dp)) { p ->
+    HorizontalPager(pager, pageSize = PageSize.Fixed(330.dp), contentPadding = PaddingValues(end = 40.dp)) { p ->
         Column {
             pages[p].forEachIndexed { j, t ->
-                TrackRow(t, onClick = { onPlay(p * 4 + j) }, onMore = { onMore(t) })
+                Row(
+                    Modifier.fillMaxWidth().clickable { onPlay(p * 3 + j) }.padding(horizontal = 16.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Artwork(t.artworkUrl, Modifier.size(72.dp), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(t.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            color = if (t.id == currentId) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                        Text(t.artistLine, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    if (t.id == currentId) {
+                        EqualizerBars(isPlaying, Modifier.padding(horizontal = 10.dp))
+                    } else {
+                        IconButton(onClick = { onMore(t) }) { Icon(Icons.Rounded.MoreHoriz, stringResource(R.string.home_more), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    }
+                }
             }
         }
     }

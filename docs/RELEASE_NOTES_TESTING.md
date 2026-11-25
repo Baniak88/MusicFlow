@@ -1,18 +1,19 @@
 ## MusicFlow — wersja testowa / test build
 
-**Nowości w tej wersji (beta.4):**
-- **Normalizacja głośności** jak w Spotify (Ustawienia → Odtwarzanie → Normalizacja głośności;
-  domyślnie *Normalnie*). Każdy utwór gra z tą samą głośnością, na podstawie głośności zmierzonej
-  przez YouTube albo tagów ReplayGain w plikach lokalnych. Zastosowaną wartość widać w odtwarzaczu
-  (stuknij linię z formatem).
-- **Nawigacja:** podwójne stuknięcie nie otwiera już ekranu dwa razy, podwójne „wstecz” nie cofa
-  o dwa ekrany, przejścia są szybkie (wcześniej 0,7 s przenikania), stuknięcie polubionego
-  utworu w Bibliotece go odtwarza, a w Szukaj nie wyskakuje sama klawiatura.
-- Strony wykonawców pokazują albumy i single.
-- **Mniejszy plik (ok. 9,5 MB zamiast 84 MB)** i stały klucz podpisu: od tej wersji kolejne bety
-  instalują się na poprzednią bez odinstalowywania (biblioteka zostaje).
-- Uwaga: beta.4 to nowa aplikacja „MusicFlow” (`app.musicflow.beta`); poprzednie bety
-  (`app.musicflow.debug`) możesz odinstalować.
+**Nowości w tej wersji (beta.5):**
+- **Przenikanie bez ubytków dźwięku:** końcówka utworu jest buforowana kilka sekund wcześniej,
+  a przełączenie następuje dopiero, gdy faktycznie gra. Gdyby nie zdążyła się załadować,
+  przejście odbywa się bez przenikania, ale też bez dziury.
+- **Lepsza jakość dźwięku:** domyślnie najlepsza jakość (Opus ok. 160 kb/s także na danych
+  komórkowych zamiast AAC 128 kb/s). Normalizacja w trybach Cicho/Normalnie tylko ścisza zbyt
+  głośne utwory, bez limitera w torze dźwięku. Podbijanie cichych utworów tylko w trybie Głośno.
+  Uwaga: jeśli wcześniej zmieniałeś jakość w Ustawieniach, ustaw „Najlepsza dostępna”.
+- **Nowy wygląd i ikona:** fioletowy motyw, „Kontynuuj słuchanie” z animacją odtwarzanego
+  utworu, mini odtwarzacz połączony z nawigacją, nowy odtwarzacz („Odtwarzanie na: <urządzenie>”,
+  udostępnianie, „Odtwarzanie z: <źródło>”), nowa ikona aplikacji.
+
+**Wcześniej (beta.4):** normalizacja głośności, poprawki nawigacji, albumy na stronach
+wykonawców, mały plik (~9,5 MB), stały klucz podpisu (aktualizacja bez odinstalowywania).
 
 **EN:** Test build (pre-release). Download the `MusicFlow-*.apk` below and install it on
 Android 9+. See the tester guide (docs/TESTY.md, Polish) and TESTING.md for the full test plan.

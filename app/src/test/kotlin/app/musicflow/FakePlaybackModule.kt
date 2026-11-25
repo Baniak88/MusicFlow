@@ -28,7 +28,7 @@ class FakePlaybackEngine : PlaybackEngine {
             isPlaying = playing, playWhenReady = playing, hasNext = index < queue.lastIndex, hasPrevious = index > 0, durationMs = queue.getOrNull(index)?.durationMs)
     }
     private val q get() = _state.value.queue.map { it.track }
-    override fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean) = set(tracks, startIndex)
+    override fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean, source: String?) { set(tracks, startIndex); _state.update { it.copy(queueTitle = source) } }
     override fun playNext(track: Track) = set(q.toMutableList().apply { add((_state.value.currentIndex + 1).coerceAtMost(size), track) }, _state.value.currentIndex.coerceAtLeast(0))
     override fun addToQueue(tracks: List<Track>) = set(q + tracks, _state.value.currentIndex.coerceAtLeast(0))
     override fun togglePlayPause() = _state.update { it.copy(isPlaying = !it.isPlaying, playWhenReady = !it.playWhenReady) }

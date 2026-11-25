@@ -122,6 +122,7 @@ class MediaControllerEngine @Inject constructor(
             hasNext = p.hasNextMediaItem(),
             hasPrevious = p.hasPreviousMediaItem() || p.currentPosition > 3_000,
             errorMessage = p.playerError?.message,
+            queueTitle = p.playlistMetadata.title?.toString(),
         )
     }
 
@@ -135,10 +136,11 @@ class MediaControllerEngine @Inject constructor(
 
     private fun items(tracks: List<Track>): List<MediaItem> = tracks.map(MediaItems::toMediaItem)
 
-    override fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean) {
+    override fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean, source: String?) {
         if (tracks.isEmpty()) return
         scope.launch { runCatching { library.rememberAll(tracks) } } // DB work off the main thread
         withController { c ->
+            c.playlistMetadata = androidx.media3.common.MediaMetadata.Builder().setTitle(source).build()
             c.shuffleModeEnabled = shuffle
             val start = if (shuffle && startIndex == 0) tracks.indices.random() else startIndex.coerceIn(0, tracks.lastIndex)
             c.setMediaItems(items(tracks), start, 0)

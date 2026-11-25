@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.musicflow.core.designsystem.component.ErrorState
+import app.musicflow.core.designsystem.component.PillChip
 import app.musicflow.core.designsystem.component.HorizontalListPadding
 import app.musicflow.core.designsystem.component.HorizontalListSpacing
 import app.musicflow.core.designsystem.component.MessageState
@@ -116,9 +117,9 @@ fun ExploreScreen(contentPadding: PaddingValues, vm: ExploreViewModel = hiltView
                 Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.headlineMedium)
                 Spacer(Modifier.height(12.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item { FilterChip(selected = group == null, onClick = { vm.group.value = null }, label = { Text(stringResource(R.string.group_all)) }) }
+                    item { PillChip(stringResource(R.string.group_all), group == null, { vm.group.value = null }) }
                     items(CategoryGroup.entries) { g ->
-                        FilterChip(selected = group == g, onClick = { vm.group.value = g }, label = { Text(groupLabel(g)) })
+                        PillChip(groupLabel(g), group == g, { vm.group.value = g })
                     }
                 }
             }
@@ -151,6 +152,7 @@ fun CategoryScreen(contentPadding: PaddingValues, vm: CategoryViewModel = hiltVi
     val nav = LocalNavigator.current
     val menu = LocalTrackMenu.current
     val color = Color(vm.category.color)
+    val label = categoryLabel(vm.category)
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp)) {
         item {
             Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(color.copy(alpha = 0.8f), MaterialTheme.colorScheme.background)))) {
@@ -178,15 +180,15 @@ fun CategoryScreen(contentPadding: PaddingValues, vm: CategoryViewModel = hiltVi
                     item { SectionHeader(stringResource(R.string.explore_songs)) }
                     item {
                         Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Button(onClick = { vm.play(tracks, 0) }) { Icon(Icons.Rounded.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.explore_play)) }
-                            FilledTonalButton(onClick = { vm.shuffle(tracks) }) { Icon(Icons.Rounded.Shuffle, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.explore_shuffle)) }
+                            Button(onClick = { vm.play(tracks, 0, label) }) { Icon(Icons.Rounded.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.explore_play)) }
+                            FilledTonalButton(onClick = { vm.shuffle(tracks, label) }) { Icon(Icons.Rounded.Shuffle, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.explore_shuffle)) }
                             if (vm.canSortByDate(s.content.tracks)) {
-                                FilterChip(selected = newest, onClick = { vm.newestFirst.value = !newest }, label = { Text(stringResource(R.string.explore_newest)) })
+                                PillChip(stringResource(R.string.explore_newest), newest, { vm.newestFirst.value = !newest })
                             }
                         }
                     }
                     itemsIndexed(tracks, key = { _, t -> t.id.value }) { i, t ->
-                        TrackRow(t, onClick = { vm.play(tracks, i) }, onMore = { menu.open(t) })
+                        TrackRow(t, onClick = { vm.play(tracks, i, label) }, onMore = { menu.open(t) })
                     }
                 }
             }

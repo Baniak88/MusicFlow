@@ -61,7 +61,7 @@ private class NoopEngine : PlaybackEngine {
     val played = mutableListOf<Pair<List<Track>, Int>>()
     override val state = MutableStateFlow(PlaybackState())
     override val progress = emptyFlow<Progress>()
-    override fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean) { played += tracks to startIndex }
+    override fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean, source: String?) { played += tracks to startIndex }
     override fun playNext(track: Track) {}; override fun addToQueue(tracks: List<Track>) {}; override fun togglePlayPause() {}
     override fun pause() {}; override fun next() {}; override fun previous() {}; override fun seekTo(positionMs: Long) {}
     override fun skipToQueueItem(index: Int) {}; override fun removeFromQueue(index: Int) {}; override fun moveQueueItem(from: Int, to: Int) {}

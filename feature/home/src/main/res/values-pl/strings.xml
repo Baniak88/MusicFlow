@@ -33,4 +33,9 @@
         <item quantity="many">%d utworów</item>
         <item quantity="other">%d utworu</item>
     </plurals>
+    <string name="home_filter_all">Wszystko</string>
+    <string name="home_filter_songs">Utwory</string>
+    <string name="home_filter_albums">Albumy</string>
+    <string name="home_filter_artists">Wykonawcy</string>
+    <string name="home_more">Więcej opcji</string>
 </resources>

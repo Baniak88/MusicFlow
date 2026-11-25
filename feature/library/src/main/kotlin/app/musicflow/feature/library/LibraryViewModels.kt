@@ -82,10 +82,11 @@ class LibraryViewModel @Inject constructor(
     /** Plays liked songs starting with [track] (tapping a song plays it, it doesn't navigate). */
     fun playFavoritesFrom(track: Track) {
         val list = favorites.value
-        playback.play(list, list.indexOfFirst { it.id == track.id }.coerceAtLeast(0))
+        playback.play(list, list.indexOfFirst { it.id == track.id }.coerceAtLeast(0), source = likedSongsLabel)
     }
 
-    fun playFavorites(shuffle: Boolean) = favorites.value.takeIf { it.isNotEmpty() }?.let { playback.play(it, 0, shuffle) }
+    fun playFavorites(shuffle: Boolean) = favorites.value.takeIf { it.isNotEmpty() }?.let { playback.play(it, 0, shuffle, likedSongsLabel) }
+    private val likedSongsLabel get() = context.getString(R.string.lib_favorites)
 
     private fun launchBusy(block: suspend () -> Unit) = viewModelScope.launch {
         busy.value = true
@@ -126,7 +127,7 @@ class UserPlaylistViewModel @Inject constructor(
     fun remove(entry: PlaylistEntry) = viewModelScope.launch { repo.remove(id, entry.entryId) }
     fun rename(name: String) = viewModelScope.launch { repo.rename(id, name) }
     fun delete() = viewModelScope.launch { repo.delete(id) }
-    fun play(index: Int = 0, shuffle: Boolean = false) = playback.play(entries.value.map { it.track }, index, shuffle)
+    fun play(index: Int = 0, shuffle: Boolean = false) = playback.play(entries.value.map { it.track }, index, shuffle, playlist.value?.name)
 
     fun export(uri: Uri) = viewModelScope.launch {
         runCatching {
@@ -168,7 +169,7 @@ class LibrarySectionViewModel @Inject constructor(
 
     fun refresh() { reload.value++ }
     fun clearHistory() = viewModelScope.launch { library.clearHistory() }
-    fun play(tracks: List<Track>, index: Int, shuffle: Boolean = false) = playback.play(tracks, index, shuffle)
+    fun play(tracks: List<Track>, index: Int, shuffle: Boolean = false, source: String? = null) = playback.play(tracks, index, shuffle, source)
 }
 
 sealed interface LoadState<out T> {
@@ -229,7 +230,7 @@ class CollectionViewModel @Inject constructor(
 
     fun play(index: Int = 0, shuffle: Boolean = false) {
         val page = (_state.value as? LoadState.Loaded)?.value ?: return
-        playback.play(page.tracks, index, shuffle)
+        playback.play(page.tracks, index, shuffle, page.title)
     }
 }
 
@@ -257,13 +258,14 @@ class ArtistViewModel @Inject constructor(
         library.setArtistFavorite(a, !isFavorite.value)
     }
 
-    fun play(tracks: List<Track>, index: Int, shuffle: Boolean = false) = playback.play(tracks, index, shuffle)
+    fun play(tracks: List<Track>, index: Int, shuffle: Boolean = false) =
+        playback.play(tracks, index, shuffle, (_state.value as? LoadState.Loaded)?.value?.artist?.name)
 
     /** Artist radio: the artist's top track followed by related tracks. */
     fun radio() = viewModelScope.launch {
         val top = (_state.value as? LoadState.Loaded)?.value?.topTracks?.firstOrNull() ?: return@launch
         val related = runCatching { catalog.related(top.id, 30) }.getOrDefault(emptyList())
-        playback.play(listOf(top) + related, 0)
+        playback.play(listOf(top) + related, 0, source = (_state.value as? LoadState.Loaded)?.value?.artist?.name)
     }
 }
 
