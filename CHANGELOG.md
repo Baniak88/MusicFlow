@@ -3,6 +3,16 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.10] - 2026-11-25
+
+### Fixed
+- **SoundCloud search failing with "unexpected error"**: when SoundCloud found nothing in one
+  category, NewPipe's *NothingFoundException* surfaced as an error and, for the tracks category,
+  failed the whole *All* search. No results are now an empty list (also for YouTube), and *All*
+  shows whatever categories succeeded.
+- Unexpected errors now show their technical reason under the message, so a screenshot is
+  enough to diagnose them.
+
 ## [1.0.0-beta.9] - 2026-11-25
 
 ### Added

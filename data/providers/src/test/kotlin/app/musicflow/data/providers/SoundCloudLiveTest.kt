@@ -69,7 +69,9 @@ class SoundCloudLiveTest {
             }
             println("$filter: " + (r.getOrNull()?.items?.take(5)?.map { it.title } ?: "FAILED"))
         }
-        assertThat(runCatching { pl.search("Dynamic Waves move on baby", SearchFilter.ALL) }.isSuccess).isTrue()
+        for (filter in SearchFilter.entries) assertThat(runCatching { pl.search("Dynamic Waves move on baby", filter) }.isSuccess).isTrue()
+        // A query without any match is an empty result, not an error.
+        assertThat(pl.search("qxzvbnmlkjhgfdsa poiuytrewq zzqqxx", SearchFilter.ARTISTS).items).isEmpty()
     }
 
     @Test fun metadataPlaylistsArtistsAndRelated() = runBlocking {

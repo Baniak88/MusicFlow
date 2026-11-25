@@ -27,4 +27,8 @@ fun ProviderError.messageRes(): Int = when (this) {
 
 @Composable
 fun errorMessage(t: Throwable): String =
-    if (t is ProviderError) stringResource(t.messageRes()) else stringResource(R.string.mf_error_unknown)
+    when {
+        t is ProviderError && t !is ProviderError.Unknown -> stringResource(t.messageRes())
+        // Unexpected: add the technical reason, so a screenshot is enough to diagnose it.
+        else -> stringResource(R.string.mf_error_unknown) + (t.message?.takeIf { it.isNotBlank() }?.let { "\n($it)" } ?: "")
+    }

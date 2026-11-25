@@ -123,7 +123,13 @@ class YouTubeMusicProvider(
     /** Page tokens remember which NewPipe content filter produced them. */
     private val tokenFilters: MutableMap<String, String> = Collections.synchronizedMap(HashMap())
 
-    private fun searchWith(query: String, npFilter: String, filter: SearchFilter, token: String?): SearchPage {
+    private fun searchWith(query: String, npFilter: String, filter: SearchFilter, token: String?): SearchPage = try {
+        searchOrThrow(query, npFilter, filter, token)
+    } catch (e: org.schabi.newpipe.extractor.search.SearchExtractor.NothingFoundException) {
+        SearchPage(query, filter, emptyList(), null) // no results is not an error
+    }
+
+    private fun searchOrThrow(query: String, npFilter: String, filter: SearchFilter, token: String?): SearchPage {
         val s = service()
         val handler = s.searchQHFactory.fromQuery(query, listOf(npFilter), "")
         return if (token == null) {

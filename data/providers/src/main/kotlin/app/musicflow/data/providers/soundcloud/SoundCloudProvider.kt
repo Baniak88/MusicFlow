@@ -39,6 +39,7 @@ import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
 import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
+import org.schabi.newpipe.extractor.search.SearchExtractor
 import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.services.soundcloud.linkHandler.SoundcloudSearchQueryHandlerFactory
 import org.schabi.newpipe.extractor.stream.AudioStream
@@ -118,7 +119,13 @@ class SoundCloudProvider(
         else SoundCloudMapper.summary(item)
     }
 
-    private fun searchWith(query: String, filter: SearchFilter, token: String?): SearchPage {
+    private fun searchWith(query: String, filter: SearchFilter, token: String?): SearchPage = try {
+        searchOrThrow(query, filter, token)
+    } catch (e: SearchExtractor.NothingFoundException) {
+        SearchPage(query, filter, emptyList(), null) // no results is not an error
+    }
+
+    private fun searchOrThrow(query: String, filter: SearchFilter, token: String?): SearchPage {
         val s = service()
         val np = token?.let { tokenFilters[it] } ?: npFilter(filter)
         val handler = s.searchQHFactory.fromQuery(query, listOf(np), "")
@@ -136,16 +143,21 @@ class SoundCloudProvider(
         linkResult(query.trim(), filter)?.let { return it }
         if (filter != SearchFilter.ALL) return io("search") { searchWith(query, filter, pageToken) }
         return coroutineScope {
-            val tracks = async { io("search.tracks") { searchWith(query, SearchFilter.SONGS, null) } }
+            val tracks = async { runCatching { io("search.tracks") { searchWith(query, SearchFilter.SONGS, null) } } }
             val users = async { runCatching { io("search.users") { searchWith(query, SearchFilter.ARTISTS, null) } }.getOrNull() }
             val sets = async { runCatching { io("search.sets") { searchWith(query, SearchFilter.PLAYLISTS, null) } }.getOrNull() }
-            val trackPage = tracks.await()
+            val trackResult = tracks.await()
+            val userPage = users.await()
+            val setPage = sets.await()
+            // Only fail when every category failed; otherwise show what was found.
+            if (trackResult.isFailure && userPage == null && setPage == null) throw trackResult.exceptionOrNull()!!
+            val trackPage = trackResult.getOrNull()
             val items = buildList {
-                users.await()?.items?.take(2)?.let(::addAll)
-                addAll(trackPage.items.take(16))
-                sets.await()?.items?.take(6)?.let(::addAll)
+                userPage?.items?.take(2)?.let(::addAll)
+                trackPage?.items?.take(16)?.let(::addAll)
+                setPage?.items?.take(6)?.let(::addAll)
             }
-            SearchPage(query, SearchFilter.ALL, items, nextPageToken = null, correctedQuery = trackPage.correctedQuery)
+            SearchPage(query, SearchFilter.ALL, items, nextPageToken = null, correctedQuery = trackPage?.correctedQuery)
         }
     }
 

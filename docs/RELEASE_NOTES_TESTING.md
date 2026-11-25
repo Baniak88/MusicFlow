@@ -1,5 +1,10 @@
 ## MusicFlow — wersja testowa / test build
 
+**Poprawki w beta.10:**
+- SoundCloud: wyszukiwanie nie kończy się już błędem „Wystąpił nieoczekiwany błąd”, gdy w którejś
+  kategorii nic nie znaleziono — pokazuje to, co znalazło. Jeśli pojawi się jakiś nieoczekiwany
+  błąd, pod komunikatem widać teraz jego techniczną przyczynę (przydatne przy zgłoszeniach).
+
 **Nowości w beta.9:**
 - **SoundCloud:** w wynikach wyszukiwania wybierz źródło „SoundCloud” (obok „YouTube Music”).
   Działają utwory, wykonawcy, playlisty/albumy, podobne utwory i wklejone linki soundcloud.com.
