@@ -192,12 +192,17 @@ class RepositoryTest {
         settings.setQualityWifi(AudioQuality.BEST)
         settings.setCacheSizeMb(10_000)
         settings.setLanguage("pl")
+        assertThat(settings.current().crossfadeSeconds).isEqualTo(0) // off by default (gapless)
+        settings.setCrossfadeSeconds(30)
+        assertThat(settings.current().crossfadeSeconds).isEqualTo(12)
+        settings.setCrossfadeSeconds(6)
         val s = settings.current()
         assertThat(s.themeMode).isEqualTo(ThemeMode.LIGHT)
         assertThat(s.amoledBlack).isTrue()
         assertThat(s.qualityWifi).isEqualTo(AudioQuality.BEST)
         assertThat(s.cacheSizeMb).isEqualTo(4096)
         assertThat(s.languageTag).isEqualTo("pl")
+        assertThat(s.crossfadeSeconds).isEqualTo(6)
     }
 
     @Test fun recordPlayClassifiesSkipsAndCompletionsAndRespectsHistorySetting() = runTest {

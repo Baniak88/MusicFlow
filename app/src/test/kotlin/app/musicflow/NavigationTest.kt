@@ -75,6 +75,7 @@ class PlayerNavigationTest {
     @get:Rule(order = 0) val hilt = HiltAndroidRule(this)
     @get:Rule(order = 1) val compose = createAndroidComposeRule<MainActivity>()
     @javax.inject.Inject lateinit var engine: app.musicflow.playback.engine.PlaybackEngine
+    @javax.inject.Inject lateinit var settings: app.musicflow.data.repositories.SettingsRepository
 
     @Before fun inject() = hilt.inject()
 
@@ -90,6 +91,16 @@ class PlayerNavigationTest {
         compose.onAllNodes(androidx.compose.ui.test.hasContentDescription("Next track"))[1].performClick()
         compose.waitUntil(5_000) { engine.state.value.current?.title == "Song 2" }
         compose.onNodeWithTag("full_player").assertExists()
+
+        // Quality picker in the player writes the setting for the current network type.
+        compose.onNodeWithTag("quality_line").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Data saver").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Data saver").performClick()
+        repeat(5) { compose.waitForIdle(); Thread.sleep(200) }
+        val q = kotlinx.coroutines.runBlocking { settings.current() }
+        org.junit.Assert.assertTrue(
+            q.qualityWifi == app.musicflow.core.model.AudioQuality.DATA_SAVER || q.qualityMobile == app.musicflow.core.model.AudioQuality.DATA_SAVER,
+        )
         compose.activity.onBackPressedDispatcher.onBackPressed()
         compose.waitUntil(5_000) { compose.onAllNodes(androidx.compose.ui.test.hasTestTag("full_player")).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag("mini_player").assertExists()

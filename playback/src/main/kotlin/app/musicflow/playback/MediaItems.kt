@@ -19,7 +19,11 @@ object MediaItems {
     private const val EXTRA_TRACK = "app.musicflow.track"
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun placeholderUri(id: MediaId): Uri = Uri.Builder().scheme(SCHEME).authority("media").appendQueryParameter("id", id.value).build()
+    /** [revision] forces a reload of the same track (e.g. after a quality change). */
+    fun placeholderUri(id: MediaId, revision: Long? = null): Uri = Uri.Builder().scheme(SCHEME).authority("media")
+        .appendQueryParameter("id", id.value)
+        .apply { revision?.let { appendQueryParameter("rev", it.toString()) } }
+        .build()
 
     fun mediaIdFromUri(uri: Uri): MediaId? =
         if (uri.scheme == SCHEME) MediaId.parseOrNull(uri.getQueryParameter("id")) else null

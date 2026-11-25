@@ -89,3 +89,22 @@ class DerivativeFilterTest {
         }
     }
 }
+
+class SongMergeTest {
+    private fun t(id: String, title: String, artist: String) =
+        app.musicflow.core.model.MediaItemSummary.TrackItem(app.musicflow.core.model.Track(app.musicflow.core.model.MediaId("yt:$id"), title, listOf(app.musicflow.core.model.ArtistRef(null, artist))))
+
+    @Test fun uploadsMissingFromCatalogueAreIncludedAndExactMatchFirst() {
+        val songs = listOf(t("s1", "Powiedz mi", "Inny Zespół"), t("s2", "Coś innego", "Ktoś"))
+        val uploads = listOf(t("I5uH5-JHh3k", "D-Bomb Powiedz mi co czujesz", "dbombbartek"), t("v2", "Powiedz mi (Official Video)", "Inny Zespół"))
+        val out = app.musicflow.data.providers.youtube.SongMerge.merge("D-Bomb Powiedz mi co czujesz", songs, uploads)
+        com.google.common.truth.Truth.assertThat(out.first().id.value).isEqualTo("yt:I5uH5-JHh3k")
+        // "Powiedz mi (Official Video)" by the same artist duplicates catalogue song s1.
+        com.google.common.truth.Truth.assertThat(out.map { it.id.value }).containsExactly("yt:I5uH5-JHh3k", "yt:s1", "yt:s2")
+    }
+
+    @Test fun emptyCatalogueStillReturnsUploads() {
+        val out = app.musicflow.data.providers.youtube.SongMerge.merge("x", emptyList(), listOf(t("a", "A", "B")))
+        com.google.common.truth.Truth.assertThat(out).hasSize(1)
+    }
+}

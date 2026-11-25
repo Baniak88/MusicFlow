@@ -48,7 +48,8 @@ class PlayerViewModel @Inject constructor(
     private val runtime: PlaybackRuntime,
     private val sleepTimer: SleepTimer,
     private val effects: AudioEffects,
-    settings: SettingsRepository,
+    private val settings: SettingsRepository,
+    private val connectivity: app.musicflow.core.network.ConnectivityMonitor,
 ) : ViewModel() {
     val state: StateFlow<PlaybackState> = engine.state
     val progress: Flow<Progress> = engine.progress
@@ -75,6 +76,18 @@ class PlayerViewModel @Inject constructor(
                 onFailure = { LyricsState.Failed(it) },
             )
         }
+    }
+
+    /** Quality used on the network the phone is on right now (Wi-Fi vs mobile data). */
+    val isMetered: Boolean get() = connectivity.current().isMetered
+
+    val activeQuality: StateFlow<app.musicflow.core.model.AudioQuality> = settings.settings
+        .map { if (connectivity.current().isMetered) it.qualityMobile else it.qualityWifi }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, app.musicflow.core.model.AudioQuality.HIGH)
+
+    /** Saves the quality for the current network type; the service reloads the song in place. */
+    fun setQuality(q: app.musicflow.core.model.AudioQuality) = viewModelScope.launch {
+        if (isMetered) settings.setQualityMobile(q) else settings.setQualityWifi(q)
     }
 
     fun togglePlay() = engine.togglePlayPause()

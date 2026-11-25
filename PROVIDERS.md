@@ -35,12 +35,19 @@ usually an extractor update. Behaviour MusicFlow implements:
 * Only lossy formats exist (Opus ≈ 50–160 kbps, AAC 48–129 kbps). MusicFlow shows the codec and
   bitrate actually reported, never "lossless".
 
+**What "Songs" contains.** YouTube Music's *Songs* search covers only its official catalogue.
+Much music exists only as uploads by fans or artists (e.g. Polish disco-polo, regional, older or
+independent releases — reported example: "D-Bomb – Powiedz mi co czujesz"). MusicFlow therefore
+merges catalogue songs **with** YouTube music-video/upload results, removes duplicates (same id,
+or same normalised title + artist) and moves results matching every word of the query to the
+top. Pasting a YouTube / YouTube Music link into search opens that track or playlist directly.
+
 **Known limitations (verified with live tests on 2026-11-24).**
 
 * YouTube Music withholds its licensed *Songs* and *Albums* catalogue on some networks
   (observed from cloud/data-centre IPs: the search returns "No results" and offers only Artists,
-  Videos, Playlists, Podcasts). The Songs search then falls back to official music videos (same
-  recordings, `Diagnostics` logs the fallback); album search may be empty. On normal consumer
+  Videos, Playlists, Podcasts). Songs then come only from uploads/music videos (logged in
+  `Diagnostics`); album search may be empty. On normal consumer
   connections the full catalogue is returned.
 * Trending uses `charts.youtube.com` and suggestions use `suggestqueries-clients6.youtube.com`; if
   those are blocked by a network, the sections are hidden / local history suggestions are used.

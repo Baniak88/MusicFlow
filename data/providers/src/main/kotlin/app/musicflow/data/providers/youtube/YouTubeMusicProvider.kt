@@ -152,22 +152,41 @@ class YouTubeMusicProvider(
     }
 
     private fun searchOnce(query: String, filter: SearchFilter, token: String?): SearchPage {
-        if (token != null) {
-            val npFilter = tokenFilters[token] ?: npFilter(filter)
-            return searchWith(query, npFilter, filter, token)
-        }
-        val page = searchWith(query, npFilter(filter), filter, null)
-        // YouTube Music withholds its licensed "Songs" catalogue in some regions/networks
-        // (observed from data-centre IPs). Official music videos are the same recordings, so
-        // fall back to them instead of showing nothing.
-        if (page.items.isEmpty() && filter == SearchFilter.SONGS || page.items.isEmpty() && filter == SearchFilter.ALL) {
-            diagnostics.w("youtube", "Songs search returned no results; falling back to music videos")
-            return searchWith(query, YoutubeSearchQueryHandlerFactory.MUSIC_VIDEOS, filter, null)
-        }
-        return page
+        if (filter == SearchFilter.SONGS || filter == SearchFilter.ALL) return searchSongsMerged(query, filter, token)
+        if (token != null) return searchWith(query, tokenFilters[token] ?: npFilter(filter), filter, token)
+        return searchWith(query, npFilter(filter), filter, null)
+    }
+
+    /**
+     * Songs = YouTube Music's official catalogue **merged with** YouTube uploads.
+     *
+     * The catalogue ("Songs") misses a lot of music that only exists as uploads by fans or
+     * artists (e.g. many Polish disco-polo, regional, older or independent tracks). Those are
+     * found by the music-videos search, so both are fetched and merged, duplicates removed.
+     * Pagination continues both lists with a composite token.
+     */
+    private fun searchSongsMerged(query: String, filter: SearchFilter, token: String?): SearchPage {
+        val (songTok, videoTok) = if (token != null) {
+            val parts = token.removePrefix(MERGED).split('|')
+            parts.getOrNull(0)?.takeIf { it != NONE } to parts.getOrNull(1)?.takeIf { it != NONE }
+        } else null to null
+        val first = token == null
+        val songs = if (first || songTok != null) runCatching {
+            searchWith(query, YoutubeSearchQueryHandlerFactory.MUSIC_SONGS, SearchFilter.SONGS, songTok)
+        }.getOrNull() else null
+        val videos = if (first || videoTok != null) runCatching {
+            searchWith(query, YoutubeSearchQueryHandlerFactory.MUSIC_VIDEOS, SearchFilter.SONGS, videoTok)
+        }.getOrElse { if (songs == null) throw it else null } else null
+        if (songs == null && videos == null && first) throw ProviderError.Network("Search failed")
+        if (first && songs?.items.isNullOrEmpty()) diagnostics.i("youtube", "Catalogue songs empty for query; using uploads")
+        val merged = SongMerge.merge(query, songs?.items.orEmpty(), videos?.items.orEmpty())
+        val next = if (songs?.nextPageToken == null && videos?.nextPageToken == null) null
+            else MERGED + (songs?.nextPageToken ?: NONE) + "|" + (videos?.nextPageToken ?: NONE)
+        return SearchPage(query, filter, merged, next, correctedQuery = songs?.correctedQuery ?: videos?.correctedQuery)
     }
 
     override suspend fun search(query: String, filter: SearchFilter, pageToken: String?): SearchPage {
+        linkResult(query.trim(), filter)?.let { return it }
         if (filter != SearchFilter.ALL) return io("search") { searchOnce(query, filter, pageToken) }
         // "All": top results of every category, fetched concurrently; a failing category is skipped.
         return coroutineScope {
@@ -178,12 +197,27 @@ class YouTubeMusicProvider(
             val songPage = songs.await()
             val items = buildList {
                 artists.await()?.items?.take(2)?.let(::addAll)
-                addAll(songPage.items.take(12))
+                addAll(songPage.items.take(16))
                 albums.await()?.items?.take(6)?.let(::addAll)
                 playlists.await()?.items?.take(6)?.let(::addAll)
             }
             SearchPage(query, SearchFilter.ALL, items, nextPageToken = null, correctedQuery = songPage.correctedQuery)
         }
+    }
+
+    /** A pasted YouTube / YouTube Music link resolves directly to that track or playlist. */
+    private suspend fun linkResult(query: String, filter: SearchFilter): SearchPage? {
+        if (!YouTubeIds.isYouTubeUrl(query)) return null
+        YouTubeIds.videoIdFromUrl(query)?.let { id ->
+            return SearchPage(query, filter, listOf(MediaItemSummary.TrackItem(track(YouTubeIds.track(id)))), null)
+        }
+        YouTubeIds.listIdFromUrl(query)?.let { list ->
+            val page = playlist(YouTubeIds.playlist(list))
+            return SearchPage(query, filter, listOf(MediaItemSummary.PlaylistItem(
+                app.musicflow.core.model.PlaylistSummary(YouTubeIds.playlist(list), page.title, page.subtitle, page.artworkUrl, page.tracks.size),
+            )), null)
+        }
+        return null
     }
 
     override suspend fun suggestions(query: String): List<String> = io("suggestions") {
@@ -362,6 +396,9 @@ class YouTubeMusicProvider(
     }
 
     companion object {
+        private const val MERGED = "merged:"
+        private const val NONE = "-"
+
         /** True for sped-up/slowed/8D/etc. re-uploads, including letter-spaced spellings. */
         fun isDerivative(title: String): Boolean =
             DERIVATIVE.containsMatchIn(title) || DERIVATIVE_COMPACT.containsMatchIn(title.replace(" ", "").lowercase())

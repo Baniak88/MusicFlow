@@ -32,6 +32,7 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Lyrics
@@ -87,7 +88,7 @@ import app.musicflow.playback.SleepTimerState
 import app.musicflow.playback.engine.Progress
 import kotlin.math.roundToInt
 
-private enum class PlayerSheet { NONE, QUEUE, LYRICS, SLEEP, SPEED }
+private enum class PlayerSheet { NONE, QUEUE, LYRICS, SLEEP, SPEED, QUALITY }
 
 @Composable
 fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
@@ -136,6 +137,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                     IconButton(onClick = { more = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.player_more), tint = Color.White) }
                     DropdownMenu(more, { more = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.player_sleep_timer)) }, leadingIcon = { Icon(Icons.Rounded.Bedtime, null) }, onClick = { more = false; sheet = PlayerSheet.SLEEP })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.player_quality)) }, leadingIcon = { Icon(Icons.Rounded.HighQuality, null) }, onClick = { more = false; sheet = PlayerSheet.QUALITY })
                         DropdownMenuItem(text = { Text(stringResource(R.string.player_speed)) }, leadingIcon = { Icon(Icons.Rounded.Speed, null) }, onClick = { more = false; sheet = PlayerSheet.SPEED })
                         DropdownMenuItem(text = { Text(stringResource(R.string.player_equalizer)) }, leadingIcon = { Icon(Icons.Rounded.Equalizer, null) }, onClick = { more = false; onCollapse(); nav.openEqualizer() })
                         track?.let { t -> DropdownMenuItem(text = { Text(stringResource(R.string.player_track_options)) }, leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) }, onClick = { more = false; menu.open(t) }) }
@@ -185,7 +187,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
             }
 
             ProgressSection(progress, state.durationMs, vm::seek)
-            QualityLine(status)
+            QualityLine(status, onClick = { sheet = PlayerSheet.QUALITY })
 
             Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = vm::toggleShuffle) {
@@ -233,6 +235,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
         PlayerSheet.LYRICS -> LyricsSheet(vm) { sheet = PlayerSheet.NONE }
         PlayerSheet.SLEEP -> SleepTimerDialog(vm, sleep) { sheet = PlayerSheet.NONE }
         PlayerSheet.SPEED -> SpeedDialog(state.speed, vm::setSpeed) { sheet = PlayerSheet.NONE }
+        PlayerSheet.QUALITY -> QualityDialog(vm) { sheet = PlayerSheet.NONE }
         PlayerSheet.NONE -> Unit
     }
 }
@@ -262,7 +265,7 @@ private fun ProgressSection(progress: Progress, fallbackDuration: Long?, onSeek:
 
 /** Shows only what the source and decoder actually report — never an assumed quality. */
 @Composable
-private fun QualityLine(status: EngineStatus) {
+private fun QualityLine(status: EngineStatus, onClick: () -> Unit) {
     val stream = status.stream
     val format = status.format
     val text = when {
@@ -274,7 +277,60 @@ private fun QualityLine(status: EngineStatus) {
         ).joinToString(" · ")
         else -> ""
     }
-    if (text.isNotEmpty()) {
-        Text(text, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.fillMaxWidth().padding(top = 2.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-    }
+    Text(
+        text.ifEmpty { stringResource(R.string.player_quality) } + "  ›",
+        style = MaterialTheme.typography.labelSmall,
+        color = Color.White.copy(alpha = 0.7f),
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 6.dp).testTag("quality_line"),
+    )
+}
+
+@Composable
+private fun QualityDialog(vm: PlayerViewModel, onDismiss: () -> Unit) {
+    val active by vm.activeQuality.collectAsStateWithLifecycle()
+    val status by vm.engineStatus.collectAsStateWithLifecycle()
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.player_quality)) },
+        text = {
+            Column {
+                Text(
+                    stringResource(if (vm.isMetered) R.string.player_quality_for_mobile else R.string.player_quality_for_wifi),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                app.musicflow.core.model.AudioQuality.entries.forEach { q ->
+                    Row(
+                        Modifier.fillMaxWidth().clickable { vm.setQuality(q); onDismiss() }.padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        androidx.compose.material3.RadioButton(selected = q == active, onClick = { vm.setQuality(q); onDismiss() })
+                        Column(Modifier.padding(start = 8.dp)) {
+                            Text(stringResource(qualityName(q)), style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(qualityHint(q)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                status.stream?.describe()?.takeIf { it.isNotEmpty() }?.let {
+                    Text(stringResource(R.string.player_quality_now, it), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+                }
+                Text(stringResource(R.string.player_quality_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+            }
+        },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.player_close)) } },
+    )
+}
+
+private fun qualityName(q: app.musicflow.core.model.AudioQuality) = when (q) {
+    app.musicflow.core.model.AudioQuality.DATA_SAVER -> R.string.player_q_saver
+    app.musicflow.core.model.AudioQuality.STANDARD -> R.string.player_q_standard
+    app.musicflow.core.model.AudioQuality.HIGH -> R.string.player_q_high
+    app.musicflow.core.model.AudioQuality.BEST -> R.string.player_q_best
+}
+
+private fun qualityHint(q: app.musicflow.core.model.AudioQuality) = when (q) {
+    app.musicflow.core.model.AudioQuality.DATA_SAVER -> R.string.player_q_saver_hint
+    app.musicflow.core.model.AudioQuality.STANDARD -> R.string.player_q_standard_hint
+    app.musicflow.core.model.AudioQuality.HIGH -> R.string.player_q_high_hint
+    app.musicflow.core.model.AudioQuality.BEST -> R.string.player_q_best_hint
 }

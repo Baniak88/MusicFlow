@@ -24,6 +24,8 @@ Zaznacz ✅ / ❌ i dopisz uwagi.
 
 **Muzyka online (eksperymentalna — YouTube Music)**
 - [ ] Wyszukiwanie utworu, wykonawcy, albumu, playlisty; filtry i przewijanie kolejnych wyników.
+- [ ] Utwory, których nie ma w oficjalnym katalogu (np. „D-Bomb Powiedz mi co czujesz”) są
+      w wynikach; wklejenie linku z YouTube w wyszukiwarkę od razu pokazuje utwór.
 - [ ] Odtworzenie utworu z wyników; na odtwarzaczu widać kodek i bitrate (np. „OPUS · 160 kbps”).
 - [ ] Strona wykonawcy i albumu/playlisty.
 - [ ] Ekran Główna po przesłuchaniu kilku utworów pokazuje rekomendacje.
@@ -41,6 +43,10 @@ Zaznacz ✅ / ❌ i dopisz uwagi.
 - [ ] Przełączenie Wi-Fi ↔ dane komórkowe w trakcie odtwarzania — muzyka wznawia się sama.
 - [ ] Android Auto (jeśli dostępne): przeglądanie i odtwarzanie.
 - [ ] Wyłącznik czasowy zatrzymuje muzykę.
+- [ ] Przenikanie (Ustawienia → Odtwarzanie → Przenikanie, np. 6 s): koniec utworu płynnie
+      nakłada się na początek następnego; powiadomienie pokazuje już nowy utwór.
+- [ ] Jakość dźwięku: w odtwarzaczu stuknij linię z formatem (np. „OPUS · 160 kbps”) lub ⋮ →
+      Jakość dźwięku → zmiana działa od razu, utwór gra dalej od tego samego miejsca.
 
 **Biblioteka i playlisty**
 - [ ] Polubienie utworu, utworzenie playlisty, dodanie utworów, zmiana kolejności przeciąganiem,

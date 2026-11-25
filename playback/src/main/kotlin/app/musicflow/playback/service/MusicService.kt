@@ -96,6 +96,9 @@ class MusicService : MediaLibraryService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var player: ExoPlayer
+    private lateinit var crossfader: Crossfader
+    private lateinit var mediaSourceFactory: DefaultMediaSourceFactory
+    private var crossfadeJob: Job? = null
     private lateinit var session: MediaLibrarySession
     private lateinit var streams: StreamRepository
     private lateinit var prefs: SharedPreferences
@@ -128,6 +131,10 @@ class MusicService : MediaLibraryService() {
 
         player = buildPlayer(settings)
         player.addListener(playerListener)
+        crossfader = Crossfader(player, ::buildFader).apply {
+            fadeMs = settings.crossfadeSeconds * 1000L
+            blocked = { sleepTimer.state.value == SleepTimerState.EndOfTrack }
+        }
         player.addAnalyticsListener(analyticsListener)
 
         val sessionActivity = packageManager.getLaunchIntentForPackage(packageName)?.let {
@@ -146,20 +153,59 @@ class MusicService : MediaLibraryService() {
         observeSettings()
         observeConnectivity()
         observeSleepTimer()
+        runCrossfadeLoop()
     }
+
+    /** Checks ~10×/s while playing whether a crossfade should start or progress. */
+    private fun runCrossfadeLoop() {
+        crossfadeJob = scope.launch {
+            while (isActive) {
+                if (crossfader.fadeMs > 0 && (player.isPlaying || crossfader.isFading)) {
+                    crossfader.tick()
+                    delay(100)
+                } else delay(500)
+            }
+        }
+    }
+
+    /** Session-less player that plays the outgoing track during a crossfade. */
+    private fun buildFader(): ExoPlayer = ExoPlayer.Builder(this)
+        .setMediaSourceFactory(mediaSourceFactory)
+        .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), false)
+        .build()
+
+    /**
+     * Re-resolves the current remote track at the new quality without losing the position
+     * (used when the user changes audio quality while listening).
+     */
+    private fun reloadCurrentForQuality() {
+        val item = player.currentMediaItem ?: return
+        val id = MediaId.parseOrNull(item.mediaId) ?: return
+        if (id.providerId == "local") return
+        val index = player.currentMediaItemIndex
+        val position = player.currentPosition
+        crossfader.finish()
+        reloadingIndex = index
+        val reloaded = item.buildUpon().setUri(MediaItems.placeholderUri(id, revision = System.currentTimeMillis())).build()
+        player.replaceMediaItem(index, reloaded)
+        player.seekTo(index, position)
+        diagnostics.i("playback", "Quality changed: reloading current track at ${position / 1000}s")
+    }
+    private var reloadingIndex: Int? = null
 
     // ---------------------------------------------------------------- player
 
     private fun buildPlayer(s: UserSettings): ExoPlayer {
         val dataSources = PlaybackDataSources.factory(this, client, cacheHolder.cache, streams)
         val errorPolicy = StreamErrorPolicy(streams, diagnostics) { connectivity.current().isConnected }
+        mediaSourceFactory = DefaultMediaSourceFactory(dataSources).setLoadErrorHandlingPolicy(errorPolicy)
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(s.bufferProfile.minBufferMs, s.bufferProfile.maxBufferMs, 1_500, 3_000)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
         val renderers = DefaultRenderersFactory(this).setEnableAudioFloatOutput(false)
         return ExoPlayer.Builder(this, renderers)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSources).setLoadErrorHandlingPolicy(errorPolicy))
+            .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
@@ -188,7 +234,13 @@ class MusicService : MediaLibraryService() {
     private val playerListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             val now = System.currentTimeMillis()
-            finishListening(userSkipped = reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK, now = now)
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED && reloadingIndex != null) {
+                reloadingIndex = null // same track re-resolved at a new quality: not a new listen
+                return
+            }
+            val viaCrossfade = crossfader.consumeSelfTransition()
+            if (!viaCrossfade && crossfader.isFading) crossfader.finish() // user skipped during a fade
+            finishListening(userSkipped = reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK && !viaCrossfade, now = now)
             mediaItem?.let(MediaItems::toTrack)?.let { t ->
                 listening = ListeningSession(t, now, resumedAt = if (player.isPlaying) now else null)
                 scope.launch { runCatching { library.remember(t) } }
@@ -204,6 +256,7 @@ class MusicService : MediaLibraryService() {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             val now = System.currentTimeMillis()
             listening?.let { if (isPlaying) it.resumedAt = now else it.pause(now) }
+            crossfader.onMainPlayingChanged(isPlaying)
             if (!isPlaying) persistPosition()
         }
 
@@ -313,7 +366,13 @@ class MusicService : MediaLibraryService() {
                 registry.setEnabled("yt", s.youtubeProviderEnabled)
                 if (old.skipSilence != s.skipSilence) player.skipSilenceEnabled = s.skipSilence
                 if (old.pauseOnDisconnect != s.pauseOnDisconnect) player.setHandleAudioBecomingNoisy(s.pauseOnDisconnect)
-                if (old.qualityWifi != s.qualityWifi || old.qualityMobile != s.qualityMobile) streams.clear()
+                crossfader.fadeMs = s.crossfadeSeconds * 1000L
+                if (old.qualityWifi != s.qualityWifi || old.qualityMobile != s.qualityMobile) {
+                    val metered = connectivity.current().isMetered
+                    val changedNow = if (metered) old.qualityMobile != s.qualityMobile else old.qualityWifi != s.qualityWifi
+                    streams.clear()
+                    if (changedNow) reloadCurrentForQuality()
+                }
                 effects.setLeveling(s.volumeLeveling)
             }
         }
@@ -434,6 +493,8 @@ class MusicService : MediaLibraryService() {
     override fun onDestroy() {
         finishListening(userSkipped = false, now = System.currentTimeMillis())
         persistPosition()
+        crossfadeJob?.cancel()
+        crossfader.release()
         effects.release()
         session.release()
         player.release()

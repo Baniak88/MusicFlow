@@ -15,6 +15,8 @@ data class UserSettings(
     val qualityMobile: AudioQuality = AudioQuality.STANDARD,
     val cacheSizeMb: Int = 512,
     val autoContinueQueue: Boolean = true,
+    /** Overlap between consecutive tracks, 0 = off (gapless). */
+    val crossfadeSeconds: Int = 0,
     val volumeLeveling: Boolean = false,
     val skipSilence: Boolean = false,
     val pauseOnDisconnect: Boolean = true,

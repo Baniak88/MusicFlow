@@ -90,6 +90,18 @@ class YouTubeLiveTest {
         println("trending: ${trending.map { it.size }} ${trending.exceptionOrNull()}")
     }
 
+    @Test fun findsUploadsMissingFromTheCatalogue() = runBlocking {
+        // Reported by a user: fan upload of "D-Bomb - Powiedz mi co czujesz" was not found.
+        val songs = provider.search("D-Bomb Powiedz mi co czujesz", SearchFilter.SONGS).items.tracks()
+        println("upload search: " + songs.take(3).map { it.title })
+        assertThat(songs.map { it.id.key }).contains("I5uH5-JHh3k")
+        val viaLink = provider.search("https://youtu.be/I5uH5-JHh3k?is=kPN3R9CeGB_FzP6t", SearchFilter.ALL).items.tracks()
+        assertThat(viaLink.single().id.key).isEqualTo("I5uH5-JHh3k")
+        val stream = provider.resolve(viaLink.single().id, AudioQuality.BEST)
+        println("upload stream: ${stream.describe()}")
+        assertThat(stream.bitrateKbps).isAtLeast(128)
+    }
+
     @Test fun suggestions() = runBlocking {
         val s = runCatching { provider.suggestions("daft pu") }
         println("suggestions: $s")

@@ -1,5 +1,7 @@
 ## MusicFlow — wersja testowa / test build
 
+**Nowości / What's new:** see CHANGELOG.md.
+
 **PL:** To jest wersja do testów (pre-release). Pobierz plik `MusicFlow-*.apk` poniżej,
 zainstaluj na Androidzie 9 lub nowszym i postępuj według [instrukcji dla testerów](https://github.com/Baniak88/MusicFlow/blob/ccr-08f57c60-5k88o7/docs/TESTY.md).
 Plik z końcówką `-debug` jest podpisany kluczem testowym: przed instalacją kolejnej wersji

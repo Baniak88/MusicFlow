@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -112,6 +113,12 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
         item { Clickable(stringResource(R.string.set_quality_mobile), qualityLabel(s.qualityMobile)) { dialog = "qmobile" } }
         item { Text(stringResource(R.string.set_quality_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
         item { Clickable(stringResource(R.string.set_buffer), bufferLabel(s.bufferProfile)) { dialog = "buffer" } }
+        item {
+            Clickable(
+                stringResource(R.string.set_crossfade),
+                if (s.crossfadeSeconds == 0) stringResource(R.string.set_crossfade_off) else stringResource(R.string.set_crossfade_value, s.crossfadeSeconds),
+            ) { dialog = "crossfade" }
+        }
         item { Toggle(stringResource(R.string.set_autoplay), stringResource(R.string.set_autoplay_desc), s.autoContinueQueue, vm::setAutoContinue) }
         item { Toggle(stringResource(R.string.set_leveling), stringResource(R.string.set_leveling_desc), s.volumeLeveling, vm::setLeveling) }
         item { Toggle(stringResource(R.string.set_skip_silence), null, s.skipSilence, vm::setSkipSilence) }
@@ -165,6 +172,7 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
         "qmobile" -> ChoiceDialog(stringResource(R.string.set_quality_mobile), AudioQuality.entries.map { Choice(it, qualityLabel(it)) }, s.qualityMobile, { dialog = null }, vm::setQualityMobile)
         "buffer" -> ChoiceDialog(stringResource(R.string.set_buffer), BufferProfile.entries.map { Choice(it, bufferLabel(it)) }, s.bufferProfile, { dialog = null }, vm::setBuffer)
         "cache" -> ChoiceDialog(stringResource(R.string.set_cache_size), listOf(128, 256, 512, 1024, 2048, 4096).map { Choice(it, "$it MB") }, s.cacheSizeMb, { dialog = null }, vm::setCacheSize)
+        "crossfade" -> CrossfadeDialog(s.crossfadeSeconds, { dialog = null }, vm::setCrossfade)
         "country" -> CountryDialog(s.contentCountry, { dialog = null }, vm::setCountry)
         "clear_cache" -> Confirm(stringResource(R.string.set_clear_cache), stringResource(R.string.set_clear_cache_desc), { dialog = null }, vm::clearCache)
         "clear_history" -> Confirm(stringResource(R.string.set_clear_history), stringResource(R.string.set_clear_history_desc), { dialog = null }, vm::clearHistory)
@@ -231,6 +239,30 @@ private fun <T> ChoiceDialog(title: String, choices: List<Choice<T>>, selected: 
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.set_close)) } },
+    )
+}
+
+@Composable
+private fun CrossfadeDialog(current: Int, onDismiss: () -> Unit, onSet: (Int) -> Unit) {
+    var value by rememberSaveable { mutableStateOf(current.toFloat()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.set_crossfade)) },
+        text = {
+            Column {
+                Text(
+                    if (value.toInt() == 0) stringResource(R.string.set_crossfade_off) else stringResource(R.string.set_crossfade_value, value.toInt()),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                androidx.compose.material3.Slider(
+                    value = value, onValueChange = { value = it }, valueRange = 0f..12f, steps = 11,
+                    modifier = Modifier.testTag("crossfade_slider"),
+                )
+                Text(stringResource(R.string.set_crossfade_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSet(value.toInt()); onDismiss() }) { Text(stringResource(R.string.set_save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.set_close)) } },
     )
 }
 

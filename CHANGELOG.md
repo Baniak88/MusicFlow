@@ -3,7 +3,24 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
-## [1.0.0] - 2026-11-24
+## [1.0.0-beta.2] - 2026-11-25
+
+### Added
+- **Crossfade** (Settings → Playback → Crossfade, 0–12 s): Spotify-style overlap of consecutive
+  songs with an equal-power curve; notification/lock screen/Android Auto follow the new song.
+- **Audio quality in the player** (tap the format line or ⋮ → Audio quality). Applies immediately
+  to the current song, keeping the position; shows what is actually playing.
+- Pasting a YouTube / YouTube Music link into search opens that track or playlist.
+
+### Fixed
+- Many songs were missing from search: only YouTube Music's official catalogue was searched.
+  Songs now also include YouTube uploads (merged, de-duplicated, exact matches first).
+- Changing audio quality in Settings only affected the next song.
+
+## [1.0.0-beta.1] - 2026-11-25
+First test build.
+
+## [1.0.0] - 2026-11-24 (internal)
 
 ### Added
 - Multi-module Kotlin/Compose/Material 3 app (15 modules) with Hilt, Room, DataStore, Coil, OkHttp.

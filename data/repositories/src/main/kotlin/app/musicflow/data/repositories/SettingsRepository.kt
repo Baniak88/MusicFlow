@@ -36,6 +36,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
         val qMobile = stringPreferencesKey("quality_mobile")
         val cache = intPreferencesKey("cache_mb")
         val autoContinue = booleanPreferencesKey("auto_continue")
+        val crossfade = intPreferencesKey("crossfade_seconds")
         val leveling = booleanPreferencesKey("volume_leveling")
         val skipSilence = booleanPreferencesKey("skip_silence")
         val pauseOnDisconnect = booleanPreferencesKey("pause_on_disconnect")
@@ -63,6 +64,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
             qualityMobile = p.enum(K.qMobile, d.qualityMobile),
             cacheSizeMb = p[K.cache] ?: d.cacheSizeMb,
             autoContinueQueue = p[K.autoContinue] ?: d.autoContinueQueue,
+            crossfadeSeconds = p[K.crossfade] ?: d.crossfadeSeconds,
             volumeLeveling = p[K.leveling] ?: d.volumeLeveling,
             skipSilence = p[K.skipSilence] ?: d.skipSilence,
             pauseOnDisconnect = p[K.pauseOnDisconnect] ?: d.pauseOnDisconnect,
@@ -87,6 +89,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     suspend fun setQualityMobile(v: AudioQuality) { store.edit { it[K.qMobile] = v.name } }
     suspend fun setCacheSizeMb(v: Int) { store.edit { it[K.cache] = v.coerceIn(64, 4096) } }
     suspend fun setAutoContinue(v: Boolean) { store.edit { it[K.autoContinue] = v } }
+    suspend fun setCrossfadeSeconds(v: Int) { store.edit { it[K.crossfade] = v.coerceIn(0, MAX_CROSSFADE) } }
     suspend fun setVolumeLeveling(v: Boolean) { store.edit { it[K.leveling] = v } }
     suspend fun setSkipSilence(v: Boolean) { store.edit { it[K.skipSilence] = v } }
     suspend fun setPauseOnDisconnect(v: Boolean) { store.edit { it[K.pauseOnDisconnect] = v } }
@@ -97,4 +100,8 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     suspend fun setDiagnosticsEnabled(v: Boolean) { store.edit { it[K.diagnostics] = v } }
     suspend fun setBufferProfile(v: BufferProfile) { store.edit { it[K.buffer] = v.name } }
     suspend fun setContentCountry(v: String) { store.edit { it[K.country] = v.uppercase().take(2) } }
+
+    companion object {
+        const val MAX_CROSSFADE = 12
+    }
 }

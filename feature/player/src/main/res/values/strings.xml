@@ -38,4 +38,17 @@
     <string name="player_eq_unavailable_body">Start playing a song. Some devices do not support audio effects.</string>
     <string name="player_system_eq">Open system equaliser</string>
     <string name="player_eq_note">Settings apply to MusicFlow playback only.</string>
+    <string name="player_quality">Audio quality</string>
+    <string name="player_quality_for_wifi">Applies on Wi-Fi (current connection). Change mobile-data quality in Settings.</string>
+    <string name="player_quality_for_mobile">Applies on mobile data (current connection). Change Wi-Fi quality in Settings.</string>
+    <string name="player_quality_now">Now playing: %1$s</string>
+    <string name="player_quality_note">Takes effect immediately for the current song. YouTube\'s best audio is Opus ≈160 kbps, so High and Best usually sound the same.</string>
+    <string name="player_q_saver">Data saver</string>
+    <string name="player_q_saver_hint">≈ 50–64 kbps</string>
+    <string name="player_q_standard">Standard</string>
+    <string name="player_q_standard_hint">up to 128 kbps</string>
+    <string name="player_q_high">High</string>
+    <string name="player_q_high_hint">up to 192 kbps</string>
+    <string name="player_q_best">Best available</string>
+    <string name="player_q_best_hint">highest bitrate the source offers</string>
 </resources>
