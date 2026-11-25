@@ -18,6 +18,7 @@ fun ProviderError.messageRes(): Int = when (this) {
         ProviderError.Restricted.Reason.GEOGRAPHIC -> R.string.mf_error_restricted_geo
         ProviderError.Restricted.Reason.AGE -> R.string.mf_error_restricted_age
         ProviderError.Restricted.Reason.PAID -> R.string.mf_error_restricted_paid
+        ProviderError.Restricted.Reason.DRM -> R.string.mf_error_restricted_drm
         ProviderError.Restricted.Reason.OTHER -> R.string.mf_error_unavailable
     }
     is ProviderError.Parsing -> R.string.mf_error_parsing

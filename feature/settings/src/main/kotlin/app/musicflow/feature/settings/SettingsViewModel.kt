@@ -125,14 +125,14 @@ class SettingsViewModel @Inject constructor(
     fun clearSearchHistory() = viewModelScope.launch { search.clearHistory(); _events.emit(SettingsEvent.Message(R.string.set_search_cleared)) }
 
     fun backup(uri: Uri) = viewModelScope.launch {
-        runCatching {
+        app.musicflow.core.common.runCatchingCancellable {
             val json = playlists.backup(library.favoriteTracks.first())
             withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(json.toByteArray()) } }
         }.onSuccess { _events.emit(SettingsEvent.Message(R.string.set_backup_done)) }.onFailure { _events.emit(SettingsEvent.Error(it)) }
     }
 
     fun restore(uri: Uri) = viewModelScope.launch {
-        runCatching {
+        app.musicflow.core.common.runCatchingCancellable {
             val text = withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } }.orEmpty()
             playlists.restore(text) { library.setFavorite(it, true) }
         }.onSuccess { _events.emit(SettingsEvent.Message(R.string.set_restore_done, it)) }.onFailure { _events.emit(SettingsEvent.Error(it)) }
@@ -179,7 +179,7 @@ class DiagnosticsViewModel @Inject constructor(
     }
 
     fun export(uri: Uri) = viewModelScope.launch {
-        val ok = runCatching {
+        val ok = app.musicflow.core.common.runCatchingCancellable {
             val text = report()
             withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray()) } }
         }.isSuccess

@@ -16,4 +16,5 @@
     <string name="mf_error_expired">Link do strumienia wygasł. Odświeżanie…</string>
     <string name="mf_error_unknown">Wystąpił nieoczekiwany błąd.</string>
     <string name="mf_provider_disabled">Muzyka online jest wyłączona. Włącz YouTube Music w Ustawienia → Dostawcy.</string>
+    <string name="mf_error_restricted_drm">Ten utwór SoundCloud jest chroniony DRM i nie da się go tu odtworzyć (brak identycznego nagrania w YouTube Music). Pomijam.</string>
 </resources>

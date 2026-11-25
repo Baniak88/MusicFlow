@@ -42,6 +42,8 @@ object PlaybackDataSources {
         client: OkHttpClient,
         cache: SimpleCache?,
         streams: StreamRepository,
+        /** Radio setting: plain-HTTP follow-up requests (HLS playlists/segments) of chosen streams. */
+        allowCleartextMedia: () -> Boolean = { false },
     ): DataSource.Factory {
         val plainHttp = OkHttpDataSource.Factory(client)
         val chunked = YouTubeChunkedDataSource.Factory(client)
@@ -54,7 +56,7 @@ object PlaybackDataSources {
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         } else remoteRouting
         val local = DefaultDataSource.Factory(context)
-        val routing = DataSource.Factory { LocalOrRemoteDataSource(local.createDataSource(), remote.createDataSource(), plainHttp.createDataSource()) }
+        val routing = DataSource.Factory { LocalOrRemoteDataSource(local.createDataSource(), remote.createDataSource(), plainHttp.createDataSource(), allowCleartextMedia) }
         return ResolvingDataSource.Factory(routing) { spec -> resolve(spec, streams) }
     }
 
@@ -69,6 +71,12 @@ object PlaybackDataSources {
         return if (host.endsWith("sndcdn.com") || host.endsWith("media-streaming.soundcloud.cloud")) {
             uri.buildUpon().clearQuery().fragment(null).build().toString()
         } else uri.toString()
+    }
+
+    /** Key-less media requests that may be cached: SoundCloud's signed but immutable HLS segments. */
+    internal fun cacheableWithoutKey(uri: Uri): Boolean {
+        val host = uri.host.orEmpty()
+        return host.endsWith("sndcdn.com") || host.endsWith("media-streaming.soundcloud.cloud")
     }
 
     internal fun resolve(spec: DataSpec, streams: StreamRepository): DataSpec {
@@ -94,7 +102,12 @@ object PlaybackDataSources {
 
 /** Sends `content://`/`file://` to the local source, everything else to the remote chain. */
 @UnstableApi
-private class LocalOrRemoteDataSource(private val local: DataSource, private val remote: DataSource, private val live: DataSource) : DataSource {
+private class LocalOrRemoteDataSource(
+    private val local: DataSource,
+    private val remote: DataSource,
+    private val live: DataSource,
+    private val allowCleartextMedia: () -> Boolean,
+) : DataSource {
     private var active: DataSource? = null
     override fun addTransferListener(transferListener: TransferListener) {
         local.addTransferListener(transferListener); remote.addTransferListener(transferListener); live.addTransferListener(transferListener)
@@ -104,6 +117,16 @@ private class LocalOrRemoteDataSource(private val local: DataSource, private val
         if (dataSpec.httpRequestHeaders[TRANSPORT_HEADER] == TRANSPORT_LIVE) {
             active = live
             return live.open(dataSpec.buildUpon().setHttpRequestHeaders(dataSpec.httpRequestHeaders - TRANSPORT_HEADER).build())
+        }
+        // Follow-up requests made by a media source itself (HLS playlist refreshes, segments) carry
+        // no resolver key. Only SoundCloud's immutable segments are worth caching; live playlists
+        // must never be served from the cache (they would go stale and playback would stop).
+        if ((scheme == "http" || scheme == "https") && dataSpec.key == null && !PlaybackDataSources.cacheableWithoutKey(dataSpec.uri)) {
+            active = live
+            val spec = if (scheme == "http" && allowCleartextMedia()) {
+                dataSpec.buildUpon().setHttpRequestHeaders(dataSpec.httpRequestHeaders + (app.musicflow.core.network.CleartextGuard.ALLOW_HEADER to "radio")).build()
+            } else dataSpec
+            return live.open(spec)
         }
         val src = if (scheme == "http" || scheme == "https") remote else local
         active = src

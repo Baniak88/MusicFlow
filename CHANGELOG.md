@@ -3,6 +3,22 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.14] - 2026-11-26
+
+### Fixed
+- **"Unexpected error (… was cancelled)" while typing a new search**: a replaced search reported its
+  cancellation as an error (and a late result could overwrite newer ones). Cancellations are no
+  longer errors anywhere in the UI, and only the current search may update the screen.
+- **HLS radio stations stopping with "Source error"**: follow-up requests (playlist refreshes,
+  segments) went through the disk cache, so live playlists went stale; for HTTP stations the HTTPS
+  guard also blocked them. Such requests now bypass the cache, and may use HTTP only while
+  *Radio: allow unencrypted stations* is on. SoundCloud segments are still cached.
+- **DRM-only SoundCloud tracks**: a clear message ("DRM-protected … skipping") instead of
+  "content unavailable"; the queue continues with the next track.
+
+### Changed
+- Settings is now one tap away from Library and Explore too (gear icon), not only from Home.
+
 ## [1.0.0-beta.13] - 2026-11-25
 
 ### Fixed

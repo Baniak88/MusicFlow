@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 
 data class ResultsState(
@@ -51,7 +52,7 @@ class SearchViewModel @Inject constructor(
     val suggestions: StateFlow<List<String>> = input
         .debounce(300)
         .distinctUntilChanged()
-        .mapLatest { q -> if (q.length < 2) emptyList() else runCatching { repo.suggestions(q, _results.value.source) }.getOrDefault(emptyList()) }
+        .mapLatest { q -> if (q.length < 2) emptyList() else app.musicflow.core.common.runCatchingCancellable { repo.suggestions(q, _results.value.source) }.getOrDefault(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _results = MutableStateFlow(ResultsState())
@@ -72,7 +73,9 @@ class SearchViewModel @Inject constructor(
         _results.value = ResultsState(query = q, filter = filter, loading = true, source = source)
         searchJob = viewModelScope.launch {
             repo.recordQuery(q)
-            _results.value = runCatching { repo.search(q, filter, sourceId = source) }.fold(
+            val result = app.musicflow.core.common.runCatchingCancellable { repo.search(q, filter, sourceId = source) }
+            coroutineContext.ensureActive() // a newer search replaced this one: never show stale results
+            _results.value = result.fold(
                 onSuccess = { ResultsState(q, filter, SearchRepository.dedupe(emptyList(), it.items), nextPageToken = it.nextPageToken, correctedQuery = it.correctedQuery, source = source) },
                 onFailure = { ResultsState(q, filter, error = it, source = source) },
             )
@@ -93,7 +96,7 @@ class SearchViewModel @Inject constructor(
         if (s.loading || s.loadingMore) return
         _results.value = s.copy(loadingMore = true)
         viewModelScope.launch {
-            runCatching { repo.search(s.query, s.filter, token, s.source) }
+            app.musicflow.core.common.runCatchingCancellable { repo.search(s.query, s.filter, token, s.source) }
                 .onSuccess { page ->
                     val cur = _results.value
                     if (cur.query == s.query && cur.filter == s.filter && cur.source == s.source) {

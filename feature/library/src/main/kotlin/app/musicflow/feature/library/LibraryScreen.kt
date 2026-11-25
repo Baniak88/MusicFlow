@@ -1,5 +1,6 @@
 package app.musicflow.feature.library
 
+import androidx.compose.material.icons.rounded.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -82,6 +83,7 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
         item {
             Row(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 8.dp, top = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.lib_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
+                IconButton(onClick = nav::openSettings) { Icon(Icons.Rounded.Settings, stringResource(R.string.lib_settings)) }
                 Box {
                     IconButton(onClick = { addMenu = true }) { Icon(Icons.Rounded.Add, stringResource(R.string.lib_add)) }
                     DropdownMenu(expanded = addMenu, onDismissRequest = { addMenu = false }) {

@@ -93,4 +93,5 @@
     <string name="lib_mb_genres">Gatunki</string>
     <string name="lib_mb_note">Uwagi</string>
     <string name="lib_mb_discography">Pełna dyskografia w MusicBrainz</string>
+    <string name="lib_settings">Ustawienia</string>
 </resources>

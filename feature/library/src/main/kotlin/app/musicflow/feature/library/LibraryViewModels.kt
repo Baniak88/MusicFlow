@@ -90,7 +90,7 @@ class LibraryViewModel @Inject constructor(
 
     private fun launchBusy(block: suspend () -> Unit) = viewModelScope.launch {
         busy.value = true
-        runCatching { block() }.onFailure { _events.emit(LibraryEvent.Failed(it)) }
+        app.musicflow.core.common.runCatchingCancellable { block() }.onFailure { _events.emit(LibraryEvent.Failed(it)) }
         busy.value = false
     }
 }
@@ -130,7 +130,7 @@ class UserPlaylistViewModel @Inject constructor(
     fun play(index: Int = 0, shuffle: Boolean = false) = playback.play(entries.value.map { it.track }, index, shuffle, playlist.value?.name)
 
     fun export(uri: Uri) = viewModelScope.launch {
-        runCatching {
+        app.musicflow.core.common.runCatchingCancellable {
             val text = repo.exportM3u(id)
             withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray()) } }
         }.onSuccess { _events.emit(LibraryEvent.Exported) }.onFailure { _events.emit(LibraryEvent.Failed(it)) }
@@ -198,7 +198,7 @@ class CollectionViewModel @Inject constructor(
 
     fun load() = viewModelScope.launch {
         _state.value = LoadState.Loading
-        _state.value = runCatching { catalog.collection(id) }.fold({ LoadState.Loaded(it) }, { LoadState.Failed(it) })
+        _state.value = app.musicflow.core.common.runCatchingCancellable { catalog.collection(id) }.fold({ LoadState.Loaded(it) }, { LoadState.Failed(it) })
     }
 
     fun loadMore() {
@@ -207,7 +207,7 @@ class CollectionViewModel @Inject constructor(
         if (loadingMore.value) return
         loadingMore.value = true
         viewModelScope.launch {
-            runCatching { catalog.collection(id, token) }.onSuccess { more ->
+            app.musicflow.core.common.runCatchingCancellable { catalog.collection(id, token) }.onSuccess { more ->
                 val existing = cur.tracks.map { it.id }.toSet()
                 _state.value = LoadState.Loaded(cur.copy(tracks = cur.tracks + more.tracks.filter { it.id !in existing }, nextPageToken = more.nextPageToken))
             }
@@ -254,7 +254,7 @@ class ArtistViewModel @Inject constructor(
 
     fun load() = viewModelScope.launch {
         _state.value = LoadState.Loading
-        _state.value = runCatching { catalog.artist(id) }.fold({ LoadState.Loaded(it) }, { LoadState.Failed(it) })
+        _state.value = app.musicflow.core.common.runCatchingCancellable { catalog.artist(id) }.fold({ LoadState.Loaded(it) }, { LoadState.Failed(it) })
         (_state.value as? LoadState.Loaded)?.value?.artist?.let { a -> _facts.value = catalog.artistFacts(a) }
     }
 
@@ -269,7 +269,7 @@ class ArtistViewModel @Inject constructor(
     /** Artist radio: the artist's top track followed by related tracks. */
     fun radio() = viewModelScope.launch {
         val top = (_state.value as? LoadState.Loaded)?.value?.topTracks?.firstOrNull() ?: return@launch
-        val related = runCatching { catalog.related(top.id, 30) }.getOrDefault(emptyList())
+        val related = app.musicflow.core.common.runCatchingCancellable { catalog.related(top.id, 30) }.getOrDefault(emptyList())
         playback.play(listOf(top) + related, 0, source = (_state.value as? LoadState.Loaded)?.value?.artist?.name)
     }
 }

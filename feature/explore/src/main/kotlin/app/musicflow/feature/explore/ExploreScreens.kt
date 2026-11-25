@@ -1,5 +1,6 @@
 package app.musicflow.feature.explore
 
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -123,7 +124,12 @@ fun ExploreScreen(contentPadding: PaddingValues, vm: ExploreViewModel = hiltView
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(top = 20.dp, bottom = 4.dp)) {
-                Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.headlineMedium)
+                androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
+                    androidx.compose.material3.IconButton(onClick = { nav.openSettings() }) {
+                        androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Settings, stringResource(R.string.explore_settings))
+                    }
+                }
                 Spacer(Modifier.height(12.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item { PillChip(stringResource(R.string.group_all), group == null, { vm.group.value = null }) }

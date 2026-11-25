@@ -224,7 +224,7 @@ class MusicService : MediaLibraryService() {
     // ---------------------------------------------------------------- player
 
     private fun buildPlayer(s: UserSettings): ExoPlayer {
-        val dataSources = PlaybackDataSources.factory(this, client, cacheHolder.cache, streams)
+        val dataSources = PlaybackDataSources.factory(this, client, cacheHolder.cache, streams, allowCleartextMedia = { settings.radioAllowHttp })
         val errorPolicy = StreamErrorPolicy(streams, diagnostics) { connectivity.current().isConnected }
         mediaSourceFactory = DefaultMediaSourceFactory(dataSources).setLoadErrorHandlingPolicy(errorPolicy)
         val loadControl = DefaultLoadControl.Builder()

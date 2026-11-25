@@ -102,7 +102,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             if (_online.value is OnlineState.Loaded) _refreshing.value = true else _online.value = OnlineState.Loading
             val s = settings.current()
-            _online.value = if (!s.youtubeProviderEnabled) OnlineState.Disabled else runCatching { home.load() }.fold(
+            _online.value = if (!s.youtubeProviderEnabled) OnlineState.Disabled else app.musicflow.core.common.runCatchingCancellable { home.load() }.fold(
                 onSuccess = { OnlineState.Loaded(it) },
                 onFailure = { OnlineState.Failed(it) },
             )

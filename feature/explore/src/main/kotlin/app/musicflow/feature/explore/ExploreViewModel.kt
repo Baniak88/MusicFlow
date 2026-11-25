@@ -43,7 +43,7 @@ class CategoryViewModel @Inject constructor(
     fun load() {
         _ui.value = CategoryUi.Loading
         viewModelScope.launch {
-            _ui.value = runCatching { repo.load(category) }.fold({ CategoryUi.Loaded(it) }, { CategoryUi.Failed(it) })
+            _ui.value = app.musicflow.core.common.runCatchingCancellable { repo.load(category) }.fold({ CategoryUi.Loaded(it) }, { CategoryUi.Failed(it) })
         }
     }
 

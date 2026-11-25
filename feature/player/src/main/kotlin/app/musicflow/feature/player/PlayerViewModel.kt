@@ -73,7 +73,7 @@ class PlayerViewModel @Inject constructor(
         lyricsFor = track.id.value
         _lyrics.value = LyricsState.Loading
         viewModelScope.launch {
-            _lyrics.value = runCatching { lyricsProvider.lyrics(track) }.fold(
+            _lyrics.value = app.musicflow.core.common.runCatchingCancellable { lyricsProvider.lyrics(track) }.fold(
                 onSuccess = { l -> if (l == null || (l.plain.isNullOrBlank() && !l.isSynced)) LyricsState.NotFound else LyricsState.Loaded(l) },
                 onFailure = { LyricsState.Failed(it) },
             )

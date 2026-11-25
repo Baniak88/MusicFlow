@@ -36,7 +36,8 @@ sealed class ProviderError(message: String, cause: Throwable? = null) : Exceptio
     /** Geographic, age or paid-content restriction imposed by the provider. */
     class Restricted(val reason: Reason, message: String = "Restricted by provider", cause: Throwable? = null) :
         ProviderError(message, cause) {
-        enum class Reason { GEOGRAPHIC, AGE, PAID, OTHER }
+        /** DRM: the source only serves an encrypted stream, which MusicFlow does not decrypt. */
+        enum class Reason { GEOGRAPHIC, AGE, PAID, DRM, OTHER }
         override val isTransient = false
     }
 

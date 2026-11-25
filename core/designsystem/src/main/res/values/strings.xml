@@ -16,4 +16,5 @@
     <string name="mf_error_expired">The stream link expired. Refreshing…</string>
     <string name="mf_error_unknown">An unexpected error occurred.</string>
     <string name="mf_provider_disabled">Online music is turned off. Enable YouTube Music in Settings → Providers.</string>
+    <string name="mf_error_restricted_drm">This SoundCloud track is DRM-protected and cannot be played here (no identical recording found on YouTube Music). Skipping.</string>
 </resources>

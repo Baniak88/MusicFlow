@@ -79,3 +79,15 @@ fun defaultClassify(t: Throwable): ProviderError = when (t) {
     is java.io.IOException -> ProviderError.Network(t.message ?: "I/O error", t)
     else -> ProviderError.Unknown(t.message ?: t::class.java.simpleName, t)
 }
+
+/**
+ * Like [runCatching], but a coroutine cancellation (e.g. a newer search replacing an older one)
+ * is rethrown instead of being turned into a failure that the UI would show as an error.
+ */
+inline fun <T> runCatchingCancellable(block: () -> T): Result<T> = try {
+    Result.success(block())
+} catch (c: kotlinx.coroutines.CancellationException) {
+    throw c
+} catch (t: Throwable) {
+    Result.failure(t)
+}

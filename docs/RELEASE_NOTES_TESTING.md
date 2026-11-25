@@ -1,5 +1,14 @@
 ## MusicFlow — wersja testowa / test build
 
+**Poprawki w beta.14:**
+- Wyszukiwanie: zniknął błąd „Wystąpił nieoczekiwany błąd (… was cancelled)” przy wpisywaniu
+  kolejnego zapytania.
+- Radio: stacje nadające w HLS (np. część stacji AAC 192 kb/s) nie przerywają się już po chwili
+  błędem „Source error”.
+- SoundCloud działa — wyjątkiem są utwory chronione DRM (np. część utworów wytwórni): teraz
+  komunikat mówi to wprost, a kolejka przechodzi do następnego utworu.
+- Ustawienia są dostępne także z Biblioteki i Odkrywaj (ikona koła zębatego).
+
 **Poprawki w beta.13 (radio):**
 - Znajdują się i grają m.in. Sunshine Live, Dance rádio (CZ) i Radio FAMA Kielce. Wyszukiwanie
   rozdziela sklejone słowa („danceradio” → „dance radio”), dokładna nazwa stacji jest pierwsza,

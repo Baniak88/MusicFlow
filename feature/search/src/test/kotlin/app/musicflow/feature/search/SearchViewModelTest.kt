@@ -47,6 +47,8 @@ private class PagedProvider : MusicProvider, SearchProvider {
     fun t(i: Int, title: String = "Song $i") = MediaItemSummary.TrackItem(Track(MediaId("yt:$i"), title, listOf(ArtistRef(null, "A"))))
     override suspend fun search(query: String, filter: SearchFilter, pageToken: String?): SearchPage {
         searchCalls++
+        // Like a blocking network call: it finishes even after its coroutine was cancelled.
+        if (query == "slow") kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { kotlinx.coroutines.delay(1_000) }
         return when (pageToken) {
             null -> SearchPage(query, filter, listOf(t(1), t(2)), "p2", correctedQuery = if (query == "avici") "avicii" else null)
             // Page 2 repeats id 2 and the same song as 1 under another id: both must be dropped.
@@ -91,6 +93,15 @@ class SearchViewModelTest {
     }
 
     @After fun tearDown() { db.close(); Dispatchers.resetMain() }
+
+    /** Reported: typing a new query showed "unexpected error (… was cancelled)". */
+    @Test fun replacedSearchNeverShowsACancellationError() = runTest(dispatcher) {
+        vm.submit("slow"); advanceTimeBy(100)
+        vm.submit("fast"); advanceUntilIdle()
+        assertThat(vm.results.value.error).isNull()
+        assertThat(vm.results.value.query).isEqualTo("fast")
+        assertThat(vm.results.value.items).isNotEmpty()
+    }
 
     @Test fun suggestionsAreDebounced() = runTest(dispatcher) {
         val job = launch { vm.suggestions.collect {} }

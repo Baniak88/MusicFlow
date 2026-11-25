@@ -42,3 +42,40 @@ class SoundCloudPlaybackTest {
         assertThat(PlaybackDataSources.cacheKey(DataSpec.Builder().setUri("https://x/y").setKey("yt:abc:251").build())).isEqualTo("yt:abc:251")
     }
 }
+
+/** Live radio: HLS playlists are never served from the disk cache; HTTP follow-ups only when allowed. */
+@RunWith(RobolectricTestRunner::class)
+class LiveRoutingTest {
+    private val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+    @get:org.junit.Rule val tmp = org.junit.rules.TemporaryFolder()
+
+    private fun read(factory: androidx.media3.datasource.DataSource.Factory, spec: DataSpec): String {
+        val ds = factory.createDataSource()
+        ds.open(spec)
+        val out = java.io.ByteArrayOutputStream(); val buf = ByteArray(1024)
+        while (true) { val n = ds.read(buf, 0, buf.size); if (n < 0) break; out.write(buf, 0, n) }
+        ds.close()
+        return out.toString()
+    }
+
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+    @Test fun livePlaylistsAreRefetchedAndHttpNeedsTheSetting() {
+        okhttp3.mockwebserver.MockWebServer().use { s ->
+            var n = 0
+            s.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+                override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest) = okhttp3.mockwebserver.MockResponse().setBody("#EXTM3U\n#v${++n}\n")
+            }
+            val client = okhttp3.OkHttpClient.Builder().addNetworkInterceptor(app.musicflow.core.network.CleartextGuard()).build()
+            val cache = androidx.media3.datasource.cache.SimpleCache(tmp.newFolder(), androidx.media3.datasource.cache.NoOpCacheEvictor(), androidx.media3.database.StandaloneDatabaseProvider(context))
+            val streams = app.musicflow.playback.stream.StreamRepository({ _, _ -> error("unused") }, { app.musicflow.core.model.AudioQuality.BEST }, app.musicflow.core.common.DiagnosticsLog())
+            var allow = true
+            val factory = PlaybackDataSources.factory(context, client, cache, streams, allowCleartextMedia = { allow })
+            val playlist = DataSpec(Uri.parse(s.url("/live.m3u8").toString()))
+            assertThat(read(factory, playlist)).contains("#v1")
+            assertThat(read(factory, playlist)).contains("#v2") // refreshed, not a stale cached copy
+            allow = false
+            assertThat(runCatching { read(factory, playlist) }.isFailure).isTrue() // plain HTTP refused without the setting
+            cache.release()
+        }
+    }
+}
