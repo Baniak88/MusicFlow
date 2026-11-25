@@ -58,6 +58,20 @@ class SoundCloudLiveTest {
         }
     }
 
+    /** Reported from a phone: "All" search with a Polish locale failed with an unexpected error. */
+    @Test fun allFilterWithPolishLocaleAsOnThePhone() = runBlocking {
+        val pl = SoundCloudProvider(client, DiagnosticsLog(), { Locale.forLanguageTag("pl-PL") })
+        for (filter in SearchFilter.entries) {
+            val r = runCatching { pl.search("Dynamic Waves move on baby", filter) }
+            r.exceptionOrNull()?.let { e ->
+                var c: Throwable? = e; var depth = 0
+                while (c != null && depth < 6) { println("  [$filter] ${"  ".repeat(depth)}${c::class.java.name}: ${c.message?.take(300)}"); c = c.cause; depth++ }
+            }
+            println("$filter: " + (r.getOrNull()?.items?.take(5)?.map { it.title } ?: "FAILED"))
+        }
+        assertThat(runCatching { pl.search("Dynamic Waves move on baby", SearchFilter.ALL) }.isSuccess).isTrue()
+    }
+
     @Test fun metadataPlaylistsArtistsAndRelated() = runBlocking {
         val track = provider.search("odesza say my name", SearchFilter.SONGS).items.tracks().first()
         val full = provider.track(track.id)
