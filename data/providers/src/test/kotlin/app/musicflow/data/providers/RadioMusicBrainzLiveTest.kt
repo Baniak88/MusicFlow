@@ -136,3 +136,29 @@ class RadioSearchDiagnosisLiveTest {
         }
     }
 }
+
+/** Diagnosis: Sunshine Live, Danceradio (CZ), Open FM — listing, formats, bitrates, what the URL returns. */
+class RadioStationsDiagnosisLiveTest {
+    private val client = OkHttpClient.Builder().readTimeout(20, TimeUnit.SECONDS).followRedirects(true).build()
+    @Before fun onlyWhenEnabled() = assumeTrue(System.getProperty("musicflow.liveTests") == "true")
+
+    @Test fun printStations() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; coerceInputValues = true }
+        for (name in listOf("sunshine live", "danceradio", "dance radio", "open fm", "openfm")) {
+            val body = client.newCall(Request.Builder().url("https://de1.api.radio-browser.info/json/stations/search?limit=15&order=clickcount&reverse=true&hidebroken=false&name=" + java.net.URLEncoder.encode(name, "UTF-8"))
+                .header("User-Agent", "MusicFlow/diagnosis").build()).execute().use { it.body!!.string() }
+            val list = json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(app.musicflow.data.providers.radio.RadioStation.serializer()), body)
+            println("[$name] ${list.size}")
+            list.take(10).forEach { s ->
+                val probe = runCatching {
+                    client.newCall(Request.Builder().url(s.urlResolved.ifBlank { s.url }).header("User-Agent", "MusicFlow/diagnosis").header("Icy-MetaData", "1").build()).execute().use { r ->
+                        val bytes = r.body!!.source().let { src -> src.request(512); src.buffer.snapshot(minOf(src.buffer.size, 512L).toInt()).toByteArray() }
+                        val head = String(bytes, Charsets.ISO_8859_1).take(40).replace(Regex("[^\\x20-\\x7E]"), ".")
+                        "HTTP ${r.code} ${r.header("Content-Type")} first='$head'"
+                    }
+                }.getOrElse { "ERR ${it::class.simpleName}: ${it.message?.take(80)}" }
+                println("    ${s.name} | ${s.codec} ${s.bitrate}k hls=${s.hls} ok=${s.lastCheckOk} | ${s.countryCode} | url=${s.url.take(70)} | resolved=${s.urlResolved.take(70)} | $probe")
+            }
+        }
+    }
+}
