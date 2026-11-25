@@ -142,10 +142,10 @@ class MusicBrainzProvider(
         fun next(count: Int, size: Int) = (offset + size).takeIf { size > 0 && it < count }?.toString()
         return when (filter) {
             SearchFilter.SONGS -> get("recording", page, MbRecordingSearch.serializer()).let { r ->
-                SearchPage(q, filter, r.recordings.filter { !it.video }.map { MediaItemSummary.TrackItem(MbMapper.track(it)) }, next(r.count, r.recordings.size))
+                SearchPage(q, filter, MbMapper.rankRecordings(q, r.recordings).map { MediaItemSummary.TrackItem(MbMapper.track(it)) }, next(r.count, r.recordings.size))
             }
             SearchFilter.ALBUMS -> get("release-group", page, MbReleaseGroupSearch.serializer()).let { r ->
-                SearchPage(q, filter, r.releaseGroups.map { MediaItemSummary.AlbumItem(MbMapper.album(it)) }, next(r.count, r.releaseGroups.size))
+                SearchPage(q, filter, MbMapper.rankGroups(q, r.releaseGroups).map { MediaItemSummary.AlbumItem(MbMapper.album(it)) }, next(r.count, r.releaseGroups.size))
             }
             SearchFilter.ARTISTS -> get("artist", page, MbArtistSearch.serializer()).let { r ->
                 SearchPage(q, filter, r.artists.map { MediaItemSummary.ArtistItem(MbMapper.artist(it)) }, next(r.count, r.artists.size))
@@ -154,8 +154,8 @@ class MusicBrainzProvider(
             SearchFilter.ALL -> coroutineScope {
                 // Sequential under the rate limit anyway; artists and albums first, best matches only.
                 val artists = runCatching { get("artist", mapOf("query" to q, "limit" to "3"), MbArtistSearch.serializer()).artists.filter { (it.score ?: 0) >= 90 } }.getOrDefault(emptyList())
-                val songs = async { get("recording", mapOf("query" to q, "limit" to "20"), MbRecordingSearch.serializer()).recordings.filter { !it.video } }
-                val albums = runCatching { get("release-group", mapOf("query" to q, "limit" to "8"), MbReleaseGroupSearch.serializer()).releaseGroups }.getOrDefault(emptyList())
+                val songs = async { MbMapper.rankRecordings(q, get("recording", mapOf("query" to q, "limit" to "40"), MbRecordingSearch.serializer()).recordings).take(20) }
+                val albums = runCatching { MbMapper.rankGroups(q, get("release-group", mapOf("query" to q, "limit" to "15"), MbReleaseGroupSearch.serializer()).releaseGroups).take(8) }.getOrDefault(emptyList())
                 val items = artists.take(2).map { MediaItemSummary.ArtistItem(MbMapper.artist(it)) } +
                     songs.await().map { MediaItemSummary.TrackItem(MbMapper.track(it)) } +
                     albums.map { MediaItemSummary.AlbumItem(MbMapper.album(it)) }
@@ -259,6 +259,31 @@ object MbIds {
 
 internal object MbMapper {
     fun year(date: String?): Int? = date?.take(4)?.toIntOrNull()
+
+    /** Whether the user typed this artist's name (e.g. "karma police radiohead"). */
+    private fun mentions(query: String, credit: String): Boolean {
+        val c = TextMatching.normalize(credit)
+        return c.isNotEmpty() && (" " + TextMatching.normalize(query) + " ").contains(" $c ")
+    }
+
+    /**
+     * MusicBrainz ranks by text score only, so covers and namesakes come first. Re-rank: the
+     * artist the user named first, then (within the same score band) the versions that appear on
+     * the most releases — a good proxy for "the well-known recording". Music videos are dropped.
+     */
+    fun rankRecordings(query: String, items: List<MbRecording>): List<MbRecording> = items.filter { !it.video }
+        .sortedWith(
+            compareByDescending<MbRecording> { mentions(query, credit(it.artistCredit)) }
+                .thenByDescending { (it.score ?: 0) / 10 }
+                .thenByDescending { it.releases.size }
+                .thenByDescending { it.releases.any { r -> r.status == "Official" } },
+        )
+
+    fun rankGroups(query: String, items: List<MbReleaseGroupRef>): List<MbReleaseGroupRef> = items.sortedWith(
+        compareByDescending<MbReleaseGroupRef> { mentions(query, credit(it.artistCredit)) }
+            .thenByDescending { (it.score ?: 0) / 10 }
+            .thenByDescending { it.releases.size },
+    )
 
     fun credit(credits: List<MbCredit>) = credits.joinToString("") { it.name + it.joinPhrase }.trim()
 

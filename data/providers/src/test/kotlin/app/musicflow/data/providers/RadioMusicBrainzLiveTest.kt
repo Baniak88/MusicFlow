@@ -63,8 +63,9 @@ class RadioMusicBrainzLiveTest {
         val mb = MusicBrainzProvider(client, DiagnosticsLog(), null, ua)
         val songs = mb.search("Bohemian Rhapsody Queen", SearchFilter.SONGS).items.tracks()
         println("mb songs: " + songs.take(5).map { "${it.id} ${it.title} / ${it.artistLine} / ${it.album?.title} / ${it.durationMs}" })
-        assertThat(songs).isNotEmpty()
+        assertThat(songs.first().artistLine).isEqualTo("Queen")
         val albums = mb.search("OK Computer", SearchFilter.ALBUMS).items.filterIsInstance<MediaItemSummary.AlbumItem>()
+        assertThat(albums.first().album.artistLine).isEqualTo("Radiohead") // the famous one, not a namesake
         println("mb albums: " + albums.take(3).map { "${it.album.id} ${it.album.title} / ${it.album.artistLine} / ${it.album.year}" })
         val album = mb.album(albums.first().album.id)
         println("mb tracklist: ${album.title} (${album.year}): " + album.tracks.map { it.title })
@@ -88,7 +89,8 @@ class RadioMusicBrainzLiveTest {
             override suspend fun candidates(query: String) = yt.search(query, SearchFilter.SONGS).items.tracks().take(10)
             override suspend fun resolve(id: app.musicflow.core.model.MediaId, quality: AudioQuality) = yt.resolve(id, quality)
         }, ua)
-        val t = mb.search("Karma Police Radiohead", SearchFilter.SONGS).items.tracks().first { (it.durationMs ?: 0) in 250_000..280_000 }
+        val t = mb.search("Karma Police Radiohead", SearchFilter.SONGS).items.tracks().first()
+        assertThat(t.artistLine).isEqualTo("Radiohead")
         val r = runCatching { mb.resolve(t.id, AudioQuality.HIGH) }
         println("mb→yt: ${t.title} / ${t.artistLine} / ${t.durationMs} → ${r.getOrNull()?.codec} ${r.getOrNull()?.bitrateKbps} kbps; error=${r.exceptionOrNull()}")
         // YouTube may rate-limit CI runners; a wrong match must never happen, a block is inconclusive.

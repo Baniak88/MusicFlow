@@ -209,3 +209,19 @@ class MusicBrainzRetryTest {
         }
     }
 }
+
+class MusicBrainzRankingTest {
+    @Test fun namedArtistAndWidelyReleasedVersionsComeFirst() = runBlocking {
+        fun rec(id: String, artist: String, releases: Int) = """{"id":"$id","score":100,"title":"Bohemian Rhapsody","length":354000,
+           "artist-credit":[{"name":"$artist","joinphrase":"","artist":{"id":"a$id","name":"$artist"}}],
+           "releases":[${(1..releases).joinToString(",") { """{"id":"r$id$it","title":"x","status":"Official"}""" }}]}"""
+        val body = """{"count":3,"offset":0,"recordings":[${rec("cover", "Brooklyn Duo", 1)},${rec("live", "Queen", 3)},${rec("orig", "Queen", 40)}]}"""
+        MockWebServer().apply { enqueue(MockResponse().setBody(body)); enqueue(MockResponse().setBody(body)) }.use { s ->
+            val p = MusicBrainzProvider(OkHttpClient(), DiagnosticsLog(), null, "UA", s.url("/ws/2/"), minIntervalMs = 0, clock = { 0L })
+            assertThat(p.search("bohemian rhapsody queen", SearchFilter.SONGS).items.map { it.id.value })
+                .containsExactly("mbr:orig", "mbr:live", "mbr:cover").inOrder()
+            // Without an artist in the query, the most released version still wins over a one-off cover.
+            assertThat(p.search("bohemian rhapsody", SearchFilter.SONGS).items.first().id.value).isEqualTo("mbr:orig")
+        }
+    }
+}
