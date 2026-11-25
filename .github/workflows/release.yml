@@ -31,6 +31,14 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # Stable debug/test signing key, so test builds update in place (no uninstall, library kept).
+      # Kept in the Actions cache (never in git); see BUILD.md.
+      - name: Restore test signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: musicflow-test-signing-key-v1
+
       - name: Derive version from tag
         id: version
         run: |
@@ -57,7 +65,7 @@ jobs:
           MUSICFLOW_KEY_ALIAS: ${{ secrets.MUSICFLOW_KEY_ALIAS }}
           MUSICFLOW_KEY_PASSWORD: ${{ secrets.MUSICFLOW_KEY_PASSWORD }}
         run: |
-          ./gradlew :app:assembleRelease :app:assembleDebug \
+          ./gradlew :app:assembleRelease :app:assembleBeta \
             -PversionName=${{ steps.version.outputs.name }} -PversionCode=${{ github.run_number }} --stacktrace
 
       - name: Collect versioned APKs
@@ -67,8 +75,8 @@ jobs:
           if ls app/build/outputs/apk/release/app-release.apk >/dev/null 2>&1; then
             cp app/build/outputs/apk/release/app-release.apk "dist/MusicFlow-$V.apk"
           else
-            # No signing secrets configured: publish the debug-signed APK, clearly labelled.
-            cp app/build/outputs/apk/debug/app-debug.apk "dist/MusicFlow-$V-debug.apk"
+            # No release signing secrets: publish the optimised test build (".beta", test key).
+            cp app/build/outputs/apk/beta/app-beta.apk "dist/MusicFlow-$V-beta.apk"
           fi
           (cd dist && sha256sum *.apk > SHA256SUMS.txt)
 

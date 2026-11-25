@@ -108,3 +108,15 @@ class SongMergeTest {
         com.google.common.truth.Truth.assertThat(out).hasSize(1)
     }
 }
+
+class ArtistMatchTest {
+    private val m = app.musicflow.data.providers.youtube.ArtistMatch
+    @Test fun matchesCreditsIdsAndArtistPrefixedUploads() {
+        com.google.common.truth.Truth.assertThat(m.creditedTo("Daft Punk", "Discovery", "Daft Punk", "ytch:x", emptyList())).isTrue()
+        com.google.common.truth.Truth.assertThat(m.creditedTo("Daft Punk & Pharrell", "Get Lucky", "Daft Punk", "ytch:x", emptyList())).isTrue()
+        com.google.common.truth.Truth.assertThat(m.creditedTo("Some Channel", "Daft Punk - Veridis Quo", "Daft Punk", "ytch:x", emptyList())).isTrue()
+        com.google.common.truth.Truth.assertThat(m.creditedTo("Other", "Anything", "Daft Punk", "ytch:x", listOf("ytch:x"))).isTrue()
+        com.google.common.truth.Truth.assertThat(m.creditedTo("Daft Punk Tribute Band", "Around", "Daft Punk", "ytch:x", emptyList())).isFalse()
+        com.google.common.truth.Truth.assertThat(m.creditedTo("Random", "Punk covers", "Daft Punk", "ytch:x", emptyList())).isFalse()
+    }
+}

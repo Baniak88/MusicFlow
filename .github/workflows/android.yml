@@ -36,6 +36,14 @@ jobs:
       - name: Set up Gradle (with dependency cache)
         uses: gradle/actions/setup-gradle@v4
 
+      # Stable debug/test signing key, so test builds update in place (no uninstall, library kept).
+      # Kept in the Actions cache (never in git); see BUILD.md.
+      - name: Restore test signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: musicflow-test-signing-key-v1
+
       - name: Lint
         run: ./gradlew lint --stacktrace
 

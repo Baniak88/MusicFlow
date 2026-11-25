@@ -4,11 +4,11 @@
 
 1. Otwórz na telefonie stronę **Releases** repozytorium i wybierz najnowszą wersję oznaczoną
    jako *Pre-release*.
-2. Pobierz plik `MusicFlow-<wersja>-debug.apk` (lub `MusicFlow-<wersja>.apk`).
+2. Pobierz plik `MusicFlow-<wersja>-beta.apk` (lub `MusicFlow-<wersja>.apk`).
 3. Otwórz pobrany plik. Jeśli Android zapyta, zezwól przeglądarce/menedżerowi plików na
    *instalowanie nieznanych aplikacji*.
 4. Wymagany jest Android 9 lub nowszy. Wersja testowa instaluje się jako osobna aplikacja
-   „MusicFlow” (identyfikator `app.musicflow.debug`).
+   „MusicFlow” (identyfikator `app.musicflow.beta`).
 
 Alternatywa: zakładka **Actions → Android CI → najnowsze uruchomienie → Artifacts →
 `MusicFlow-debug-<numer>`** (plik ZIP z APK, wymaga zalogowania do GitHuba).

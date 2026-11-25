@@ -8,6 +8,14 @@
    `SHA256SUMS.txt` to a GitHub Release.
 3. **Device tests (emulator)** (manual / weekly) runs instrumented tests on API 28 and 34 emulators.
 
+### Test builds update in place
+
+Test APKs (`-debug`) are signed with a test key that CI keeps in the GitHub Actions cache
+(`musicflow-test-signing-key-v1`, never in git), so a newer test build installs over the old one
+and the library is kept. The cache is evicted after 7 days without any CI run; then a new key
+is generated and testers must uninstall once. For permanent, update-safe builds use the release
+signing secrets below.
+
 ### Signed release builds
 
 Create a keystore once (never commit it):

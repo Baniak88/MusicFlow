@@ -250,7 +250,7 @@ class YouTubeMusicProvider(
         val artist = Artist(id, name, YouTubeMapper.bestImage(info.avatars), info.subscriberCount.takeIf { it > 0 })
 
         val releases = async {
-            runCatching {
+            val fromTab = runCatching {
                 io("artist.releases") {
                     val tab = info.tabs.firstOrNull { ChannelTabs.ALBUMS in it.contentFilters } ?: return@io emptyList()
                     ChannelTabInfo.getInfo(s, tab).relatedItems.filterIsInstance<PlaylistInfoItem>().mapNotNull { item ->
@@ -258,12 +258,23 @@ class YouTubeMusicProvider(
                     }
                 }
             }.getOrDefault(emptyList())
+            // Artist channels often expose no "Releases" tab through the extractor: fall back to an
+            // album search, keeping only albums credited to this artist.
+            fromTab.ifEmpty {
+                runCatching {
+                    io("artist.albumSearch") {
+                        searchWith(name, YoutubeSearchQueryHandlerFactory.MUSIC_ALBUMS, SearchFilter.ALBUMS, null).items
+                            .filterIsInstance<MediaItemSummary.AlbumItem>().map { it.album }
+                            .filter { a -> ArtistMatch.creditedTo(a.artistLine, a.title, name, id.value, a.artists.mapNotNull { it.id }) }
+                    }
+                }.getOrDefault(emptyList())
+            }
         }
         val top = async {
             runCatching {
                 searchOnce(name, SearchFilter.SONGS, null).items
                     .filterIsInstance<MediaItemSummary.TrackItem>().map { it.track }
-                    .filter { t -> t.artists.any { TextMatching.similarity(it.name, name) > 0.8 || it.id == id.value } }
+                    .filter { t -> ArtistMatch.creditedTo(t.artistLine, t.title, name, id.value, t.artists.mapNotNull { it.id }) }
                     .take(20)
             }.getOrDefault(emptyList())
         }

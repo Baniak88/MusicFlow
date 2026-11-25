@@ -11,7 +11,7 @@ wyszukiwanie po wklejonym linku, zmiana jakości bezpośrednio w odtwarzaczu, pr
 
 **EN:** Test build (pre-release). Download the `MusicFlow-*.apk` below and install it on
 Android 9+. See the tester guide (docs/TESTY.md, Polish) and TESTING.md for the full test plan.
-A `-debug` APK is signed with a CI test key; uninstall the previous test build before
+A `-beta` APK is signed with a CI test key; uninstall the previous test build before
 installing a newer one if Android refuses the update.
 
 `SHA256SUMS.txt` contains checksums of the attached files.
