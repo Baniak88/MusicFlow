@@ -142,12 +142,14 @@ class MusicBrainzProvider(
         // Free text searches only titles by default; also match the artist field, so
         // "karma police radiohead" finds Radiohead's recording rather than covers titled "Radiohead - …".
         val terms = MbMapper.luceneTerms(q)
-        val recQuery = page + ("query" to "recording:($terms)^2 OR artist:($terms)")
+        // Recordings: fetch the API maximum and rank it, so the well-known version is among them
+        // (a famous song has hundreds of live takes, remasters and karaoke recordings).
+        val recQuery = page + ("query" to "recording:($terms)^2 OR artist:($terms)") + ("limit" to RECORDING_PAGE.toString())
         val rgQuery = page + ("query" to "releasegroup:($terms)^2 OR artist:($terms)")
         fun next(count: Int, size: Int) = (offset + size).takeIf { size > 0 && it < count }?.toString()
         return when (filter) {
             SearchFilter.SONGS -> get("recording", recQuery, MbRecordingSearch.serializer()).let { r ->
-                SearchPage(q, filter, MbMapper.rankRecordings(q, r.recordings).map { MediaItemSummary.TrackItem(MbMapper.track(it)) }, next(r.count, r.recordings.size))
+                SearchPage(q, filter, MbMapper.rankRecordings(q, r.recordings).take(PAGE).map { MediaItemSummary.TrackItem(MbMapper.track(it)) }, next(r.count, r.recordings.size))
             }
             SearchFilter.ALBUMS -> get("release-group", rgQuery, MbReleaseGroupSearch.serializer()).let { r ->
                 SearchPage(q, filter, MbMapper.rankGroups(q, r.releaseGroups).map { MediaItemSummary.AlbumItem(MbMapper.album(it)) }, next(r.count, r.releaseGroups.size))
@@ -159,7 +161,7 @@ class MusicBrainzProvider(
             SearchFilter.ALL -> coroutineScope {
                 // Sequential under the rate limit anyway; artists and albums first, best matches only.
                 val artists = runCatching { get("artist", mapOf("query" to q, "limit" to "3"), MbArtistSearch.serializer()).artists.filter { (it.score ?: 0) >= 90 } }.getOrDefault(emptyList())
-                val songs = async { MbMapper.rankRecordings(q, get("recording", recQuery + ("limit" to "40") + ("offset" to "0"), MbRecordingSearch.serializer()).recordings).take(20) }
+                val songs = async { MbMapper.rankRecordings(q, get("recording", recQuery + ("offset" to "0"), MbRecordingSearch.serializer()).recordings).take(20) }
                 val albums = runCatching { MbMapper.rankGroups(q, get("release-group", rgQuery + ("limit" to "15") + ("offset" to "0"), MbReleaseGroupSearch.serializer()).releaseGroups).take(8) }.getOrDefault(emptyList())
                 val items = artists.take(2).map { MediaItemSummary.ArtistItem(MbMapper.artist(it)) } +
                     songs.await().map { MediaItemSummary.TrackItem(MbMapper.track(it)) } +
@@ -239,6 +241,7 @@ class MusicBrainzProvider(
 
     companion object {
         const val PAGE = 25
+        const val RECORDING_PAGE = 100
         private const val MAX_RETRIES = 3
         private val SKIP_SECONDARY = setOf("Compilation", "Live", "Remix", "DJ-mix", "Mixtape/Street", "Interview", "Audiobook", "Spokenword", "Demo")
 
