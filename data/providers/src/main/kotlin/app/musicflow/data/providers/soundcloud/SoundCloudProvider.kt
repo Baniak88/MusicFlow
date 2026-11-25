@@ -63,6 +63,8 @@ class SoundCloudProvider(
     private val diagnostics: DiagnosticsLog,
     private val locale: () -> Locale = { Locale.getDefault() },
     private val countryOverride: () -> String? = { null },
+    /** Plays the same recording elsewhere (YouTube Music) when SoundCloud only offers DRM streams. */
+    private val fallback: app.musicflow.data.providers.api.AudioMatcher? = null,
 ) : MusicProvider, SearchProvider, MetadataProvider, StreamResolver, RecommendationProvider, PlaylistProvider {
 
     override val id = SoundCloudIds.TRACK
@@ -263,11 +265,21 @@ class SoundCloudProvider(
 
     override fun canResolve(id: MediaId) = id.providerId == SoundCloudIds.TRACK
 
-    override suspend fun resolve(id: MediaId, quality: AudioQuality): ResolvedStream = io("resolve") {
-        val chosen = select(extractor(id).audioStreams, quality)
-            ?: throw ProviderError.Unavailable("SoundCloud returned no playable audio stream for this track")
+    override suspend fun resolve(id: MediaId, quality: AudioQuality): ResolvedStream {
+        val (track, chosen) = io("resolve") { extractor(id).let { e -> trackFrom(e, id) to select(e.audioStreams, quality) } }
+        if (chosen != null) return streamOf(id, chosen)
+        // Monetised label tracks are often served only as DRM-encrypted HLS, which MusicFlow does
+        // not (and must not) decrypt. Play the identical recording elsewhere, or say why not.
+        val f = fallback ?: throw ProviderError.Unavailable(DRM_MESSAGE)
+        val match = runCatching { app.musicflow.data.providers.api.AudioMatch.best(track, f.candidates("${track.primaryArtist.orEmpty()} ${track.title}".trim())) }
+            .getOrNull() ?: throw ProviderError.Unavailable("$DRM_MESSAGE; no identical recording was found on ${f.name}")
+        diagnostics.i("soundcloud", "DRM-only on SoundCloud: playing ${track.title} via ${match.id}")
+        return f.resolve(match.id, quality).copy(mediaId = id, cacheKey = f.name + ":" + match.id.key)
+    }
+
+    private fun streamOf(id: MediaId, chosen: AudioStream): ResolvedStream {
         val url = chosen.content
-        ResolvedStream(
+        return ResolvedStream(
             mediaId = id,
             url = url,
             mimeType = "application/x-mpegURL",
@@ -282,6 +294,8 @@ class SoundCloudProvider(
             isHls = true,
         )
     }
+
+    private val DRM_MESSAGE = "SoundCloud only offers this track with DRM encryption, which MusicFlow cannot play"
 
     override suspend fun related(seed: MediaId, limit: Int): List<Track> {
         if (seed.providerId != SoundCloudIds.TRACK) return emptyList()

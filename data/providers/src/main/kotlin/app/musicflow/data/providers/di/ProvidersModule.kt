@@ -29,7 +29,8 @@ object ProvidersModule {
     fun youTube(client: OkHttpClient, diagnostics: DiagnosticsLog) = YouTubeMusicProvider(client, diagnostics)
 
     @Provides @Singleton
-    fun soundCloud(client: OkHttpClient, diagnostics: DiagnosticsLog) = SoundCloudProvider(client, diagnostics)
+    fun soundCloud(client: OkHttpClient, diagnostics: DiagnosticsLog, youTube: YouTubeMusicProvider, registry: javax.inject.Provider<ProviderRegistry>) =
+        SoundCloudProvider(client, diagnostics, fallback = youTubeMatcher(youTube, registry))
 
     @Provides @IntoSet
     fun bindSoundCloud(p: SoundCloudProvider): MusicProvider = p
@@ -46,20 +47,23 @@ object ProvidersModule {
         registry: javax.inject.Provider<ProviderRegistry>,
     ) = MusicBrainzProvider(
         client, diagnostics,
-        audio = object : MusicBrainzProvider.AudioMatcher {
-            override val name = youTube.id
-            private fun check() {
-                if (!registry.get().isEnabled(youTube.id)) throw app.musicflow.core.model.ProviderError.NotSupported("MusicBrainz tracks play via YouTube Music, which is turned off")
-            }
-            override suspend fun candidates(query: String): List<app.musicflow.core.model.Track> {
-                check()
-                return youTube.search(query, app.musicflow.core.model.SearchFilter.SONGS).items
-                    .filterIsInstance<app.musicflow.core.model.MediaItemSummary.TrackItem>().map { it.track }.take(10)
-            }
-            override suspend fun resolve(id: app.musicflow.core.model.MediaId, quality: app.musicflow.core.model.AudioQuality) = check().let { youTube.resolve(id, quality) }
-        },
+        audio = youTubeMatcher(youTube, registry),
         userAgent = userAgent(appInfo),
     )
+
+    /** Finds the same recording on YouTube Music (only while YouTube Music is enabled). */
+    private fun youTubeMatcher(youTube: YouTubeMusicProvider, registry: javax.inject.Provider<ProviderRegistry>) = object : app.musicflow.data.providers.api.AudioMatcher {
+        override val name = "YouTube Music"
+        private fun check() {
+            if (!registry.get().isEnabled(youTube.id)) throw app.musicflow.core.model.ProviderError.NotSupported("This track plays via YouTube Music, which is turned off")
+        }
+        override suspend fun candidates(query: String): List<app.musicflow.core.model.Track> {
+            check()
+            return youTube.search(query, app.musicflow.core.model.SearchFilter.SONGS).items
+                .filterIsInstance<app.musicflow.core.model.MediaItemSummary.TrackItem>().map { it.track }.take(10)
+        }
+        override suspend fun resolve(id: app.musicflow.core.model.MediaId, quality: app.musicflow.core.model.AudioQuality) = check().let { youTube.resolve(id, quality) }
+    }
 
     /** Identifying User-Agent, as MusicBrainz and Radio Browser ask API clients to send. */
     private fun userAgent(appInfo: AppInfo) = "MusicFlow/${appInfo.versionName} ( https://github.com/${appInfo.updateRepo} )"

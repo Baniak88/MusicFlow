@@ -16,6 +16,14 @@ versioning: [SemVer](https://semver.org).
 - Search source chips now: YouTube Music · SoundCloud · Radio Browser · MusicBrainz; switches for
   each in Settings → Providers.
 
+### Fixed
+- **SoundCloud tracks that "are unavailable"**: monetised label tracks are served by SoundCloud
+  only as DRM-encrypted HLS (`cbc/ctr-encrypted-hls`), which MusicFlow does not decrypt. They now
+  play the identical recording from YouTube Music when title, artist and duration agree; otherwise
+  the message says the track is DRM-protected. Queue items are re-typed (HLS ↔ file) to match the
+  stream actually returned.
+- History: tapping a song plays it and then the following songs of the list.
+
 ## [1.0.0-beta.10] - 2026-11-25
 
 ### Fixed

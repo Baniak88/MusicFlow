@@ -39,6 +39,22 @@ object MediaItems {
         else -> false
     }
 
+    /** Whether [item] is queued for an HLS media source. */
+    fun isQueuedAsHls(item: MediaItem) = item.localConfiguration?.mimeType == MimeTypes.APPLICATION_M3U8
+
+    /**
+     * Same item re-queued for the stream type that resolution actually returned (e.g. a DRM-only
+     * SoundCloud track played from YouTube Music is a plain file, not HLS). The URI changes too,
+     * so the player builds a new media source for it.
+     */
+    fun withStreamType(item: MediaItem, hls: Boolean): MediaItem {
+        val uri = item.localConfiguration?.uri ?: return item
+        return item.buildUpon()
+            .setMimeType(if (hls) MimeTypes.APPLICATION_M3U8 else null)
+            .setUri(uri.buildUpon().appendQueryParameter("type", if (hls) "hls" else "file").build())
+            .build()
+    }
+
     fun toMediaItem(track: Track): MediaItem {
         val extras = Bundle().apply { putString(EXTRA_TRACK, json.encodeToString(Track.serializer(), track)) }
         val isHls = isHlsSource(track.id)

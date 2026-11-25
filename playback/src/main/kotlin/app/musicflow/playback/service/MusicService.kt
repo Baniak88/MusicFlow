@@ -362,6 +362,14 @@ class MusicService : MediaLibraryService() {
     // ---------------------------------------------------------------- errors & recovery
 
     private fun handleError(error: PlaybackException) {
+        // A stream of another type than queued (HLS vs file): fix the item and retry, no error shown.
+        player.currentMediaItem?.let { item ->
+            val id = MediaId.parseOrNull(item.mediaId)
+            val cached = id?.let { kotlinx.coroutines.runBlocking { streams.cached(it) } }
+            if (cached != null && MediaItems.isQueuedAsHls(item) != cached.isHls &&
+                fixStreamType(player.currentMediaItemIndex, item.mediaId, cached.isHls, current = true)
+            ) return
+        }
         val chain = generateSequence<Throwable>(error) { it.cause }.toList()
         val provider = chain.firstNotNullOfOrNull { (it as? StreamResolutionException)?.error }
         val http = chain.firstNotNullOfOrNull { it as? HttpDataSource.InvalidResponseCodeException }
@@ -499,9 +507,29 @@ class MusicService : MediaLibraryService() {
     /** Resolves the next track's stream URL in advance so the transition is seamless. */
     private fun prefetchNext() {
         if (!player.hasNextMediaItem()) return
-        val next = player.getMediaItemAt(player.nextMediaItemIndex)
+        val index = player.nextMediaItemIndex
+        val next = player.getMediaItemAt(index)
         val id = MediaId.parseOrNull(next.mediaId) ?: return
-        appScope.launch(Dispatchers.IO) { runCatching { streams.resolve(id, MediaItems.toTrack(next)) } }
+        appScope.launch(Dispatchers.IO) {
+            val stream = runCatching { streams.resolve(id, MediaItems.toTrack(next)) }.getOrNull() ?: return@launch
+            scope.launch { fixStreamType(index, id.value, stream.isHls, current = false) }
+        }
+    }
+
+    /**
+     * Re-queues an item whose resolved stream type differs from how it was queued (HLS vs file),
+     * e.g. a DRM-only SoundCloud track that plays from YouTube Music. Returns true if changed.
+     */
+    private fun fixStreamType(index: Int, mediaId: String, hls: Boolean, current: Boolean): Boolean {
+        if (index !in 0 until player.mediaItemCount) return false
+        val item = player.getMediaItemAt(index)
+        if (item.mediaId != mediaId || MediaItems.isQueuedAsHls(item) == hls) return false
+        val position = if (current) player.currentPosition else 0
+        if (current) reloadingIndex = index
+        player.replaceMediaItem(index, MediaItems.withStreamType(item, hls))
+        if (current) { player.seekTo(index, position); player.prepare(); player.play() }
+        diagnostics.i("playback", "Re-queued ${item.mediaId} as ${if (hls) "HLS" else "file"} stream")
+        return true
     }
 
     private fun schedulePersist() {

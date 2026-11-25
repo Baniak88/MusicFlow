@@ -96,7 +96,7 @@ class RadioBrowserTest {
 
 class MusicBrainzTest {
     private var now = 0L
-    private fun provider(s: MockWebServer, audio: MusicBrainzProvider.AudioMatcher? = null) =
+    private fun provider(s: MockWebServer, audio: app.musicflow.data.providers.api.AudioMatcher? = null) =
         MusicBrainzProvider(OkHttpClient(), DiagnosticsLog(), audio, "UA-test", s.url("/ws/2/"), minIntervalMs = 1_000, clock = { now })
 
     private val recordings = """{"count":2,"offset":0,"recordings":[
@@ -167,7 +167,7 @@ class MusicBrainzTest {
     @Test fun noReliableMatchIsReportedNotGuessed() = runBlocking {
         MockWebServer().apply { enqueue(MockResponse().setBody("""{"id":"r1","title":"Karma Police","length":264066,"artist-credit":[{"name":"Radiohead","joinphrase":"","artist":{"id":"a1","name":"Radiohead"}}]}""")) }.use { s ->
             var resolved = false
-            val audio = object : MusicBrainzProvider.AudioMatcher {
+            val audio = object : app.musicflow.data.providers.api.AudioMatcher {
                 override val name = "yt"
                 override suspend fun candidates(query: String) = listOf(track("Karma Police (cover)", "Some Band", 262_000))
                 override suspend fun resolve(id: MediaId, quality: AudioQuality): ResolvedStream { resolved = true; error("must not be called") }

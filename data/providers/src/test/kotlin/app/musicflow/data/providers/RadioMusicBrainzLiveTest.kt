@@ -84,7 +84,7 @@ class RadioMusicBrainzLiveTest {
     /** End to end: a MusicBrainz recording played through a reliable YouTube Music match. */
     @Test fun musicBrainzTrackPlaysViaYouTubeMatch() = mbOrSkip {
         val yt = YouTubeMusicProvider(client, DiagnosticsLog(), { Locale.US })
-        val mb = MusicBrainzProvider(client, DiagnosticsLog(), object : MusicBrainzProvider.AudioMatcher {
+        val mb = MusicBrainzProvider(client, DiagnosticsLog(), object : app.musicflow.data.providers.api.AudioMatcher {
             override val name = "yt"
             override suspend fun candidates(query: String) = yt.search(query, SearchFilter.SONGS).items.tracks().take(10)
             override suspend fun resolve(id: app.musicflow.core.model.MediaId, quality: AudioQuality) = yt.resolve(id, quality)

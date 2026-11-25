@@ -88,9 +88,11 @@ fun LibrarySectionScreen(contentPadding: PaddingValues, vm: LibrarySectionViewMo
             is SectionContent.History -> {
                 if (c.entries.isEmpty()) item { MessageState(stringResource(R.string.lib_section_empty)) }
                 val fmt = DateFormat.getDateInstance(DateFormat.MEDIUM)
+                // Tapping a song plays it and then the following songs of the list (not just one).
+                val all = c.entries.map { it.track }
                 c.entries.groupBy { fmt.format(Date(it.playedAt)) }.forEach { (day, list) ->
                     item(key = "d$day") { Text(day, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)) }
-                    items(list, key = { "e${it.eventId}" }) { e -> TrackRow(e.track, onClick = { vm.play(listOf(e.track), 0) }, onMore = { menu.open(e.track) }) }
+                    items(list, key = { "e${it.eventId}" }) { e -> TrackRow(e.track, onClick = { vm.play(all, c.entries.indexOf(e), source = title) }, onMore = { menu.open(e.track) }) }
                 }
             }
         }

@@ -53,19 +53,12 @@ class MusicBrainzProvider(
     private val client: OkHttpClient,
     private val diagnostics: DiagnosticsLog,
     /** Finds and plays a matching recording (YouTube Music); null disables playback. */
-    private val audio: AudioMatcher?,
+    private val audio: app.musicflow.data.providers.api.AudioMatcher?,
     private val userAgent: String = "MusicFlow/1.0 ( https://github.com/Baniak88/MusicFlow )",
     private val base: HttpUrl = "https://musicbrainz.org/ws/2/".toHttpUrl(),
     private val minIntervalMs: Long = 1_100,
     private val clock: () -> Long = { android.os.SystemClock.elapsedRealtime() },
 ) : MusicProvider, SearchProvider, MetadataProvider, StreamResolver {
-
-    /** Searches another provider for a recording and resolves its stream. */
-    interface AudioMatcher {
-        val name: String
-        suspend fun candidates(query: String): List<Track>
-        suspend fun resolve(id: MediaId, quality: AudioQuality): ResolvedStream
-    }
 
     override val id = MbIds.RECORDING
     override val displayName = "MusicBrainz"
@@ -252,12 +245,7 @@ class MusicBrainzProvider(
         private val SKIP_SECONDARY = setOf("Compilation", "Live", "Remix", "DJ-mix", "Mixtape/Street", "Interview", "Audiobook", "Spokenword", "Demo")
 
         /** First candidate that is the same recording (title, artist and duration agree). */
-        fun bestMatch(t: Track, candidates: List<Track>): Track? = candidates.firstOrNull { c ->
-            val titles = listOf(c.title, c.title.substringAfter(" - ", c.title))
-            titles.any { title ->
-                TextMatching.isReliableMatch(t.title, t.primaryArtist, t.durationMs, title, c.artistLine.ifEmpty { null }, c.durationMs, durationToleranceMs = 7_000)
-            }
-        }
+        fun bestMatch(t: Track, candidates: List<Track>): Track? = app.musicflow.data.providers.api.AudioMatch.best(t, candidates)
     }
 }
 

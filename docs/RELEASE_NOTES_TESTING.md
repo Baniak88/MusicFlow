@@ -11,6 +11,11 @@
   aktywności, gatunki). Utwory z MusicBrainz grają przez YouTube Music tylko wtedy, gdy tytuł,
   wykonawca i długość się zgadzają — inaczej aplikacja uczciwie mówi, że nie znalazła nagrania.
 - Każde źródło można wyłączyć w Ustawieniach → Źródła muzyki.
+- **SoundCloud „Ta zawartość jest niedostępna”:** część utworów (np. wydawanych przez wytwórnie)
+  SoundCloud udostępnia wyłącznie z zabezpieczeniem DRM, którego MusicFlow nie łamie. Takie utwory
+  grają teraz to samo nagranie z YouTube Music (gdy zgadza się tytuł, wykonawca i długość);
+  w przeciwnym razie komunikat wyjaśnia, że utwór jest chroniony DRM.
+- Historia: po stuknięciu utworu grają też kolejne z listy.
 
 **Poprawki w beta.10:**
 - SoundCloud: wyszukiwanie nie kończy się już błędem „Wystąpił nieoczekiwany błąd”, gdy w którejś

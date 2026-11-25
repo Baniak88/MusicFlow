@@ -87,6 +87,15 @@ class SoundCloudLiveTest {
             println("  transcoding: preset=${it.groupValues[1]} snipped=${it.groupValues[2]} protocol=${it.groupValues[3]} mime=${it.groupValues[4]}")
         }
         println("  policy=" + Regex(""""policy":"([^"]*)"""").find(raw)?.groupValues?.get(1) + " monetization=" + Regex(""""monetization_model":"([^"]*)"""").find(raw)?.groupValues?.get(1))
+        // With the YouTube fallback, a DRM-only track plays the identical recording (if one exists).
+        val yt = app.musicflow.data.providers.youtube.YouTubeMusicProvider(client, DiagnosticsLog(), { Locale.US })
+        val withFallback = SoundCloudProvider(client, DiagnosticsLog(), { Locale.US }, fallback = object : app.musicflow.data.providers.api.AudioMatcher {
+            override val name = "YouTube Music"
+            override suspend fun candidates(query: String) = yt.search(query, SearchFilter.SONGS).items.tracks().take(10)
+            override suspend fun resolve(id: app.musicflow.core.model.MediaId, quality: AudioQuality) = yt.resolve(id, quality)
+        })
+        val viaYt = runCatching { withFallback.resolve(t.id, AudioQuality.BEST) }
+        println("reported fallback: ${viaYt.getOrNull()?.codec} ${viaYt.getOrNull()?.bitrateKbps} error=${viaYt.exceptionOrNull()}")
     }
 
     @Test fun metadataPlaylistsArtistsAndRelated() = runBlocking {
