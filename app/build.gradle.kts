@@ -20,6 +20,9 @@ val keystoreProps = Properties().apply {
 fun signingValue(env: String, prop: String): String? = System.getenv(env)?.takeIf { it.isNotBlank() } ?: keystoreProps.getProperty(prop)
 val releaseStoreFile = signingValue("MUSICFLOW_KEYSTORE_PATH", "storeFile")
 val hasReleaseSigning = releaseStoreFile != null && file(releaseStoreFile).exists()
+// Stable *test* key for beta builds (CI keeps it in the Actions cache; never in git). Without it,
+// beta builds fall back to the machine's debug key, which cannot update a CI-built beta.
+val testStoreFile = System.getenv("MUSICFLOW_TEST_KEYSTORE")?.takeIf { it.isNotBlank() && file(it).exists() }
 
 android {
     namespace = "app.musicflow"
@@ -35,6 +38,14 @@ android {
     }
 
     signingConfigs {
+        if (testStoreFile != null) {
+            create("test") {
+                storeFile = file(testStoreFile)
+                storePassword = "musicflow-test"
+                keyAlias = "musicflow-test"
+                keyPassword = "musicflow-test"
+            }
+        }
         if (hasReleaseSigning) {
             create("release") {
                 storeFile = file(releaseStoreFile!!)
@@ -62,7 +73,7 @@ android {
             initWith(getByName("release"))
             applicationIdSuffix = ".beta"
             versionNameSuffix = "-beta"
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (testStoreFile != null) "test" else "debug")
             matchingFallbacks += listOf("release")
         }
     }

@@ -9,6 +9,9 @@
    *instalowanie nieznanych aplikacji*.
 4. Wymagany jest Android 9 lub nowszy. Wersja testowa instaluje się jako osobna aplikacja
    „MusicFlow” (identyfikator `app.musicflow.beta`).
+5. **Aktualizacja:** od wersji beta.7 nowszą wersję instalujesz na starszą, bez
+   odinstalowywania (biblioteka zostaje). Przy przejściu z beta.6 lub starszej na beta.7 trzeba
+   jeden raz odinstalować starą wersję (wcześniej każda wersja miała inny podpis).
 
 Alternatywa: zakładka **Actions → Android CI → najnowsze uruchomienie → Artifacts →
 `MusicFlow-debug-<numer>`** (plik ZIP z APK, wymaga zalogowania do GitHuba).

@@ -38,11 +38,12 @@ jobs:
 
       # Stable debug/test signing key, so test builds update in place (no uninstall, library kept).
       # Kept in the Actions cache (never in git); see BUILD.md.
+      # Read-only: only release.yml creates the key. Debug APKs here keep the throwaway debug key.
       - name: Restore test signing key
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.android/debug.keystore
-          key: musicflow-test-signing-key-v1
+          path: ~/.musicflow-test-key/test.jks
+          key: musicflow-test-signing-key-v2
 
       - name: Lint
         run: ./gradlew lint --stacktrace

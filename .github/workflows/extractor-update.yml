@@ -46,6 +46,14 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # Touching the test signing key every 6 h keeps it from being evicted from the Actions
+      # cache (entries unused for 7 days are deleted, which would break in-place updates).
+      - name: Keep test signing key alive
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.musicflow-test-key/test.jks
+          key: musicflow-test-signing-key-v2
+
       - name: Versions
         id: v
         run: |

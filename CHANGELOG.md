@@ -3,6 +3,15 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.7] - 2026-11-25
+
+### Fixed
+- **Updates install over the previous version again.** The CI test signing key was never
+  persisted, so every beta up to beta.6 was signed with a different key and Android refused to
+  update. Betas now use a dedicated, cached test key; the release workflow verifies the
+  certificate against the previous beta and refuses to publish on a mismatch. One last
+  uninstall is needed when moving from beta.6 or older to beta.7.
+
 ## [1.0.0-beta.6] - 2026-11-25
 
 ### Fixed

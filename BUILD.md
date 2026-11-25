@@ -10,11 +10,19 @@
 
 ### Test builds update in place
 
-Test APKs (`-debug`) are signed with a test key that CI keeps in the GitHub Actions cache
-(`musicflow-test-signing-key-v1`, never in git), so a newer test build installs over the old one
-and the library is kept. The cache is evicted after 7 days without any CI run; then a new key
-is generated and testers must uninstall once. For permanent, update-safe builds use the release
-signing secrets below.
+Beta APKs (`-beta.apk`) are signed with a dedicated test key that `release.yml` keeps in the
+GitHub Actions cache (`musicflow-test-signing-key-v2`, path `~/.musicflow-test-key/test.jks`,
+never in git) and passes to Gradle via `MUSICFLOW_TEST_KEYSTORE`. Safeguards:
+
+* `release.yml` **refuses to publish** a beta whose certificate differs from the previous beta
+  release (checked with `apksigner`), and never creates a new key unless dispatched with
+  `new_signing_key: true` (first setup or a lost key — testers then uninstall once).
+* `extractor-update.yml` restores the key every 6 h, so the cache entry is never evicted for
+  inactivity (GitHub deletes entries unused for 7 days).
+
+Until 1.0.0-beta.6 the key was not actually persisted (AGP wrote its debug key elsewhere), so
+each of those betas had a different signature. For permanent builds use the release signing
+secrets below.
 
 ### Signed release builds
 

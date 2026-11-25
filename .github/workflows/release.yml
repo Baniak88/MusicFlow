@@ -9,6 +9,10 @@ on:
       version:
         description: "Version tag to create, e.g. v1.0.0-beta.1 (a '-' suffix marks a pre-release)"
         required: true
+      new_signing_key:
+        description: "Allow a NEW test signing key (testers must uninstall once). Only for first setup or a lost key."
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -31,13 +35,39 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Stable debug/test signing key, so test builds update in place (no uninstall, library kept).
-      # Kept in the Actions cache (never in git); see BUILD.md.
+      # Stable test signing key, so beta builds update in place (no uninstall, library kept).
+      # Kept in the Actions cache (never in git); see BUILD.md. A missing key is never silently
+      # replaced: that would force every tester to uninstall.
       - name: Restore test signing key
-        uses: actions/cache@v4
+        id: testkey
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.android/debug.keystore
-          key: musicflow-test-signing-key-v1
+          path: ~/.musicflow-test-key/test.jks
+          key: musicflow-test-signing-key-v2
+
+      - name: Create test signing key (first setup only)
+        if: steps.testkey.outputs.cache-hit != 'true'
+        run: |
+          if [ "${{ github.event.inputs.new_signing_key }}" != "true" ]; then
+            echo "::error::Test signing key not found in the Actions cache. Publishing with a new key would force testers to uninstall. Re-run with new_signing_key=true only if that is intended."
+            exit 1
+          fi
+          mkdir -p ~/.musicflow-test-key
+          keytool -genkeypair -keystore ~/.musicflow-test-key/test.jks -storetype PKCS12 \
+            -alias musicflow-test -storepass musicflow-test -keypass musicflow-test \
+            -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=MusicFlow test builds"
+
+      - name: Save new test signing key
+        if: steps.testkey.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.musicflow-test-key/test.jks
+          key: musicflow-test-signing-key-v2
+
+      - name: Use test signing key
+        run: |
+          test -s ~/.musicflow-test-key/test.jks
+          echo "MUSICFLOW_TEST_KEYSTORE=$HOME/.musicflow-test-key/test.jks" >> "$GITHUB_ENV"
 
       - name: Derive version from tag
         id: version
@@ -79,6 +109,30 @@ jobs:
             cp app/build/outputs/apk/beta/app-beta.apk "dist/MusicFlow-$V-beta.apk"
           fi
           (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+
+      # Guard: a beta must be signed like the previous beta, or it cannot install as an update.
+      - name: Check signature matches the previous beta
+        if: hashFiles('dist/*-beta.apk') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          cert() { "$APKSIGNER" verify --print-certs "$1" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1; }
+          NEW=$(cert dist/*-beta.apk)
+          echo "New beta certificate SHA-256: $NEW"
+          PREV=$(gh api "repos/${{ github.repository }}/releases?per_page=20" --jq '[.[] | select(.draft|not) | select(.assets[]?.name | endswith("-beta.apk"))][0].tag_name // empty')
+          if [ -z "$PREV" ]; then echo "No previous beta release."; exit 0; fi
+          mkdir -p prev && gh release download "$PREV" -R "${{ github.repository }}" -p "*-beta.apk" -D prev
+          OLD=$(cert prev/*-beta.apk)
+          echo "Previous ($PREV) certificate SHA-256: $OLD"
+          if [ "$NEW" != "$OLD" ]; then
+            if [ "${{ github.event.inputs.new_signing_key }}" = "true" ]; then
+              echo "::warning::Signing key changed on purpose; testers must uninstall once."
+            else
+              echo "::error::Signing key differs from $PREV; testers could not update. Not publishing."
+              exit 1
+            fi
+          fi
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
