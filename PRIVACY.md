@@ -32,17 +32,23 @@ All remote connections use HTTPS; cleartext is refused (`network_security_config
 | `lrclib.net` | Opening lyrics | Title, artist, album, duration |
 | Hosts in your M3U files / direct links | Playing them | Standard HTTP request |
 | `api.github.com` | Update check (at most every 6 h; Settings → *Check for app updates*, on by default, can be turned off) | Request for the public release list of the MusicFlow repository; no device or user identifiers |
-| `github.com`, `objects.githubusercontent.com` | Only when you tap *Download* on the update banner (handled by your browser) | Standard download request |
+| `github.com`, `objects.githubusercontent.com`, `release-assets.githubusercontent.com` | Downloading an update: when you tap *Install*, or in the background if *Install updates automatically* is on (Settings, can be turned off) | Standard download request for the release APK and its `SHA256SUMS.txt` |
+| `soundcloud.com`, `api-v2.soundcloud.com`, `api-widget.soundcloud.com`, `a-v2.sndcdn.com`, `*.sndcdn.com`, `playback.media-streaming.soundcloud.cloud` | SoundCloud provider enabled: searching SoundCloud, opening and playing SoundCloud tracks | Search terms, track/set/user links, locale; no account |
 
 Requests carry a generic browser or client User-Agent; no identifiers, cookies or tokens are
 attached. The YouTube provider can be turned off entirely in Settings; MusicFlow then makes no
-YouTube connections.
+YouTube connections. The same applies to SoundCloud (separate switch).
 
 ## Permissions
 
 `INTERNET`, `ACCESS_NETWORK_STATE` (streaming, connectivity monitoring), `FOREGROUND_SERVICE`,
 `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `WAKE_LOCK` (background playback),
 `READ_MEDIA_AUDIO` / `READ_EXTERNAL_STORAGE ≤ API 32` (only if you open *On this device*).
+`REQUEST_INSTALL_PACKAGES`, `UPDATE_PACKAGES_WITHOUT_USER_ACTION` (in-app updates of MusicFlow
+itself: only APKs from this project's GitHub releases, after checking the SHA-256 checksum, the
+package name, a higher version and the same signing certificate as the installed app; Android
+asks you to allow installs once, and on Android 12+ later updates can install without a prompt;
+turn off *Install updates automatically* to keep full manual control).
 No location, contacts, microphone, phone or notification permission is requested.
 
 ## Diagnostics

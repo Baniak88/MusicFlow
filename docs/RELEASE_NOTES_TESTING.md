@@ -1,5 +1,16 @@
 ## MusicFlow — wersja testowa / test build
 
+**Nowości w beta.9:**
+- **SoundCloud:** w wynikach wyszukiwania wybierz źródło „SoundCloud” (obok „YouTube Music”).
+  Działają utwory, wykonawcy, playlisty/albumy, podobne utwory i wklejone linki soundcloud.com.
+  Utwory tylko dla SoundCloud Go+ (30-sekundowy podgląd) są oznaczane jako niedostępne.
+- **Aktualizacje w tle:** co ok. 6 godzin aplikacja sama sprawdza, pobiera, weryfikuje
+  (suma kontrolna i podpis) i instaluje nowszą wersję — w tym nowe wersje NewPipe Extractor
+  dla YouTube. Za pierwszym razem Android poprosi o zgodę („Instalowanie nieznanych aplikacji”
+  dla MusicFlow — przycisk w Ustawieniach); na Androidzie 12+ kolejne aktualizacje instalują
+  się już bez pytania. Baner na ekranie głównym ma teraz przycisk „Zainstaluj”.
+  W Ustawieniach widać wersję NewPipe Extractor; aktualizacje w tle można wyłączyć.
+
 **Beta.8:** pierwsza wersja instalowana jako **aktualizacja** na beta.7 (ten sam podpis,
 sprawdzony przed publikacją). Jeśli masz beta.6 lub starszą, trzeba ją jeden raz odinstalować
 (najpierw Ustawienia → Kopia zapasowa → Eksport), zainstalować tę wersję i zrobić Import.

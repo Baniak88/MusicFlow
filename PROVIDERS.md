@@ -5,6 +5,7 @@
 | On this device | `local` | Stable | Search (local), streams | none |
 | Direct audio URL | `url` | Stable | Streams (HTTPS; MP3/AAC/Opus/FLAC/WAV/HLS) | the URL's host |
 | YouTube Music (NewPipe Extractor) | `yt`, `ytpl`, `ytch` | **Experimental**, optional | Search, suggestions, albums/playlists, artists, related/radio, trending, streams | YouTube hosts |
+| SoundCloud (NewPipe Extractor) | `sc`, `scpl`, `scu` | **Experimental**, optional | Search (tracks, users, sets), suggestions, sets/albums, artists, related, links, streams (HLS) | SoundCloud hosts |
 | LRCLIB | — | Stable | Synced and plain lyrics | `lrclib.net` |
 
 ## YouTube Music (experimental)
@@ -66,6 +67,13 @@ expose it, so MusicFlow reads the already-downloaded response reflectively (no e
 if a future extractor version renames the field, normalisation for YouTube tracks is silently
 skipped and logged — playback is unaffected.
 
+**Keeping the extractor current — up to the phone.** Installed apps follow those releases on
+their own: `UpdateJobService` (JobScheduler, every ~6 h when online and the battery is not low)
+checks GitHub Releases and, with *Install updates automatically* on, downloads the APK, verifies
+its SHA-256 (`SHA256SUMS.txt`), package, version and signing certificate, and installs it via
+`PackageInstaller` — silently on Android 12+ once installs are allowed, otherwise Android asks
+and the Home banner offers *Install*. Code is never loaded outside the system installer.
+
 **Keeping the extractor current.** `.github/workflows/extractor-update.yml` runs every 6 hours:
 it live-tests the pinned NewPipe Extractor, bumps to a newer upstream release when one exists (or
 to the latest `dev` commit when the current one is broken and no release fixes it yet), runs
@@ -77,6 +85,25 @@ build through the in-app update check (see PRIVACY.md); code is never downloaded
 
 **Alternative providers.** When a track fails permanently, MusicFlow may play an on-device file
 instead — only when title, artist (similarity ≥ 0.7) and duration (± 5 s) match reliably.
+
+## SoundCloud (experimental)
+
+Built on the same NewPipe Extractor as YouTube Music (shared initialisation in
+`newpipe/NewPipeRuntime`), using SoundCloud's public web API without an account.
+
+* **Search**: pick *SoundCloud* in the source chips on the results screen (shown when more than
+  one online source is enabled). Pasted `soundcloud.com` links open the track/set/profile
+  directly, whichever source is selected. Home and Explore stay on YouTube Music.
+* **Ids**: `sc:soundcloud.com/<user>/<track>`, `scpl:soundcloud.com/<user>/sets/<set>`,
+  `scu:soundcloud.com/<user>` — the public permalink, which NewPipe resolves.
+* **Streams**: SoundCloud serves HLS only (NewPipe 0.27.1 lists AAC 160, MP3 128, Opus 64 and
+  AAC 96 kbps; encrypted variants are skipped). Quality: Best/High → AAC 160, Standard → MP3 128,
+  Data saver → Opus 64. Items are queued as HLS up front; segment cache keys ignore the URL
+  signature, so re-resolved tracks still play from the cache.
+* **Restrictions**: SoundCloud Go+ tracks only offer a 30-second preview — reported as
+  *restricted (paid)* instead of being played as if complete; geo-blocked tracks likewise.
+* **Live check**: `SoundCloudLiveTest` (opt-in) — run it on GitHub with the *Provider live tests*
+  workflow (this repo's CI network can reach SoundCloud).
 
 ## Local music
 

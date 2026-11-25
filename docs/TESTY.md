@@ -69,6 +69,14 @@ Zaznacz ✅ / ❌ i dopisz uwagi.
       wersję” albo „Dostępna wersja …”. Gdy jest nowsza wersja, na ekranie głównym pojawia się
       baner „Dostępna nowa wersja MusicFlow … — Pobierz”; „Pobierz” otwiera plik APK w przeglądarce.
 - [ ] Po wyłączeniu „Sprawdzaj aktualizacje aplikacji” baner się nie pojawia.
+- [ ] Ustawienia → „Zezwól MusicFlow na instalowanie aktualizacji” → włącz. Gdy wyjdzie nowsza
+      wersja, w ciągu kilku godzin powinna zainstalować się sama (Android 12+) albo pojawić się
+      baner „Zainstaluj”. Biblioteka i ustawienia zostają.
+
+**SoundCloud**
+- [ ] Wyszukaj coś, w wynikach wybierz „SoundCloud”: utwory, wykonawcy, playlisty.
+- [ ] Odtwarzanie utworu z SoundCloud (także w tle i z przenikaniem), strona wykonawcy, playlista.
+- [ ] Wklej link soundcloud.com w wyszukiwarkę – otwiera ten utwór/playlistę.
 
 ## 3. Zgłaszanie błędów
 

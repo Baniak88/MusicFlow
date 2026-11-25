@@ -3,6 +3,19 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.9] - 2026-11-25
+
+### Added
+- **SoundCloud** (experimental, NewPipe Extractor): search tracks / artists / sets, open sets,
+  albums and artist pages, related tracks, pasted links, playback (HLS: AAC 160 / MP3 128 /
+  Opus 64 kbps by quality setting). Source chips in Search; switch in Settings → Providers.
+  SoundCloud Go+ previews are reported as restricted, not played as full tracks.
+- **Background updates**: every ~6 h MusicFlow checks for a newer release and (setting
+  *Install updates automatically*, on by default) downloads, verifies (SHA-256, package,
+  version, same signing key) and installs it — silently on Android 12+ after allowing installs
+  once. New NewPipe Extractor versions (bumped automatically in CI) reach the phone this way.
+  The Home banner now installs in the app; Settings shows the NewPipe Extractor version.
+
 ## [1.0.0-beta.8] - 2026-11-25
 
 ### Changed
