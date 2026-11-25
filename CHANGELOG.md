@@ -3,6 +3,16 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.12] - 2026-11-25
+
+### Fixed
+- **Radio search missed many stations** (e.g. "Radio Fama Kielce"): it matched only the whole phrase
+  in station names, and only HTTPS stations were offered. Now every distinctive word is searched
+  in names and regions (plus genre tags) and stations matching the most words come first; local
+  stations without HTTPS play when *Radio: allow unencrypted stations* is on (default, Settings →
+  Providers). HTTPS stays enforced in code (`CleartextGuard`) for everything else.
+- Release workflow compared the signature with an older beta; it now uses the newest release.
+
 ## [1.0.0-beta.11] - 2026-11-25
 
 ### Added

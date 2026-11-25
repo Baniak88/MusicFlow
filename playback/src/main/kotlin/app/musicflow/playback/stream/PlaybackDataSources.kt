@@ -83,6 +83,7 @@ object PlaybackDataSources {
         val headers = stream.requestHeaders.toMutableMap()
         if (stream.requiresChunkedPost) headers[TRANSPORT_HEADER] = TRANSPORT_CHUNKED
         if (stream.isLive) headers[TRANSPORT_HEADER] = TRANSPORT_LIVE
+        if (stream.allowCleartext) headers[app.musicflow.core.network.CleartextGuard.ALLOW_HEADER] = "radio"
         return spec.buildUpon()
             .setUri(Uri.parse(stream.url))
             .setKey(stream.cacheKey)

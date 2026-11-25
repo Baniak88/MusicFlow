@@ -120,7 +120,8 @@ jobs:
           cert() { "$APKSIGNER" verify --print-certs "$1" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1; }
           NEW=$(cert dist/*-beta.apk)
           echo "New beta certificate SHA-256: $NEW"
-          PREV=$(gh api "repos/${{ github.repository }}/releases?per_page=20" --jq '[.[] | select(.draft|not) | select(.assets[]?.name | endswith("-beta.apk"))][0].tag_name // empty')
+          # Newest beta by version number (the API's order is not guaranteed to be by version).
+          PREV=$(gh api "repos/${{ github.repository }}/releases?per_page=50" --jq '[.[] | select(.draft|not) | select(any(.assets[]?; .name | endswith("-beta.apk"))) | .tag_name | select(. != "${{ steps.version.outputs.tag }}")] | sort_by(capture("(?<a>[0-9]+)[.](?<b>[0-9]+)[.](?<c>[0-9]+)(-beta[.](?<d>[0-9]+))?") | [(.a|tonumber), (.b|tonumber), (.c|tonumber), ((.d // "999999")|tonumber)]) | last // empty')
           if [ -z "$PREV" ]; then echo "No previous beta release."; exit 0; fi
           mkdir -p prev && gh release download "$PREV" -R "${{ github.repository }}" -p "*-beta.apk" -D prev
           OLD=$(cert prev/*-beta.apk)

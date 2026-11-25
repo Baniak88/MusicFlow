@@ -45,6 +45,7 @@ class MusicFlowApp : Application(), SingletonImageLoader.Factory {
                 registry.setEnabled("yt", s.youtubeProviderEnabled)
                 registry.setEnabled("sc", s.soundcloudProviderEnabled)
                 registry.setEnabled("radio", s.radioProviderEnabled)
+                (registry.byId("radio") as? app.musicflow.data.providers.radio.RadioBrowserProvider)?.allowHttp = s.radioAllowHttp
                 registry.setEnabled("mbr", s.musicbrainzEnabled)
                 app.musicflow.data.repositories.UpdateJobService.schedule(this@MusicFlowApp, s.checkUpdates)
                 diagnostics.enabled = s.diagnosticsEnabled

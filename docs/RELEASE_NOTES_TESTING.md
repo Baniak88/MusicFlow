@@ -1,5 +1,11 @@
 ## MusicFlow — wersja testowa / test build
 
+**Poprawki w beta.12:**
+- **Wyszukiwanie radia** znajduje teraz dużo więcej stacji, np. „Radio Fama Kielce”: szuka po
+  pojedynczych słowach w nazwie, regionie/mieście i gatunku, a najlepiej pasujące pokazuje
+  najpierw. Grają też lokalne stacje nadające bez szyfrowania (HTTP) — można to wyłączyć w
+  Ustawieniach → Źródła muzyki → „Radio: zezwalaj na stacje bez szyfrowania”.
+
 **Nowości w beta.11:**
 - **Radio internetowe (Radio Browser, ok. 50 000 stacji):** w wyszukiwarce wybierz źródło
   „Radio Browser” (nazwa stacji albo gatunek, np. „jazz”), albo Odkrywaj → Radio (popularne

@@ -59,6 +59,24 @@ class RadioMusicBrainzLiveTest {
         }
     }
 
+    /** Reported: "Radio Fama Kielce" was not found (HTTP-only station, city in the region field). */
+    @Test fun findsAndPlaysRadioFamaKielce() = runBlocking {
+        val guarded = client.newBuilder().addNetworkInterceptor(app.musicflow.core.network.CleartextGuard()).build()
+        val radio = RadioBrowserProvider(guarded, DiagnosticsLog(), ua, countryCode = { "PL" })
+        val found = radio.search("Radio Fama Kielce", SearchFilter.ALL).items.tracks()
+        println("fama search: " + found.take(5).map { "${it.title} / ${it.artistLine}" })
+        assertThat(found.first().title).ignoringCase().contains("fama")
+        assertThat(found.first().artistLine).contains("Kielce")
+        val stream = radio.resolve(found.first().id, AudioQuality.BEST)
+        println("fama stream: ${stream.url} cleartext=${stream.allowCleartext} ${stream.codec} ${stream.bitrateKbps}")
+        val marker = if (stream.allowCleartext) mapOf(app.musicflow.core.network.CleartextGuard.ALLOW_HEADER to "radio") else emptyMap()
+        guarded.newCall(Request.Builder().url(stream.url).headers(okhttp3.Headers.headersOf(*(stream.requestHeaders + marker).flatMap { listOf(it.key, it.value) }.toTypedArray())).build()).execute().use { r ->
+            val bytes = r.body!!.source().readByteArray(4096)
+            println("fama audio: HTTP ${r.code} ${r.header("Content-Type")} ${bytes.size} bytes")
+            assertThat(bytes.size).isGreaterThan(1000)
+        }
+    }
+
     @Test fun musicBrainzSearchAlbumArtistAndFacts() = mbOrSkip {
         val mb = MusicBrainzProvider(client, DiagnosticsLog(), null, ua)
         val songs = mb.search("Bohemian Rhapsody Queen", SearchFilter.SONGS).items.tracks()

@@ -146,6 +146,7 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
                 }
             }
         }
+        if (s.radioProviderEnabled) item { Toggle(stringResource(R.string.set_radio_http), stringResource(R.string.set_radio_http_desc), s.radioAllowHttp, vm::setRadioHttp) }
         item { Text(stringResource(R.string.set_providers_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
         item { Clickable(stringResource(R.string.set_country), s.contentCountry.ifEmpty { stringResource(R.string.set_country_auto) }) { dialog = "country" } }
 

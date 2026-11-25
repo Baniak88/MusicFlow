@@ -30,5 +30,7 @@ object NetworkModule {
         .retryOnConnectionFailure(true)
         .connectionPool(ConnectionPool(8, 5, TimeUnit.MINUTES))
         .cache(Cache(File(context.cacheDir, "http"), 20L * 1024 * 1024))
+        // Checks every hop, so an HTTPS URL redirecting to HTTP is refused too.
+        .addNetworkInterceptor(CleartextGuard())
         .build()
 }

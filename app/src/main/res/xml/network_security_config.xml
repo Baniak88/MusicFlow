@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- HTTPS only. Cleartext traffic is refused for every host. -->
+<!--
+  System CAs only. HTTPS is enforced in code by CleartextGuard (core:network) on every request and
+  redirect. Its only exception: internet-radio audio streams over plain HTTP, when the user allows
+  them in Settings (many broadcasters have no HTTPS). The OS-level switch is therefore open, so the
+  app-level guard decides; nothing else in MusicFlow may use HTTP.
+-->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false">
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

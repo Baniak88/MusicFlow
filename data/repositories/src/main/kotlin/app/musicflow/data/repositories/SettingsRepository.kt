@@ -46,6 +46,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
         val yt = booleanPreferencesKey("provider_yt")
         val sc = booleanPreferencesKey("provider_sc")
         val radio = booleanPreferencesKey("provider_radio")
+        val radioHttp = booleanPreferencesKey("radio_allow_http")
         val mb = booleanPreferencesKey("provider_mb")
         val history = booleanPreferencesKey("history_enabled")
         val diagnostics = booleanPreferencesKey("diagnostics_enabled")
@@ -80,6 +81,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
             youtubeProviderEnabled = p[K.yt] ?: d.youtubeProviderEnabled,
             soundcloudProviderEnabled = p[K.sc] ?: d.soundcloudProviderEnabled,
             radioProviderEnabled = p[K.radio] ?: d.radioProviderEnabled,
+            radioAllowHttp = p[K.radioHttp] ?: d.radioAllowHttp,
             musicbrainzEnabled = p[K.mb] ?: d.musicbrainzEnabled,
             historyEnabled = p[K.history] ?: d.historyEnabled,
             diagnosticsEnabled = p[K.diagnostics] ?: d.diagnosticsEnabled,
@@ -113,6 +115,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     suspend fun setYouTubeEnabled(v: Boolean) { store.edit { it[K.yt] = v } }
     suspend fun setSoundCloudEnabled(v: Boolean) { store.edit { it[K.sc] = v } }
     suspend fun setRadioEnabled(v: Boolean) { store.edit { it[K.radio] = v } }
+    suspend fun setRadioAllowHttp(v: Boolean) { store.edit { it[K.radioHttp] = v } }
     suspend fun setMusicBrainzEnabled(v: Boolean) { store.edit { it[K.mb] = v } }
     suspend fun setHistoryEnabled(v: Boolean) { store.edit { it[K.history] = v } }
     suspend fun setDiagnosticsEnabled(v: Boolean) { store.edit { it[K.diagnostics] = v } }

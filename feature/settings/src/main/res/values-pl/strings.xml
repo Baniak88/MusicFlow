@@ -128,4 +128,6 @@
     <string name="set_update_install_failed">Nie zainstalowano: %1$s</string>
     <string name="set_extractor">NewPipe Extractor (YouTube, SoundCloud)</string>
     <string name="set_extractor_value">%1$s · aktualizowany automatycznie z nowymi wersjami aplikacji</string>
+    <string name="set_radio_http">Radio: zezwalaj na stacje bez szyfrowania (HTTP)</string>
+    <string name="set_radio_http_desc">Wiele lokalnych stacji nadaje tylko bez szyfrowania. Przez HTTP idzie wyłącznie ich strumień dźwięku; cała reszta MusicFlow zostaje na HTTPS.</string>
 </resources>

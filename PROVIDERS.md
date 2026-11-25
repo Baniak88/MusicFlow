@@ -114,8 +114,13 @@ Community directory of internet radio (public API, no key, open data). `RadioBro
 * **Search** (source chip *Radio Browser*): station names, plus genre-tag matches on the first page
   (e.g. "jazz"); albums/artists filters return nothing. **Explore → Radio**: popular stations in
   your country (device locale), worldwide, and by genre.
-* **HTTPS only**: queried with `is_https=true&hidebroken=true`; a station whose current URL is plain
-  HTTP is reported as not supported (MusicFlow refuses cleartext, see PRIVACY.md).
+* **Search by words**: names often differ from what people type ("Radio FAMA" in region "Kielce"),
+  so besides the whole phrase each distinctive word is searched in names and regions, plus the
+  phrase as a genre tag; stations matching the most words (name, region, tags, country) come
+  first, then the most popular (`RadioSearch`).
+* **HTTPS vs HTTP**: HTTPS streams are preferred. Many local broadcasters have no HTTPS; their
+  stream may use plain HTTP only while *Radio: allow unencrypted stations* is on (default). The
+  request is marked for `CleartextGuard`, which refuses HTTP for everything else.
 * **Mirrors**: `de1`, `fi1`, `de2`, `nl1.api.radio-browser.info`, tried in order.
 * **Clicks**: playing a station calls `/json/url/<uuid>` (station id only), as the API asks, which
   also returns the current stream URL.

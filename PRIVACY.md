@@ -20,7 +20,9 @@ rules exclude everything); use *Backup & restore* to save a JSON file you contro
 
 ## Network connections
 
-All remote connections use HTTPS; cleartext is refused (`network_security_config.xml`).
+All remote connections use HTTPS; plain HTTP is refused in code for every request and redirect
+(`CleartextGuard`). The single exception is the audio stream of an internet radio station that has
+no HTTPS, while *Radio: allow unencrypted stations* is on (see the table).
 
 | Host | When | Data sent |
 |---|---|---|
@@ -34,7 +36,7 @@ All remote connections use HTTPS; cleartext is refused (`network_security_config
 | `api.github.com` | Update check (at most every 6 h; Settings → *Check for app updates*, on by default, can be turned off) | Request for the public release list of the MusicFlow repository; no device or user identifiers |
 | `github.com`, `objects.githubusercontent.com`, `release-assets.githubusercontent.com` | Downloading an update: when you tap *Install*, or in the background if *Install updates automatically* is on (Settings, can be turned off) | Standard download request for the release APK and its `SHA256SUMS.txt` |
 | `de1.api.radio-browser.info`, `fi1.api.radio-browser.info`, `de2.api.radio-browser.info`, `nl1.api.radio-browser.info` | Radio Browser enabled: browsing/searching stations, playing a station (its id is sent to `/json/url/…`, as the directory asks) | Search terms, country code, genre tag, station id |
-| Radio station hosts | Playing a station you chose (HTTPS only) | Standard streaming request (with `Icy-MetaData` for song titles) |
+| Radio station hosts | Playing a station you chose. HTTPS when the station offers it; plain HTTP only for stations that have no HTTPS and only while *Radio: allow unencrypted stations* is on (default on; turn it off to keep everything encrypted) — a network observer can then see which station you listen to | Standard streaming request (with `Icy-MetaData` for song titles) |
 | `musicbrainz.org`, `coverartarchive.org`, `archive.org` | MusicBrainz enabled: searching it, opening its albums/artists, artist pages (artist name lookup), album covers | Search terms, artist names, MusicBrainz ids; User-Agent with the app version |
 | `soundcloud.com`, `api-v2.soundcloud.com`, `api-widget.soundcloud.com`, `a-v2.sndcdn.com`, `*.sndcdn.com`, `playback.media-streaming.soundcloud.cloud` | SoundCloud provider enabled: searching SoundCloud, opening and playing SoundCloud tracks | Search terms, track/set/user links, locale; no account |
 

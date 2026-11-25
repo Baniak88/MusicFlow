@@ -36,7 +36,7 @@ class RadioBrowserTest {
 
     @Test fun searchKeepsHttpsStationsAndMarksHlsInTheId() = runBlocking {
         server { MockResponse().setBody(stations) }.use { s ->
-            val p = RadioBrowserProvider(OkHttpClient(), DiagnosticsLog(), "UA-test", listOf(s.url("/").toString()))
+            val p = RadioBrowserProvider(OkHttpClient(), DiagnosticsLog(), "UA-test", listOf(s.url("/").toString())).apply { allowHttp = false }
             val page = p.search("radio", SearchFilter.ALL)
             val tracks = page.items.tracks()
             assertThat(tracks.map { it.id.value }).containsExactly("radio:aaaa", "radio:hls/cccc").inOrder()
@@ -87,9 +87,14 @@ class RadioBrowserTest {
     @Test fun plainHttpStationsAreRefusedNotPlayedInsecurely() = runBlocking {
         val plain = """[{"stationuuid":"bbbb","name":"Plain","url":"http://s2/live","url_resolved":"http://s2/live","hls":0}]"""
         server { r -> if (r.path!!.startsWith("/json/url/")) MockResponse().setBody("""{"ok":true,"url":"http://s2/live"}""") else MockResponse().setBody(plain) }.use { s ->
-            val p = RadioBrowserProvider(OkHttpClient(), DiagnosticsLog(), "UA", listOf(s.url("/").toString()))
+            val p = RadioBrowserProvider(OkHttpClient(), DiagnosticsLog(), "UA", listOf(s.url("/").toString())).apply { allowHttp = false }
             val e = runCatching { p.resolve(MediaId("radio:bbbb"), AudioQuality.BEST) }.exceptionOrNull()
             assertThat(e).isInstanceOf(ProviderError.NotSupported::class.java)
+            // Allowed by the user: the stream is marked so that only it may use HTTP.
+            p.allowHttp = true
+            val stream = p.resolve(MediaId("radio:bbbb"), AudioQuality.BEST)
+            assertThat(stream.url).isEqualTo("http://s2/live")
+            assertThat(stream.allowCleartext).isTrue()
         }
     }
 }
@@ -239,6 +244,40 @@ class MusicBrainzRankingTest {
             assertThat(sent).isEqualTo("(recording:(bohemian rhapsody queen)^2 OR artist:(bohemian rhapsody queen)) AND primarytype:(album OR single OR ep) AND NOT secondarytype:live")
             // Without an artist in the query, the most released version still wins over a one-off cover.
             assertThat(p.search("bohemian rhapsody", SearchFilter.SONGS).items.first().id.value).isEqualTo("mbr:orig")
+        }
+    }
+}
+
+class RadioSearchRankingTest {
+    private fun st(uuid: String, name: String, state: String = "", tags: String = "", clicks: Int = 0) =
+        app.musicflow.data.providers.radio.RadioStation(uuid, name, url = "http://x/$uuid", state = state, tags = tags, country = "Poland", clickCount = clicks)
+
+    @Test fun stationMatchingNameAndCityComesFirst() {
+        val ranked = app.musicflow.data.providers.radio.RadioSearch.rank("radio fama kielce", listOf(
+            st("1", "Radio Kielce", clicks = 900),
+            st("2", "Radio Fama Slupsk", state = "pomorskie", clicks = 300),
+            st("3", "Radio FAMA", state = "Kielce", clicks = 10), // the reported station
+            st("4", "Meloradio Kielce", state = "Świętokrzyskie", clicks = 500),
+        ))
+        assertThat(ranked.first().uuid).isEqualTo("3")
+        assertThat(app.musicflow.data.providers.radio.RadioSearch.words("Radio FAMA Kielce")).containsExactly("kielce", "fama").inOrder()
+    }
+}
+
+class CleartextGuardTest {
+    private val client = OkHttpClient.Builder().addNetworkInterceptor(app.musicflow.core.network.CleartextGuard()).build()
+
+    @Test fun plainHttpIsRefusedUnlessMarkedAndTheMarkerNeverLeaves() {
+        MockWebServer().use { s -> // MockWebServer speaks plain HTTP
+            s.enqueue(MockResponse().setBody("ok"))
+            val plain = runCatching { client.newCall(okhttp3.Request.Builder().url(s.url("/a")).build()).execute().close() }
+            assertThat(plain.exceptionOrNull()).isInstanceOf(java.io.IOException::class.java)
+            assertThat(s.requestCount).isEqualTo(0) // nothing was sent
+
+            client.newCall(okhttp3.Request.Builder().url(s.url("/radio")).header(app.musicflow.core.network.CleartextGuard.ALLOW_HEADER, "radio").build()).execute().use {
+                assertThat(it.code).isEqualTo(200)
+            }
+            assertThat(s.takeRequest().getHeader(app.musicflow.core.network.CleartextGuard.ALLOW_HEADER)).isNull()
         }
     }
 }

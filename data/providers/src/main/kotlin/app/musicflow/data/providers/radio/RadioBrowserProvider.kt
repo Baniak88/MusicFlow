@@ -18,6 +18,8 @@ import app.musicflow.data.providers.api.MusicProvider
 import app.musicflow.data.providers.api.SearchProvider
 import app.musicflow.data.providers.api.StreamResolver
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -39,6 +41,8 @@ data class RadioStation(
     val favicon: String = "",
     val tags: String = "",
     val country: String = "",
+    /** Region/city as entered in the directory (e.g. "Kielce", "Świętokrzyskie"). */
+    val state: String = "",
     @SerialName("countrycode") val countryCode: String = "",
     val language: String = "",
     val codec: String = "",
@@ -77,6 +81,9 @@ class RadioBrowserProvider(
     override val streams: StreamResolver get() = this
 
     private val bases: List<HttpUrl> = servers.map { it.toHttpUrl() }
+
+    /** User setting: also offer stations that stream over plain HTTP (most small broadcasters). */
+    @Volatile var allowHttp: Boolean = true
     @Volatile private var preferred = 0
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
@@ -110,7 +117,11 @@ class RadioBrowserProvider(
     }
 
     private suspend fun stations(path: String, query: Map<String, String>): List<RadioStation> =
-        parse(get(path, query)).filter(::playable)
+        parse(get(path, query + (if (allowHttp) emptyMap() else mapOf("is_https" to "true")))).filter { playable(it, allowHttp) }
+
+    private fun common(limit: Int, offset: Int = 0) = mapOf(
+        "limit" to limit.toString(), "offset" to offset.toString(), "hidebroken" to "true", "order" to "clickcount", "reverse" to "true",
+    )
 
     // ---------------------------------------------------------------- search
 
@@ -118,28 +129,37 @@ class RadioBrowserProvider(
         // Stations are neither artists nor albums: other filters honestly return nothing.
         if (filter == SearchFilter.ARTISTS || filter == SearchFilter.ALBUMS) return SearchPage(query, filter, emptyList(), null)
         val offset = pageToken?.toIntOrNull() ?: 0
-        val base = mapOf("limit" to PAGE.toString(), "offset" to offset.toString(), "hidebroken" to "true", "is_https" to "true", "order" to "clickcount", "reverse" to "true")
-        val byName = stations("json/stations/search", base + ("name" to query.trim()))
-        // Genres ("rock", "jazz") are tags, not names: add tag matches on the first page.
-        val byTag = if (offset == 0 && byName.size < PAGE) runCatching { stations("json/stations/search", base + ("tag" to query.trim().lowercase())) }.getOrDefault(emptyList()) else emptyList()
-        val all = (byName + byTag).distinctBy { it.uuid }
-        val next = if (byName.size >= PAGE) (offset + PAGE).toString() else null
-        return SearchPage(query, filter, all.map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }, next)
+        val q = query.trim()
+        val byName = stations("json/stations/search", common(PAGE, offset) + ("name" to q))
+        if (offset > 0) return SearchPage(query, filter, byName.map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }, if (byName.size >= PAGE) (offset + PAGE).toString() else null)
+        // "radio fama kielce": the station is "Radio FAMA" with region "Kielce". Search each
+        // distinctive word in names and regions, plus the whole query as a genre tag, then rank
+        // stations matching the most words first.
+        val words = RadioSearch.words(q)
+        val extra = coroutineScope {
+            val calls = buildList {
+                add(async { runCatching { stations("json/stations/search", common(PAGE) + ("tag" to q.lowercase())) }.getOrDefault(emptyList()) })
+                if (words.size > 1 || byName.size < 5) words.take(3).forEach { w ->
+                    add(async { runCatching { stations("json/stations/search", common(PAGE) + ("name" to w)) }.getOrDefault(emptyList()) })
+                    add(async { runCatching { stations("json/stations/search", common(PAGE) + ("state" to w)) }.getOrDefault(emptyList()) })
+                }
+            }
+            calls.flatMap { it.await() }
+        }
+        val ranked = RadioSearch.rank(q, (byName + extra).distinctBy { it.uuid })
+        val next = if (byName.size >= PAGE) PAGE.toString() else null
+        return SearchPage(query, filter, ranked.take(60).map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }, next)
     }
 
     override suspend fun suggestions(query: String): List<String> = emptyList()
 
     /** Most popular stations in [country] (ISO code), or worldwide when null. */
-    suspend fun top(country: String? = countryCode(), limit: Int = 40): List<Track> {
-        val q = mutableMapOf("limit" to limit.toString(), "hidebroken" to "true", "is_https" to "true", "order" to "clickcount", "reverse" to "true")
-        country?.let { q["countrycode"] = it }
-        return stations("json/stations/search", q).map(RadioIds::toTrack)
-    }
+    suspend fun top(country: String? = countryCode(), limit: Int = 40): List<Track> =
+        stations("json/stations/search", common(limit) + (country?.let { mapOf("countrycode" to it) } ?: emptyMap())).map(RadioIds::toTrack)
 
     /** Most popular stations for a genre tag (e.g. "rock", "jazz"). */
     suspend fun byTag(tag: String, limit: Int = 40): List<Track> =
-        stations("json/stations/search", mapOf("tag" to tag, "limit" to limit.toString(), "hidebroken" to "true", "is_https" to "true", "order" to "clickcount", "reverse" to "true"))
-            .map(RadioIds::toTrack)
+        stations("json/stations/search", common(limit) + ("tag" to tag)).map(RadioIds::toTrack)
 
     // ---------------------------------------------------------------- metadata
 
@@ -162,8 +182,10 @@ class RadioBrowserProvider(
         val counted = runCatching {
             json.decodeFromString(ClickResult.serializer(), get("json/url/${s.uuid}")).url.takeIf { it.isNotBlank() }
         }.getOrNull()
-        val url = listOf(counted, s.urlResolved, s.url).firstOrNull { it != null && it.startsWith("https://", ignoreCase = true) }
-            ?: throw ProviderError.NotSupported("This station only streams over unencrypted HTTP, which MusicFlow does not allow")
+        val candidates = listOf(counted, s.urlResolved, s.url).filterNotNull().filter { it.isNotBlank() }
+        val url = candidates.firstOrNull { it.startsWith("https://", ignoreCase = true) }
+            ?: candidates.firstOrNull { allowHttp && it.startsWith("http://", ignoreCase = true) }
+            ?: throw ProviderError.NotSupported("This station only streams over unencrypted HTTP; allow it in Settings → Providers → Radio")
         return ResolvedStream(
             mediaId = id,
             url = url,
@@ -177,6 +199,7 @@ class RadioBrowserProvider(
             cacheKey = "radio:${s.uuid}",
             isHls = s.hls == 1,
             isLive = true,
+            allowCleartext = url.startsWith("http://", ignoreCase = true),
         )
     }
 
@@ -186,9 +209,9 @@ class RadioBrowserProvider(
         const val PAGE = 40
         val DEFAULT_SERVERS = listOf("de1", "fi1", "de2", "nl1").map { "https://$it.api.radio-browser.info/" }
 
-        /** HTTPS stream with a name; Radio Browser also lists HTTP-only stations which MusicFlow can't play. */
-        fun playable(s: RadioStation) = s.name.isNotBlank() &&
-            listOf(s.urlResolved, s.url).any { it.startsWith("https://", ignoreCase = true) }
+        /** A named station with an HTTPS stream (or HTTP, when the user allows unencrypted radio). */
+        fun playable(s: RadioStation, allowHttp: Boolean = false) = s.name.isNotBlank() &&
+            listOf(s.urlResolved, s.url).any { it.startsWith("https://", ignoreCase = true) || (allowHttp && it.startsWith("http://", ignoreCase = true)) }
     }
 }
 
@@ -207,7 +230,7 @@ object RadioIds {
     fun toTrack(s: RadioStation): Track {
         val tags = s.tags.split(',').map { it.trim() }.filter { it.isNotEmpty() }.take(3)
         val line = listOfNotNull(
-            s.country.takeIf { it.isNotBlank() },
+            listOfNotNull(s.state.trim().takeIf { it.isNotBlank() }, s.country.takeIf { it.isNotBlank() }).joinToString(", ").ifEmpty { null },
             tags.joinToString(", ").takeIf { it.isNotBlank() },
         ).joinToString(" · ").ifEmpty { "Radio" }
         return Track(
@@ -219,5 +242,25 @@ object RadioIds {
             artworkUrl = s.favicon.takeIf { it.startsWith("https://", ignoreCase = true) },
             genre = tags.firstOrNull(),
         )
+    }
+}
+
+/** Word-based matching for station search (names, regions and tags), pure and unit-tested. */
+object RadioSearch {
+    /** Words too generic to search on their own. */
+    private val generic = setOf("radio", "fm", "am", "stacja", "station", "the", "online", "live", "polskie", "polska", "music", "muzyka")
+
+    fun words(query: String): List<String> = app.musicflow.core.common.TextMatching.normalize(query).split(' ')
+        .filter { it.length >= 3 && it !in generic }.distinct().sortedByDescending { it.length }
+
+    /** Stations matching more query words (in name, region, tags or country) first, then popularity. */
+    fun rank(query: String, stations: List<RadioStation>): List<RadioStation> {
+        val ws = words(query)
+        if (ws.isEmpty()) return stations
+        fun hits(s: RadioStation): Int {
+            val hay = " " + app.musicflow.core.common.TextMatching.normalize(listOf(s.name, s.state, s.tags, s.country).joinToString(" ")) + " "
+            return ws.count { w -> hay.contains(w) }
+        }
+        return stations.sortedWith(compareByDescending<RadioStation> { hits(it) }.thenByDescending { it.clickCount })
     }
 }

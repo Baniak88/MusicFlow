@@ -44,6 +44,8 @@ data class ResolvedStream(
     val isHls: Boolean = false,
     /** Endless live stream (internet radio): never cached to disk, never crossfaded. */
     val isLive: Boolean = false,
+    /** Plain-HTTP radio stream the user allowed; every other request must be HTTPS. */
+    val allowCleartext: Boolean = false,
 ) {
     fun isExpired(nowMillis: Long, safetyMarginMillis: Long = 60_000): Boolean =
         expiresAtMillis != null && nowMillis + safetyMarginMillis >= expiresAtMillis
