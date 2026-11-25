@@ -89,7 +89,9 @@ class RadioMusicBrainzLiveTest {
             override suspend fun candidates(query: String) = yt.search(query, SearchFilter.SONGS).items.tracks().take(10)
             override suspend fun resolve(id: app.musicflow.core.model.MediaId, quality: AudioQuality) = yt.resolve(id, quality)
         }, ua)
-        val t = mb.search("Karma Police Radiohead", SearchFilter.SONGS).items.tracks().first()
+        val list = mb.search("Karma Police Radiohead", SearchFilter.SONGS).items.tracks()
+        println("mb karma: " + list.take(6).map { "${it.title} / ${it.artistLine} / ${it.album?.title} / ${it.durationMs}" })
+        val t = list.first()
         assertThat(t.artistLine).isEqualTo("Radiohead")
         val r = runCatching { mb.resolve(t.id, AudioQuality.HIGH) }
         println("mb→yt: ${t.title} / ${t.artistLine} / ${t.durationMs} → ${r.getOrNull()?.codec} ${r.getOrNull()?.bitrateKbps} kbps; error=${r.exceptionOrNull()}")
