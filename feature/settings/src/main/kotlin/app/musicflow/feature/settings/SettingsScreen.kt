@@ -164,6 +164,11 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
         item { Clickable(stringResource(R.string.set_diagnostics_screen), null, onClick = nav::openDiagnostics) }
         item { Clickable(stringResource(R.string.set_licenses), stringResource(R.string.set_licenses_desc), onClick = nav::openLicenses) }
         item { Clickable(stringResource(R.string.set_version), "${vm.appInfo.versionName} (${vm.appInfo.versionCode})") {} }
+        item { Toggle(stringResource(R.string.set_check_updates), stringResource(R.string.set_check_updates_desc), s.checkUpdates, vm::setCheckUpdates) }
+        item {
+            val checking by vm.checkingUpdates.collectAsStateWithLifecycle()
+            Clickable(stringResource(R.string.set_check_now), if (checking) stringResource(R.string.set_checking) else null) { vm.checkUpdatesNow() }
+        }
     }
 
     when (dialog) {

@@ -66,6 +66,15 @@ expose it, so MusicFlow reads the already-downloaded response reflectively (no e
 if a future extractor version renames the field, normalisation for YouTube tracks is silently
 skipped and logged — playback is unaffected.
 
+**Keeping the extractor current.** `.github/workflows/extractor-update.yml` runs every 6 hours:
+it live-tests the pinned NewPipe Extractor, bumps to a newer upstream release when one exists (or
+to the latest `dev` commit when the current one is broken and no release fixes it yet), runs
+`lint test` plus the live provider tests, commits the bump and dispatches `release.yml` for the
+next beta. Inconclusive live results caused by YouTube rate-limiting CI runners
+(`RateLimited`, "not a bot") never count as breakage. On failure it opens or comments on the
+issue "YouTube provider needs attention (NewPipe Extractor)". Installed apps learn about the new
+build through the in-app update check (see PRIVACY.md); code is never downloaded at runtime.
+
 **Alternative providers.** When a track fails permanently, MusicFlow may play an on-device file
 instead — only when title, artist (similarity ≥ 0.7) and duration (± 5 s) match reliably.
 

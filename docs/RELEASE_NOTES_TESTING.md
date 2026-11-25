@@ -12,6 +12,12 @@
   utworu, mini odtwarzacz połączony z nawigacją, nowy odtwarzacz („Odtwarzanie na: <urządzenie>”,
   udostępnianie, „Odtwarzanie z: <źródło>”), nowa ikona aplikacji.
 
+- **Automatyczne aktualizacje NewPipe Extractor:** co 6 godzin serwer budowania sprawdza, czy
+  YouTube działa, pobiera nowszą wersję NewPipe Extractor, testuje ją i publikuje nową wersję
+  testową. Aplikacja sama sprawdza (co kilka godzin), czy jest nowsza wersja i pokazuje baner
+  „Dostępna nowa wersja… — Pobierz” na ekranie głównym. Można to wyłączyć w Ustawieniach
+  („Sprawdzaj aktualizacje aplikacji”), jest też „Sprawdź aktualizacje teraz”.
+
 **Wcześniej (beta.4):** normalizacja głośności, poprawki nawigacji, albumy na stronach
 wykonawców, mały plik (~9,5 MB), stały klucz podpisu (aktualizacja bez odinstalowywania).
 

@@ -1,5 +1,6 @@
 package app.musicflow
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -73,7 +74,7 @@ class TransparentContainerTextTest {
                 androidx.compose.material3.Scaffold(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent,
                     contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onBackground,
-                ) { content = androidx.compose.material3.LocalContentColor.current }
+                ) { padding -> androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(padding)) { content = androidx.compose.material3.LocalContentColor.current } }
             }
         }
         compose.waitForIdle()

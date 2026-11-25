@@ -1,5 +1,12 @@
 package app.musicflow.feature.home
 
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
+import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -82,6 +89,9 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
     val online by vm.online.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     val network by vm.network.collectAsStateWithLifecycle()
+    val update by vm.update.collectAsStateWithLifecycle()
+    val updateDismissed by vm.updateDismissed.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val nav = LocalNavigator.current
     val menu = LocalTrackMenu.current
     val playing by vm.playback.state.collectAsStateWithLifecycle()
@@ -98,6 +108,13 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
             item(key = "chips") {
                 LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(HomeFilter.entries) { f -> PillChip(stringResource(f.label), filter == f, { filter = f }) }
+                }
+            }
+            update?.takeIf { !updateDismissed }?.let { u ->
+                item(key = "update") {
+                    UpdateBanner(u.version.toString(), onDownload = {
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.apkUrl)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    }, onDismiss = vm::dismissUpdate)
                 }
             }
             if (!network.isConnected) item(key = "offline") { OfflineBanner() }
@@ -254,6 +271,24 @@ private fun Header(greeting: Greeting, onSettings: () -> Unit) {
                 .clickable(onClickLabel = stringResource(R.string.home_settings), onClick = onSettings),
             contentAlignment = Alignment.Center,
         ) { Icon(Icons.Rounded.Person, stringResource(R.string.home_settings), tint = MaterialTheme.colorScheme.onSurface) }
+    }
+}
+
+@Composable
+private fun UpdateBanner(version: String, onDownload: () -> Unit, onDismiss: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).testTag("update_banner"),
+    ) {
+        Row(Modifier.padding(start = 14.dp, top = 6.dp, bottom = 6.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.SystemUpdate, null)
+            Spacer(Modifier.width(12.dp))
+            Text(stringResource(R.string.home_update_available, version), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            TextButton(onClick = onDownload) { Text(stringResource(R.string.home_update_download)) }
+            IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, stringResource(R.string.home_update_dismiss)) }
+        }
     }
 }
 

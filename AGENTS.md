@@ -28,6 +28,8 @@ See ARCHITECTURE.md. Features must not depend on each other — use `LocalNaviga
 ```
 
 ## When the YouTube provider breaks
+0. `extractor-update.yml` usually handles it (6-hourly bump → tests → beta). Check its runs and the
+   "YouTube provider needs attention" issue first; dispatch it with `force_version` to try a tag/commit.
 1. Run the live tests; read `Diagnostics` export from a device.
 2. Check NewPipe Extractor releases; bump `newpipeExtractor` in `gradle/libs.versions.toml`.
 3. Update PROVIDERS.md "Known limitations".

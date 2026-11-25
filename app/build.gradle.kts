@@ -30,6 +30,8 @@ android {
         versionCode = versionCodeProp
         versionName = versionNameProp
         vectorDrawables { useSupportLibrary = true }
+        // Repository whose GitHub Releases the in-app update check follows (CI: the building repo).
+        buildConfigField("String", "UPDATE_REPO", "\"${System.getenv("GITHUB_REPOSITORY") ?: "Baniak88/MusicFlow"}\"")
     }
 
     signingConfigs {

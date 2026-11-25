@@ -15,6 +15,15 @@ versioning: [SemVer](https://semver.org).
   the signal path); boosting quiet tracks is limited to the *Loud* level.
 - Text colours on the new transparent, gradient-backed screens.
 
+### Added
+- **Automatic NewPipe Extractor updates** (`.github/workflows/extractor-update.yml`): every 6 h CI
+  checks the current extractor against live YouTube, picks up new NewPipe releases (or, if YouTube
+  is broken, the latest `dev` commit), runs lint + unit + live tests, commits the bump and publishes
+  a new beta. Failures open/update a GitHub issue instead of shipping a broken build.
+- **In-app update notice**: MusicFlow checks the GitHub release list (at most every 6 h, can be
+  turned off; *Check now* in Settings) and shows a Home banner with a download link. Nothing is
+  downloaded or installed automatically; the library code is never replaced at runtime.
+
 ### Changed
 - New look: plum gradient theme, pill chips, "Continue listening" rows with now-playing bars,
   one bottom dock with mini player + navigation, redesigned player ("Playing on <device>",

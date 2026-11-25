@@ -56,6 +56,7 @@ class SettingsViewModel @Inject constructor(
     private val playlists: PlaylistRepository,
     private val search: SearchRepository,
     private val cache: AudioCacheHolder,
+    private val updates: app.musicflow.data.repositories.AppUpdateRepository,
     val appInfo: AppInfo,
 ) : ViewModel() {
     val settings: StateFlow<UserSettings> = repo.settings.stateIn(viewModelScope, SharingStarted.Eagerly, UserSettings())
@@ -80,6 +81,17 @@ class SettingsViewModel @Inject constructor(
     fun setCrossfade(seconds: Int) = viewModelScope.launch { repo.setCrossfadeSeconds(seconds) }
     fun setAutoContinue(v: Boolean) = viewModelScope.launch { repo.setAutoContinue(v) }
     fun setSkipSilence(v: Boolean) = viewModelScope.launch { repo.setSkipSilence(v) }
+    fun setCheckUpdates(v: Boolean) = viewModelScope.launch { repo.setCheckUpdates(v) }
+    val checkingUpdates = MutableStateFlow(false)
+    fun checkUpdatesNow() = viewModelScope.launch {
+        if (checkingUpdates.value) return@launch
+        checkingUpdates.value = true
+        updates.check(force = true).fold(
+            onSuccess = { u -> _events.emit(if (u != null) SettingsEvent.Message(R.string.set_update_found, u.version.toString()) else SettingsEvent.Message(R.string.set_update_none)) },
+            onFailure = { _events.emit(SettingsEvent.Message(R.string.set_update_failed)) },
+        )
+        checkingUpdates.value = false
+    }
     fun setLeveling(v: Boolean) = viewModelScope.launch { repo.setVolumeLeveling(v) }
     fun setPauseOnDisconnect(v: Boolean) = viewModelScope.launch { repo.setPauseOnDisconnect(v) }
     fun setDiscovery(v: Boolean) = viewModelScope.launch { repo.setDiscoveryMode(v) }

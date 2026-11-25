@@ -61,6 +61,12 @@ Zaznacz ✅ / ❌ i dopisz uwagi.
 - [ ] Ustawienia → Kopia zapasowa: eksport i przywrócenie.
 - [ ] Biblioteka działa bez internetu (tryb samolotowy).
 
+**Aktualizacje**
+- [ ] Ustawienia → O aplikacji → „Sprawdź aktualizacje teraz”: komunikat „Masz najnowszą
+      wersję” albo „Dostępna wersja …”. Gdy jest nowsza wersja, na ekranie głównym pojawia się
+      baner „Dostępna nowa wersja MusicFlow … — Pobierz”; „Pobierz” otwiera plik APK w przeglądarce.
+- [ ] Po wyłączeniu „Sprawdzaj aktualizacje aplikacji” baner się nie pojawia.
+
 ## 3. Zgłaszanie błędów
 
 1. Odtwórz problem, potem **Ustawienia → Diagnostyka → ikona eksportu** i zapisz plik

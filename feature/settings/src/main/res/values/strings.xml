@@ -110,4 +110,11 @@
     <string name="lic_app_title">MusicFlow</string>
     <string name="lic_app_body">Copyright © 2026 MusicFlow contributors. Licensed under the GNU General Public License v3.0 or later. Source code is available in the project repository.</string>
     <string name="lic_disclaimer">MusicFlow is not affiliated with, endorsed or sponsored by YouTube, Google, Spotify or any other service. All trademarks belong to their owners.</string>
+    <string name="set_check_updates">Check for app updates</string>
+    <string name="set_check_updates_desc">Every few hours, asks GitHub whether a newer MusicFlow build is published (new builds bring YouTube fixes). Nothing is downloaded or installed without you.</string>
+    <string name="set_check_now">Check for updates now</string>
+    <string name="set_checking">Checking…</string>
+    <string name="set_update_found">MusicFlow %1$s is available – see the banner on Home</string>
+    <string name="set_update_none">You have the latest version</string>
+    <string name="set_update_failed">Could not check for updates. Try again later.</string>
 </resources>

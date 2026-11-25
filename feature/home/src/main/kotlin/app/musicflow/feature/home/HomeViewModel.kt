@@ -6,7 +6,9 @@ import app.musicflow.core.model.Artist
 import app.musicflow.core.model.NetworkStatus
 import app.musicflow.core.model.Track
 import app.musicflow.core.network.ConnectivityMonitor
+import app.musicflow.data.repositories.AppUpdateRepository
 import app.musicflow.data.repositories.HomeRepository
+import app.musicflow.data.repositories.UpdateInfo
 import app.musicflow.data.repositories.LibraryRepository
 import app.musicflow.data.repositories.OnlineHome
 import app.musicflow.data.repositories.SettingsRepository
@@ -48,7 +50,14 @@ class HomeViewModel @Inject constructor(
     private val settings: SettingsRepository,
     connectivity: ConnectivityMonitor,
     val playback: PlaybackEngine,
+    private val updates: AppUpdateRepository,
 ) : ViewModel() {
+
+    /** A newer MusicFlow build published on GitHub (null when up to date or checks are off). */
+    val update: StateFlow<UpdateInfo?> = updates.available
+    private val _updateDismissed = MutableStateFlow(false)
+    val updateDismissed: StateFlow<Boolean> = _updateDismissed
+    fun dismissUpdate() { _updateDismissed.value = true }
 
     val greeting: Greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
         in 5..11 -> Greeting.MORNING
@@ -72,6 +81,8 @@ class HomeViewModel @Inject constructor(
 
     init {
         refresh()
+        // Throttled to once every 6 h and a no-op when disabled in Settings.
+        viewModelScope.launch { updates.check() }
         // Reload when we come back online or the provider is toggled.
         viewModelScope.launch {
             connectivity.status.map { it.isConnected }.distinctUntilChanged().drop(1).collect { if (it) refresh() }

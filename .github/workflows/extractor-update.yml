@@ -1,0 +1,134 @@
+name: NewPipe Extractor auto-update
+
+# Keeps YouTube Music working without manual work:
+#  1. every 6 h, compare the NewPipe Extractor version with the latest upstream release;
+#  2. check whether YouTube still works with the current version (live tests);
+#  3. new release → bump, run all tests (+ live tests) and publish a new beta automatically;
+#  4. YouTube broken and no release yet → try the upstream `dev` commit (built by JitPack);
+#  5. nothing works → open (or update) a GitHub issue so a human looks at it.
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      force_version:
+        description: "Optional: test & release a specific extractor version (tag or commit)"
+        required: false
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+
+concurrency:
+  group: extractor-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.0 build-tools;36.0.0 platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Versions
+        id: v
+        run: |
+          current=$(sed -n 's/^newpipeExtractor = "\(.*\)"/\1/p' gradle/libs.versions.toml)
+          latest=$(gh api repos/TeamNewPipe/NewPipeExtractor/releases/latest --jq .tag_name)
+          dev=$(gh api repos/TeamNewPipe/NewPipeExtractor/commits/dev --jq .sha | cut -c1-10)
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "dev=$dev" >> "$GITHUB_OUTPUT"
+          echo "Current: $current · latest release: $latest · dev: $dev"
+
+      # Live check of the version currently shipped. "inconclusive" = YouTube blocked the CI
+      # machine's IP (bot check / rate limit), which says nothing about the extractor itself.
+      - name: Live check (current version)
+        id: live
+        run: |
+          set +e
+          ./gradlew :data:providers:testDebugUnitTest --tests '*YouTubeLiveTest*' -PliveTests=true --console=plain > live.log 2>&1
+          code=$?
+          set -e
+          if [ $code -eq 0 ]; then echo "status=ok" >> "$GITHUB_OUTPUT"
+          elif grep -qE "RateLimited|SignInConfirmNotBot|not a bot|CAPTCHA" live.log; then echo "status=inconclusive" >> "$GITHUB_OUTPUT"
+          else echo "status=broken" >> "$GITHUB_OUTPUT"; fi
+          tail -40 live.log
+
+      - name: Choose candidate
+        id: pick
+        run: |
+          cand=""
+          reason=""
+          if [ -n "${{ github.event.inputs.force_version }}" ]; then
+            cand="${{ github.event.inputs.force_version }}"; reason="manual request"
+          elif [ "${{ steps.v.outputs.latest }}" != "${{ steps.v.outputs.current }}" ]; then
+            cand="${{ steps.v.outputs.latest }}"; reason="new upstream release"
+          elif [ "${{ steps.live.outputs.status }}" = "broken" ]; then
+            cand="${{ steps.v.outputs.dev }}"; reason="YouTube broken with ${{ steps.v.outputs.current }}; trying upstream dev"
+          fi
+          echo "candidate=$cand" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+          echo "Candidate: ${cand:-none} (${reason:-up to date, status ${{ steps.live.outputs.status }}})"
+
+      - name: Bump and test candidate
+        id: test
+        if: steps.pick.outputs.candidate != ''
+        run: |
+          sed -i "s/^newpipeExtractor = \".*\"/newpipeExtractor = \"${{ steps.pick.outputs.candidate }}\"/" gradle/libs.versions.toml
+          set +e
+          # JitPack builds a new tag/commit on first request; retry while it does.
+          for i in 1 2 3; do ./gradlew dependencies -q --configuration debugRuntimeClasspath -p data/providers > /dev/null 2>&1 && break; sleep 120; done
+          ./gradlew lint test --console=plain > unit.log 2>&1; unit=$?
+          ./gradlew :data:providers:testDebugUnitTest --tests '*YouTubeLiveTest*' -PliveTests=true --console=plain > live2.log 2>&1; live=$?
+          set -e
+          tail -30 unit.log; tail -30 live2.log
+          if [ $live -ne 0 ] && grep -qE "RateLimited|SignInConfirmNotBot|not a bot|CAPTCHA" live2.log; then live=inconclusive; fi
+          echo "unit=$unit" >> "$GITHUB_OUTPUT"
+          echo "live=$live" >> "$GITHUB_OUTPUT"
+          # Releases from upstream are accepted when unit tests pass and live tests pass or are
+          # inconclusive (CI IP blocked). A dev snapshot must pass the live tests.
+          if [ $unit -eq 0 ] && { [ "$live" = "0" ] || { [ "$live" = "inconclusive" ] && [ "${{ steps.pick.outputs.reason }}" = "new upstream release" ]; }; }; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit, push and release
+        if: steps.test.outputs.ok == 'true'
+        run: |
+          git config user.name "musicflow-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/libs.versions.toml
+          git commit -m "Update NewPipe Extractor to ${{ steps.pick.outputs.candidate }} (${{ steps.pick.outputs.reason }})"
+          git push origin HEAD:${{ github.ref_name }}
+          tag=$(.github/scripts/next-beta-tag.sh)
+          echo "Releasing $tag"
+          gh workflow run release.yml --ref "${{ github.ref_name }}" -f version="$tag"
+
+      - name: Report failure as an issue
+        if: (steps.test.outputs.ok == 'false') || (steps.pick.outputs.candidate == '' && steps.live.outputs.status == 'broken')
+        run: |
+          title="YouTube provider needs attention (NewPipe Extractor)"
+          body=$(printf 'Automatic check on %s.\n\n- Shipped extractor: `%s`\n- Latest release: `%s`, dev: `%s`\n- Live status of shipped version: **%s**\n- Candidate tried: `%s` (%s) → unit=%s live=%s\n\nRun: %s/%s/actions/runs/%s' \
+            "$(date -u +%F)" "${{ steps.v.outputs.current }}" "${{ steps.v.outputs.latest }}" "${{ steps.v.outputs.dev }}" \
+            "${{ steps.live.outputs.status }}" "${{ steps.pick.outputs.candidate }}" "${{ steps.pick.outputs.reason }}" \
+            "${{ steps.test.outputs.unit }}" "${{ steps.test.outputs.live }}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          existing=$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)
+          if [ -n "$existing" ]; then gh issue comment "$existing" --body "$body"; else gh issue create --title "$title" --body "$body"; fi

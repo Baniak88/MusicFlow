@@ -31,6 +31,8 @@ All remote connections use HTTPS; cleartext is refused (`network_security_config
 | `i.ytimg.com`, `*.googleusercontent.com`, `yt3.ggpht.com` | Artwork | Image URL |
 | `lrclib.net` | Opening lyrics | Title, artist, album, duration |
 | Hosts in your M3U files / direct links | Playing them | Standard HTTP request |
+| `api.github.com` | Update check (at most every 6 h; Settings → *Check for app updates*, on by default, can be turned off) | Request for the public release list of the MusicFlow repository; no device or user identifiers |
+| `github.com`, `objects.githubusercontent.com` | Only when you tap *Download* on the update banner (handled by your browser) | Standard download request |
 
 Requests carry a generic browser or client User-Agent; no identifiers, cookies or tokens are
 attached. The YouTube provider can be turned off entirely in Settings; MusicFlow then makes no

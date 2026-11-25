@@ -36,4 +36,7 @@
     <string name="home_filter_albums">Albums</string>
     <string name="home_filter_artists">Artists</string>
     <string name="home_more">More options</string>
+    <string name="home_update_available">MusicFlow %1$s is available</string>
+    <string name="home_update_download">Download</string>
+    <string name="home_update_dismiss">Hide</string>
 </resources>

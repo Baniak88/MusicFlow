@@ -38,4 +38,7 @@
     <string name="home_filter_albums">Albumy</string>
     <string name="home_filter_artists">Wykonawcy</string>
     <string name="home_more">Więcej opcji</string>
+    <string name="home_update_available">Dostępna nowa wersja MusicFlow %1$s</string>
+    <string name="home_update_download">Pobierz</string>
+    <string name="home_update_dismiss">Ukryj</string>
 </resources>

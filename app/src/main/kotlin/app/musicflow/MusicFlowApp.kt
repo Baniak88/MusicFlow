@@ -70,5 +70,6 @@ object AppModule {
         buildType = BuildConfig.BUILD_TYPE,
         sdkInt = Build.VERSION.SDK_INT,
         device = "${Build.MANUFACTURER} ${Build.MODEL}",
+        updateRepo = BuildConfig.UPDATE_REPO,
     )
 }
