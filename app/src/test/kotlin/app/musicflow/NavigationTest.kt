@@ -2,6 +2,9 @@ package app.musicflow
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -104,5 +107,61 @@ class PlayerNavigationTest {
         compose.activity.onBackPressedDispatcher.onBackPressed()
         compose.waitUntil(5_000) { compose.onAllNodes(androidx.compose.ui.test.hasTestTag("full_player")).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag("mini_player").assertExists()
+    }
+}
+
+/** Regression tests for bottom-bar behaviour reported by a tester ("navigation doesn't work properly"). */
+@HiltAndroidTest
+@RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
+class TabNavigationTest {
+    @get:Rule(order = 0) val hilt = HiltAndroidRule(this)
+    @get:Rule(order = 1) val compose = createAndroidComposeRule<MainActivity>()
+
+    @Before fun inject() = hilt.inject()
+
+    private fun waitForText(text: String) = compose.waitUntil(10_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    private fun tab(name: String) = compose.onNodeWithTag("tab_$name")
+
+    @Test fun reselectingCurrentTabReturnsToItsRootAndTabStaysHighlighted() {
+        waitForText("Welcome to MusicFlow")
+        compose.onNode(androidx.compose.ui.test.hasContentDescription("Settings")).performClick()
+        waitForText("Theme")
+        tab("home").assertIsSelected() // sub-screen still belongs to the Home tab
+        tab("home").performClick()     // previously: nothing happened
+        waitForText("Welcome to MusicFlow")
+        compose.onAllNodesWithText("Theme").assertCountEquals(0)
+    }
+
+    @Test fun switchingTabsKeepsEachTabsStackAndHighlight() {
+        tab("explore").performClick()
+        waitForText("Electronic")
+        compose.onNodeWithText("Electronic").performClick()
+        waitForText("Nothing found for this category right now.")
+        tab("explore").assertIsSelected()
+        tab("library").performClick()
+        waitForText("Liked songs")
+        tab("library").assertIsSelected()
+        tab("explore").performClick()   // returns to the open category (own stack)
+        waitForText("Nothing found for this category right now.")
+        tab("explore").performClick()   // second tap: back to the Explore grid
+        waitForText("Dance")
+        tab("explore").assertIsSelected()
+    }
+
+    @Test fun homeSearchIconSwitchesToSearchTabAndBackReturnsHome() {
+        waitForText("Welcome to MusicFlow")
+        compose.onNode(androidx.compose.ui.test.hasContentDescription("Search") and androidx.compose.ui.test.hasClickAction() and androidx.compose.ui.test.hasTestTag("tab_search").not())
+            .performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithTag("search_field").fetchSemanticsNodes().isNotEmpty() }
+        tab("search").assertIsSelected()
+        tab("home").assertIsNotSelected()
+        compose.activity.onBackPressedDispatcher.onBackPressed()
+        waitForText("Welcome to MusicFlow")
+        tab("home").assertIsSelected()
+    }
+
+    @Test fun statusBarHasAScrimOverScrollingContent() {
+        compose.onNodeWithTag("status_bar_scrim").assertExists()
     }
 }

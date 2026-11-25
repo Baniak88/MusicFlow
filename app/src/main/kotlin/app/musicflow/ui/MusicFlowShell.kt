@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Explore
@@ -103,13 +107,52 @@ private val tabs = listOf(
     Tab(Routes.LIBRARY, Routes.LIBRARY, R.string.nav_library, Icons.Rounded.LibraryMusic),
 )
 
-private class ShellNavigator(private val nav: NavHostController, private val showPlayer: (Boolean) -> Unit) : AppNavigator {
+/**
+ * Bottom-bar behaviour (like Spotify / YouTube Music):
+ * - each tab keeps its own back stack; switching tabs restores it,
+ * - tapping the tab you are already in returns to that tab's root,
+ * - the tab stays highlighted on its sub-screens (artist, album, settings…),
+ * - system Back walks back through the current tab, then to Home, then exits.
+ */
+internal class TabNavigation(private val nav: NavHostController, initial: String) {
+    var selected by mutableStateOf(initial)
+        private set
+
+    fun onDestinationChanged(route: String?) {
+        // Landing on a tab root (e.g. via Back) selects that tab.
+        tabs.firstOrNull { it.route == route }?.let { selected = it.route }
+    }
+
+    fun select(tab: String) {
+        val target = tabs.first { it.route == tab }
+        if (selected == tab) {
+            // Re-selecting the current tab: back to its root.
+            if (!nav.popBackStack(target.route, inclusive = false)) nav.navigate(target.target) { launchSingleTop = true }
+            return
+        }
+        selected = tab
+        nav.navigate(target.target) {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+}
+
+private class ShellNavigator(
+    private val nav: NavHostController,
+    private val tabsNav: TabNavigation,
+    private val showPlayer: (Boolean) -> Unit,
+) : AppNavigator {
     override fun openCollection(id: MediaId) = nav.navigate("collection/${Routes.enc(id.value)}")
     override fun openArtist(id: MediaId) = nav.navigate("artist/${Routes.enc(id.value)}")
     override fun openUserPlaylist(id: Long) = nav.navigate("playlist/$id")
     override fun openCategory(name: String) = nav.navigate("category/$name")
     override fun openLibrarySection(section: LibrarySection) = nav.navigate("section/${section.name}")
-    override fun openSearch(query: String?) = nav.navigate("search?q=${Routes.enc(query.orEmpty())}") { launchSingleTop = true }
+    override fun openSearch(query: String?) {
+        if (query.isNullOrBlank()) tabsNav.select(Routes.SEARCH) // the search icon switches to the Search tab
+        else nav.navigate("search?q=${Routes.enc(query)}") { launchSingleTop = true }
+    }
     override fun openSettings() = nav.navigate(Routes.SETTINGS)
     override fun openDiagnostics() = nav.navigate(Routes.DIAGNOSTICS)
     override fun openLicenses() = nav.navigate(Routes.LICENSES)
@@ -123,10 +166,14 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
     val nav = rememberNavController()
     val snackbar = remember { SnackbarHostState() }
     var playerOpen by rememberSaveable { mutableStateOf(false) }
-    val navigator = remember(nav) { ShellNavigator(nav) { playerOpen = it } }
+    var savedTab by rememberSaveable { mutableStateOf(Routes.HOME) }
+    val tabsNav = remember(nav) { TabNavigation(nav, savedTab) }
+    LaunchedEffect(tabsNav.selected) { savedTab = tabsNav.selected }
+    val navigator = remember(nav) { ShellNavigator(nav, tabsNav) { playerOpen = it } }
     val playerVm: PlayerViewModel = hiltViewModel()
     val playback by playerVm.state.collectAsStateWithLifecycle()
     val backStack by nav.currentBackStackEntryAsState()
+    LaunchedEffect(backStack?.destination?.route) { tabsNav.onDestinationChanged(backStack?.destination?.route) }
     val context = LocalContext.current
     val resources = androidx.compose.ui.platform.LocalResources.current
 
@@ -151,17 +198,10 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
                         Column {
                             if (playback.current != null) MiniPlayer(playerVm, onExpand = { playerOpen = true })
                             NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
-                                val currentRoute = backStack?.destination?.route
                                 tabs.forEach { tab ->
                                     NavigationBarItem(
-                                        selected = currentRoute == tab.route,
-                                        onClick = {
-                                            nav.navigate(tab.target) {
-                                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        },
+                                        selected = tabsNav.selected == tab.route,
+                                        onClick = { tabsNav.select(tab.route) },
                                         icon = { Icon(tab.icon, null) },
                                         label = { Text(stringResource(tab.label)) },
                                         colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer),
@@ -191,6 +231,13 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
                         composable(Routes.EQUALIZER) { EqualizerScreen(content) }
                     }
                 }
+                // Keeps status-bar icons readable over scrolling content (edge-to-edge).
+                Box(
+                    Modifier.fillMaxWidth()
+                        .windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars)
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
+                        .testTag("status_bar_scrim"),
+                )
                 AnimatedVisibility(
                     visible = playerOpen && playback.current != null,
                     enter = slideInVertically(tween(320)) { it } + fadeIn(tween(200)),

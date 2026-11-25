@@ -20,6 +20,9 @@ Zaznacz ✅ / ❌ i dopisz uwagi.
 **Podstawy**
 - [ ] Aplikacja uruchamia się, widać zakładki Główna / Odkrywaj / Szukaj / Biblioteka.
 - [ ] Ustawienia → Język: przełączenie na Polski i English działa.
+- [ ] Nawigacja: wejdź w podstronę (np. wykonawca albo Ustawienia) i stuknij tę samą zakładkę —
+      wracasz do jej ekranu głównego; zakładka jest cały czas podświetlona; przycisk Wstecz
+      cofa w obrębie zakładki, potem do Głównej.
 - [ ] Ustawienia → Motyw: ciemny, jasny, czysta czerń (AMOLED).
 
 **Muzyka online (eksperymentalna — YouTube Music)**

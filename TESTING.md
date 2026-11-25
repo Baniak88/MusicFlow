@@ -21,7 +21,7 @@ Command: `./gradlew lint test` (exit 0). 93 tests passed, 0 failed; 6 live tests
 | Chunked YouTube transport | `ChunkedDataSourceTest` (POST, `range`/`rn` stitching, 403 surfacing) | playback |
 | User settings | `RepositoryTest.settingsPersistAndDefault`, play recording honours history setting | data:repositories |
 | Theme switching | `ThemeTest` (6): dark, AMOLED, light, system day/night, WCAG contrast | app |
-| Application navigation | `NavigationTest` (2): launches real `MainActivity` with Hilt, all four tabs, Explore category, Settings, back; `PlayerNavigationTest`: mini player → full player → controls → collapse | app |
+| Application navigation | `TabNavigationTest` (4, reproduce the tester report — 3 failed on the old code): re-selecting a tab returns to its root, tab highlight on sub-screens, per-tab stacks, Home search icon → Search tab, Back to Home, status-bar scrim; `NavigationTest` (2): launches real `MainActivity` with Hilt, all four tabs, Explore category, Settings, back; `PlayerNavigationTest`: mini player → full player → controls → collapse | app |
 | Recommendations | `RecommendationEngineTest` (7): artist cap, no back-to-back artist, skip/completion signals, recency, discovery mode, familiar/new balance | data:repositories |
 | Privacy | `SanitizerTest` (tokens, cookies, signed URLs, e-mails redacted) | core:common |
 | Crossfade | `CrossfadeLogicTest` (window, vetoes, equal-power curve), `CrossfaderPlaybackTest` (two real ExoPlayers: outgoing track continues while the next starts; volumes ≈0.707 halfway; pause ends the fade) | playback |

@@ -3,6 +3,15 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.3] - 2026-11-25
+
+### Fixed (navigation, reported by a tester)
+- Tapping the tab you are already in now returns to that tab's main screen (it did nothing
+  when a sub-screen such as an artist or Settings was open).
+- The current tab stays highlighted on sub-screens (artist, album, category, settings…).
+- The search icon on Home switches to the Search tab instead of stacking Search on Home.
+- Status-bar icons no longer overlap scrolling content (background behind the status bar).
+
 ## [1.0.0-beta.2] - 2026-11-25
 
 ### Added
