@@ -1,5 +1,10 @@
 ## MusicFlow — wersja testowa / test build
 
+**Beta.8:** pierwsza wersja instalowana jako **aktualizacja** na beta.7 (ten sam podpis,
+sprawdzony przed publikacją). Jeśli masz beta.6 lub starszą, trzeba ją jeden raz odinstalować
+(najpierw Ustawienia → Kopia zapasowa → Eksport), zainstalować tę wersję i zrobić Import.
+Zmiany względem beta.7: brak (wersja kontrolna aktualizacji).
+
 **Ważne (beta.7): ostatni raz trzeba odinstalować starą wersję.** Wcześniejsze wersje testowe
 były przez błąd podpisywane za każdym razem innym kluczem, dlatego Android nie pozwalał ich
 zaktualizować. Od beta.7 klucz jest stały, a serwer budowania sprawdza podpis przed każdą

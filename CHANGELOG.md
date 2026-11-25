@@ -3,6 +3,12 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.8] - 2026-11-25
+
+### Changed
+- No code changes: first beta signed with the same key as its predecessor, to confirm
+  in-place updates (beta.7 → beta.8) on devices.
+
 ## [1.0.0-beta.7] - 2026-11-25
 
 ### Fixed
