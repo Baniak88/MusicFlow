@@ -1,31 +1,13 @@
 package app.musicflow.playback
 
-import android.content.Context
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.test.utils.TestExoPlayerBuilder
-import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
-import androidx.test.core.app.ApplicationProvider
-import app.musicflow.core.common.DiagnosticsLog
-import app.musicflow.core.model.AudioQuality
-import app.musicflow.core.model.MediaId
-import app.musicflow.core.model.ResolvedStream
-import app.musicflow.core.model.Track
+import app.musicflow.playback.service.CrossfadePlayer
 import app.musicflow.playback.service.Crossfader
-import app.musicflow.playback.stream.PlaybackDataSources
-import app.musicflow.playback.stream.StreamRepository
 import com.google.common.truth.Truth.assertThat
-import okhttp3.OkHttpClient
-import okhttp3.mockwebserver.Dispatcher
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.RecordedRequest
-import okio.Buffer
-import org.junit.After
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 class CrossfadeLogicTest {
     @Test fun startsOnlyInsideTheFadeWindow() {
@@ -51,83 +33,98 @@ class CrossfadeLogicTest {
     }
 }
 
-/** Two real ExoPlayers through the MusicFlow pipeline: the outgoing track overlaps the next one. */
-@RunWith(RobolectricTestRunner::class)
-class CrossfaderPlaybackTest {
-    private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val wav = PlaybackPipelineTest.wav(durationMs = 4_000)
-    private val server = MockWebServer().apply {
-        dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse {
-                val start = request.getHeader("Range")?.removePrefix("bytes=")?.substringBefore('-')?.toIntOrNull() ?: 0
-                return MockResponse().setResponseCode(if (start > 0) 206 else 200)
-                    .apply { if (start > 0) setHeader("Content-Range", "bytes $start-${wav.size - 1}/${wav.size}") }
-                    .setBody(Buffer().write(wav.copyOfRange(start, wav.size)))
+/** Simulated player: advances in fixed steps; becomes READY [readyDelayMs] after loading. */
+private class SimPlayer(val durations: List<Long>, private val readyDelayMs: Long = 100, startPlaying: Boolean = false) : CrossfadePlayer {
+    var index = 0
+    var pos = 0L
+    var wantPlay = startPlaying
+    var state = if (durations.isEmpty()) Player.STATE_IDLE else Player.STATE_READY
+    private var loadedAt = 0L
+    private var simTime = 0L
+    private var items: List<MediaItem> = durations.indices.map { MediaItem.Builder().setMediaId("t$it").build() }
+
+    fun advance(ms: Long) {
+        simTime += ms
+        if (state == Player.STATE_BUFFERING && simTime - loadedAt >= readyDelayMs) state = Player.STATE_READY
+        if (isPlaying) {
+            pos += ms
+            if (pos >= durations[index]) {
+                if (index < durations.lastIndex) { index++; pos = 0 } else { pos = durations[index]; state = Player.STATE_ENDED }
             }
         }
-        start()
-    }
-    private val players = mutableListOf<ExoPlayer>()
-
-    @After fun tearDown() { players.forEach { it.release() }; server.shutdown() }
-
-    @Test fun overlapsOutgoingAndIncomingTracks() {
-        val streams = StreamRepository({ id, _ ->
-            ResolvedStream(id, server.url("/${id.key}.wav").toString(), "audio/wav", "pcm", null, 8000, 1, null, cacheKey = id.value)
-        }, { AudioQuality.HIGH }, DiagnosticsLog())
-        val factory = DefaultMediaSourceFactory(PlaybackDataSources.factory(context, OkHttpClient(), null, streams))
-        fun newPlayer() = TestExoPlayerBuilder(context).setMediaSourceFactory(factory).build().also { players += it }
-        val main = newPlayer()
-        var now = 0L
-        val crossfader = Crossfader(main, ::newPlayer, clock = { now }).apply { fadeMs = 1_000 }
-
-        main.setMediaItems(listOf(1, 2).map { MediaItems.toMediaItem(Track(MediaId("yt:t$it"), "T$it", durationMs = 4_000)) })
-        main.prepare(); main.play()
-        TestPlayerRunHelper.run(main).untilPosition(0, 3_200)
-        crossfader.tick()
-
-        // Main jumped to the next track; the fader continues the outgoing one at full volume.
-        assertThat(crossfader.isFading).isTrue()
-        assertThat(crossfader.consumeSelfTransition()).isTrue()
-        assertThat(main.currentMediaItemIndex).isEqualTo(1)
-        assertThat(main.volume).isEqualTo(0f)
-        val fader = crossfader.faderPlayer!!
-        assertThat(fader.currentMediaItem!!.mediaId).isEqualTo("yt:t1")
-        assertThat(fader.currentPosition).isAtLeast(3_000)
-        assertThat(fader.playWhenReady).isTrue()
-
-        TestPlayerRunHelper.run(main).untilState(Player.STATE_READY)
-        TestPlayerRunHelper.run(main).untilPosition(1, 100)
-        crossfader.tick()                     // ramp starts when the next track really plays
-        now += 500; crossfader.tick()         // halfway: equal power ≈ 0.707 each
-        assertThat(main.volume).isWithin(0.01f).of(0.707f)
-        assertThat(fader.volume).isWithin(0.01f).of(0.707f)
-        now += 600; crossfader.tick()         // done
-        assertThat(crossfader.isFading).isFalse()
-        assertThat(main.volume).isEqualTo(1f)
-        assertThat(fader.mediaItemCount).isEqualTo(0)
-
-        TestPlayerRunHelper.run(main).untilState(Player.STATE_ENDED)
-        assertThat(main.playerError).isNull()
     }
 
-    @Test fun pausingDuringFadeEndsIt() {
-        val streams = StreamRepository({ id, _ ->
-            ResolvedStream(id, server.url("/${id.key}.wav").toString(), "audio/wav", "pcm", null, 8000, 1, null, cacheKey = id.value)
-        }, { AudioQuality.HIGH }, DiagnosticsLog())
-        val factory = DefaultMediaSourceFactory(PlaybackDataSources.factory(context, OkHttpClient(), null, streams))
-        fun newPlayer() = TestExoPlayerBuilder(context).setMediaSourceFactory(factory).build().also { players += it }
-        val main = newPlayer()
+    override val duration get() = if (items.isEmpty()) C.TIME_UNSET else durations[index]
+    override val position get() = pos
+    override val isPlaying get() = wantPlay && state == Player.STATE_READY
+    override val playbackState get() = state
+    override val hasNext get() = index < items.lastIndex
+    override val repeatOne = false
+    override val pauseAtEnd = false
+    override val currentItem get() = items.getOrNull(index)
+    override val itemCount get() = items.size
+    override val audioSessionId = 7
+    override var volume = 1f
+    override val playbackParameters: PlaybackParameters? = null
+    override fun load(item: MediaItem, positionMs: Long, sessionId: Int, params: PlaybackParameters?) {
+        items = listOf(item); index = 0; pos = positionMs; volume = 0f; wantPlay = false
+        state = Player.STATE_BUFFERING; loadedAt = simTime
+    }
+    override fun seekTo(positionMs: Long) { pos = positionMs }
+    override fun play() { wantPlay = true }
+    override fun pause() { wantPlay = false }
+    override fun stopAndClear() { wantPlay = false; items = emptyList(); state = Player.STATE_IDLE }
+    override fun skipToNext() { index++; pos = 0 }
+    override fun release() = Unit
+}
+
+class CrossfadeSimulationTest {
+    private val step = 50L
+
+    /** Runs the whole queue; returns true if there was always audible sound. */
+    private fun run(faderReadyDelayMs: Long, fadeMs: Long = 3_000, onStep: (Long, Crossfader, SimPlayer, SimPlayer?) -> Unit = { _, _, _, _ -> }): Pair<Boolean, Crossfader> {
+        val main = SimPlayer(listOf(20_000, 20_000, 20_000), startPlaying = true)
+        var fader: SimPlayer? = null
         var now = 0L
-        val crossfader = Crossfader(main, ::newPlayer, clock = { now }).apply { fadeMs = 1_000 }
-        main.setMediaItems(listOf(1, 2).map { MediaItems.toMediaItem(Track(MediaId("yt:p$it"), "P$it")) })
-        main.prepare(); main.play()
-        TestPlayerRunHelper.run(main).untilPosition(0, 3_200)
-        crossfader.tick()
-        TestPlayerRunHelper.run(main).untilPosition(1, 100)
-        crossfader.tick(); now += 200; crossfader.tick()
-        crossfader.onMainPlayingChanged(false)
-        assertThat(crossfader.isFading).isFalse()
-        assertThat(main.volume).isEqualTo(1f)
+        val cf = Crossfader(main, { SimPlayer(listOf(20_000), faderReadyDelayMs).also { fader = it } }, clock = { now }, preloadMs = 6_000)
+        cf.fadeMs = fadeMs
+        var alwaysAudible = true
+        while (main.playbackState != Player.STATE_ENDED && now < 120_000) {
+            now += step
+            main.advance(step); fader?.advance(step)
+            cf.tick()
+            val mainAudible = main.isPlaying && main.volume > 0f
+            val faderAudible = fader?.let { it.isPlaying && it.volume > 0f } == true
+            val queueFinished = main.playbackState == Player.STATE_ENDED
+            if (!mainAudible && !faderAudible && !queueFinished) alwaysAudible = false
+            onStep(now, cf, main, fader)
+        }
+        return alwaysAudible to cf
+    }
+
+    @Test fun crossfadesWithoutEverGoingSilent() {
+        var overlaps = 0
+        var switchedEarly = 0
+        val (audible, _) = run(faderReadyDelayMs = 300) { _, cf, main, fader ->
+            if (cf.isFading && fader!!.isPlaying && main.isPlaying) overlaps++
+            if (cf.consumeSelfTransition()) { switchedEarly++; assertThat(fader!!.position).isAtLeast(16_900) } // outgoing tail
+        }
+        assertThat(audible).isTrue()
+        assertThat(switchedEarly).isEqualTo(2)        // both transitions were crossfaded
+        assertThat(overlaps).isAtLeast(2 * 40)         // ≈ 3 s of real overlap each (50 ms steps)
+    }
+
+    @Test fun slowFaderFallsBackToGaplessNeverSilence() {
+        var crossfaded = 0
+        val (audible, _) = run(faderReadyDelayMs = 60_000) { _, cf, _, _ -> if (cf.consumeSelfTransition()) crossfaded++ }
+        assertThat(audible).isTrue()
+        assertThat(crossfaded).isEqualTo(0)            // fell back to normal gapless transitions
+    }
+
+    @Test fun disabledCrossfadeNeverCreatesAFader() {
+        var faderCreated = false
+        val (audible, _) = run(faderReadyDelayMs = 100, fadeMs = 0) { _, cf, _, f -> if (f != null || cf.isActive) faderCreated = true }
+        assertThat(audible).isTrue()
+        assertThat(faderCreated).isFalse()
     }
 }

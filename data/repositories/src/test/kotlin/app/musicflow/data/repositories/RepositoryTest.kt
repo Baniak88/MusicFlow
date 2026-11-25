@@ -186,7 +186,8 @@ class RepositoryTest {
 
     @Test fun settingsPersistAndDefault() = runTest {
         assertThat(settings.current().themeMode).isEqualTo(ThemeMode.DARK)
-        assertThat(settings.current().qualityMobile).isEqualTo(AudioQuality.STANDARD)
+        assertThat(settings.current().qualityMobile).isEqualTo(AudioQuality.HIGH)
+        assertThat(settings.current().qualityWifi).isEqualTo(AudioQuality.BEST)
         settings.setThemeMode(ThemeMode.LIGHT)
         settings.setAmoled(true)
         settings.setQualityWifi(AudioQuality.BEST)

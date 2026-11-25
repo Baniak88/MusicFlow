@@ -131,7 +131,7 @@ class MusicService : MediaLibraryService() {
 
         player = buildPlayer(settings)
         player.addListener(playerListener)
-        crossfader = Crossfader(player, ::buildFader, setMainGain = { g -> crossfadeGain = g; applyVolume() }).apply {
+        crossfader = Crossfader(ExoCrossfadePlayer(player), { ExoCrossfadePlayer(buildFader()) }, setMainGain = { g -> crossfadeGain = g; applyVolume() }).apply {
             fadeMs = settings.crossfadeSeconds * 1000L
             blocked = { sleepTimer.state.value == SleepTimerState.EndOfTrack }
         }
@@ -160,9 +160,9 @@ class MusicService : MediaLibraryService() {
     private fun runCrossfadeLoop() {
         crossfadeJob = scope.launch {
             while (isActive) {
-                if (crossfader.fadeMs > 0 && (player.isPlaying || crossfader.isFading)) {
+                if (crossfader.fadeMs > 0 && (player.isPlaying || crossfader.isActive)) {
                     crossfader.tick()
-                    delay(100)
+                    delay(50)
                 } else delay(500)
             }
         }
@@ -267,7 +267,7 @@ class MusicService : MediaLibraryService() {
                 return
             }
             val viaCrossfade = crossfader.consumeSelfTransition()
-            if (!viaCrossfade && crossfader.isFading) crossfader.finish() // user skipped during a fade
+            if (!viaCrossfade && crossfader.isActive) crossfader.finish() // user skipped during a fade
             finishListening(userSkipped = reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK && !viaCrossfade, now = now)
             mediaItem?.let(MediaItems::toTrack)?.let { t ->
                 listening = ListeningSession(t, now, resumedAt = if (player.isPlaying) now else null)

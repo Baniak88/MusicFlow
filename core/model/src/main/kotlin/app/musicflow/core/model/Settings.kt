@@ -11,8 +11,8 @@ data class UserSettings(
     val artworkColors: Boolean = true,
     /** BCP-47 language tag, empty = follow system. */
     val languageTag: String = "",
-    val qualityWifi: AudioQuality = AudioQuality.HIGH,
-    val qualityMobile: AudioQuality = AudioQuality.STANDARD,
+    val qualityWifi: AudioQuality = AudioQuality.BEST,
+    val qualityMobile: AudioQuality = AudioQuality.HIGH,
     val cacheSizeMb: Int = 512,
     val autoContinueQueue: Boolean = true,
     /** Overlap between consecutive tracks, 0 = off (gapless). */

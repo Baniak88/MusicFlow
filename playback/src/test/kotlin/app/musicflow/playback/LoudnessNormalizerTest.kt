@@ -12,10 +12,12 @@ class LoudnessNormalizerTest {
     private val n = LoudnessNormalizer
 
     @Test fun gainBringsTracksToTheTargetLevel() {
-        // The user-reported D-Bomb track measures -15.17 LUFS on YouTube.
-        assertThat(n.gainFor(-15.17f, NormalizationLevel.NORMAL)!!.gainDb).isWithin(0.01f).of(1.17f)
+        // The user-reported D-Bomb track measures -15.17 LUFS: quieter than target → untouched on Normal.
+        assertThat(n.gainFor(-15.17f, NormalizationLevel.NORMAL)!!.gainDb).isWithin(0.01f).of(0f)
+        assertThat(n.gainFor(-15.17f, NormalizationLevel.LOUD)!!.gainDb).isWithin(0.01f).of(4.17f)
         assertThat(n.gainFor(-8f, NormalizationLevel.NORMAL)!!.gainDb).isWithin(0.01f).of(-6f)   // loud master → cut
         assertThat(n.gainFor(-14f, NormalizationLevel.LOUD)!!.gainDb).isWithin(0.01f).of(3f)
+        assertThat(n.gainFor(-10f, NormalizationLevel.NORMAL)!!.gainDb).isWithin(0.01f).of(-4f)
         assertThat(n.gainFor(-14f, NormalizationLevel.QUIET)!!.gainDb).isWithin(0.01f).of(-5f)
     }
 
@@ -30,9 +32,11 @@ class LoudnessNormalizerTest {
         val cut = n.gainFor(-8f, NormalizationLevel.NORMAL)!!
         assertThat(cut.volume).isWithin(0.001f).of(0.501f)   // -6 dB
         assertThat(cut.boostMb).isEqualTo(0)
-        val boost = n.gainFor(-17f, NormalizationLevel.NORMAL)!!
+        val noBoost = n.gainFor(-17f, NormalizationLevel.NORMAL)!!
+        assertThat(noBoost.boostMb).isEqualTo(0)            // Normal never boosts (no limiter in the path)
+        val boost = n.gainFor(-17f, NormalizationLevel.LOUD)!!
         assertThat(boost.volume).isEqualTo(1f)
-        assertThat(boost.boostMb).isEqualTo(300)            // +3 dB via LoudnessEnhancer (limited)
+        assertThat(boost.boostMb).isEqualTo(600)            // +6 dB via LoudnessEnhancer (limited), Loud only
     }
 
     @Test fun replayGainFromVorbisAndId3() {

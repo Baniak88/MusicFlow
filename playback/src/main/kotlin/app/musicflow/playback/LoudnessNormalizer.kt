@@ -30,10 +30,15 @@ object LoudnessNormalizer {
     /** ReplayGain 2 reference loudness. */
     private const val REPLAYGAIN_REFERENCE_LUFS = -18f
 
+    /**
+     * Quiet/Normal only *attenuate* loud tracks (clean, no extra processing — like YouTube).
+     * Loud may also boost quiet tracks through LoudnessEnhancer's limiter (like Spotify "Loud").
+     */
     fun gainFor(loudnessLufs: Float?, level: NormalizationLevel, source: LoudnessSource = LoudnessSource.PROVIDER): NormalizationGain? {
         val target = level.targetLufs ?: return null
         val lufs = loudnessLufs ?: return null
-        return NormalizationGain((target - lufs).coerceIn(MAX_CUT_DB, MAX_BOOST_DB), source)
+        val maxBoost = if (level == NormalizationLevel.LOUD) MAX_BOOST_DB else 0f
+        return NormalizationGain((target - lufs).coerceIn(MAX_CUT_DB, maxBoost), source)
     }
 
     /** ReplayGain track gain (dB, to reach -18 LUFS) → measured loudness in LUFS. */
