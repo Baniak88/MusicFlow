@@ -60,6 +60,12 @@ top. Pasting a YouTube / YouTube Music link into search opens that track or play
 * No PoToken provider is implemented; if YouTube starts requiring one for the visionOS client,
   stream resolution will fail until the extractor or MusicFlow adds one.
 
+**Loudness.** YouTube's player response contains the measured track loudness
+(`trackAbsoluteLoudnessLkfs`, LUFS; per-format `loudnessDb` relative to −14 LUFS). NewPipe does not
+expose it, so MusicFlow reads the already-downloaded response reflectively (no extra request);
+if a future extractor version renames the field, normalisation for YouTube tracks is silently
+skipped and logged — playback is unaffected.
+
 **Alternative providers.** When a track fails permanently, MusicFlow may play an on-device file
 instead — only when title, artist (similarity ≥ 0.7) and duration (± 5 s) match reliably.
 

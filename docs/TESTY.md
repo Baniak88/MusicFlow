@@ -46,6 +46,9 @@ Zaznacz ✅ / ❌ i dopisz uwagi.
 - [ ] Przełączenie Wi-Fi ↔ dane komórkowe w trakcie odtwarzania — muzyka wznawia się sama.
 - [ ] Android Auto (jeśli dostępne): przeglądanie i odtwarzanie.
 - [ ] Wyłącznik czasowy zatrzymuje muzykę.
+- [ ] Normalizacja głośności: przełączaj utwory z różnych lat/gatunków — głośność powinna być
+      podobna; w odtwarzaczu (linia z formatem) widać „Normalizacja: … dB”. Sprawdź też
+      poziomy Cicho / Normalnie / Głośno i Wyłączona.
 - [ ] Przenikanie (Ustawienia → Odtwarzanie → Przenikanie, np. 6 s): koniec utworu płynnie
       nakłada się na początek następnego; powiadomienie pokazuje już nowy utwór.
 - [ ] Jakość dźwięku: w odtwarzaczu stuknij linię z formatem (np. „OPUS · 160 kbps”) lub ⋮ →

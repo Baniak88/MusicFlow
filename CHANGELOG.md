@@ -3,6 +3,24 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.4] - 2026-11-25
+
+### Added
+- **Loudness normalisation** (Settings → Playback, default *Normal*): per-track gain to a
+  Spotify-like target (Quiet −19 / Normal −14 / Loud −11 LUFS) using YouTube's measured track
+  loudness (no extra requests) or ReplayGain tags in local files. Cuts via volume, boosts (max
+  +6 dB) via LoudnessEnhancer with limiter. Shown in the player's quality dialog.
+- Optimised test build type `beta` (R8, ~9.5 MB instead of ~84 MB).
+- Test builds are signed with a stable key, so new betas install over old ones.
+
+### Fixed
+- Navigation: double taps no longer open a screen twice; double "back" no longer pops two
+  screens; fast transitions (were a slow 0.7 s cross-fade); tapping a liked song in Library plays
+  it; Search no longer pops up the keyboard every time.
+- Artist pages: albums/singles via album search when the channel exposes no releases tab;
+  better matching of artist credits.
+- "Volume levelling" renamed "Dynamic compression" to distinguish it from normalisation.
+
 ## [1.0.0-beta.3] - 2026-11-25
 
 ### Fixed (navigation, reported by a tester)
