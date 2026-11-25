@@ -43,6 +43,7 @@ class MusicFlowApp : Application(), SingletonImageLoader.Factory {
         scope.launch {
             settings.settings.collect { s ->
                 registry.setEnabled("yt", s.youtubeProviderEnabled)
+                registry.setEnabled("sc", s.soundcloudProviderEnabled)
                 diagnostics.enabled = s.diagnosticsEnabled
             }
         }

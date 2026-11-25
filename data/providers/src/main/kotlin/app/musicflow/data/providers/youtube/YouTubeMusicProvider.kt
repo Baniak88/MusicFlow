@@ -78,7 +78,6 @@ class YouTubeMusicProvider(
     override val playlists: PlaylistProvider get() = this
 
     private val downloader = NewPipeDownloader(client)
-    @Volatile private var initialized = false
 
     /** Opaque page tokens → NewPipe [Page] objects (bounded LRU; tokens are session-only). */
     private val pages: MutableMap<String, Page> = Collections.synchronizedMap(
@@ -88,14 +87,7 @@ class YouTubeMusicProvider(
     )
 
     private fun service(): StreamingService {
-        if (!initialized) synchronized(this) {
-            if (!initialized) {
-                val loc = locale()
-                val country = countryOverride()?.takeIf { it.length == 2 } ?: loc.country.takeIf { it.length == 2 } ?: "US"
-                NewPipe.init(downloader, Localization.fromLocale(loc), ContentCountry(country))
-                initialized = true
-            }
-        }
+        app.musicflow.data.providers.newpipe.NewPipeRuntime.ensure(downloader, locale(), countryOverride())
         return ServiceList.YouTube
     }
 

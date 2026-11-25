@@ -405,6 +405,7 @@ class MusicService : MediaLibraryService() {
                 settings = s
                 diagnostics.enabled = s.diagnosticsEnabled
                 registry.setEnabled("yt", s.youtubeProviderEnabled)
+                registry.setEnabled("sc", s.soundcloudProviderEnabled)
                 if (old.skipSilence != s.skipSilence) player.skipSilenceEnabled = s.skipSilence
                 if (old.pauseOnDisconnect != s.pauseOnDisconnect) player.setHandleAudioBecomingNoisy(s.pauseOnDisconnect)
                 crossfader.fadeMs = s.crossfadeSeconds * 1000L

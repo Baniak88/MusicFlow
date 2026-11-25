@@ -30,6 +30,7 @@ value class MediaId(val value: String) {
 
 object ProviderIds {
     const val YOUTUBE_MUSIC = "yt"
+    const val SOUNDCLOUD = "sc"
     const val LOCAL = "local"
     const val DIRECT_URL = "url"
 }

@@ -28,9 +28,19 @@ object MediaItems {
     fun mediaIdFromUri(uri: Uri): MediaId? =
         if (uri.scheme == SCHEME) MediaId.parseOrNull(uri.getQueryParameter("id")) else null
 
+    /**
+     * Whether the track's stream is an HLS playlist. Must be known before resolution (it picks the
+     * media source): SoundCloud serves HLS only; direct links say so in their extension.
+     */
+    fun isHlsSource(id: MediaId): Boolean = when (id.providerId) {
+        app.musicflow.core.model.ProviderIds.SOUNDCLOUD -> true
+        app.musicflow.core.model.ProviderIds.DIRECT_URL -> id.key.substringBefore('?').endsWith(".m3u8", ignoreCase = true)
+        else -> false
+    }
+
     fun toMediaItem(track: Track): MediaItem {
         val extras = Bundle().apply { putString(EXTRA_TRACK, json.encodeToString(Track.serializer(), track)) }
-        val isHls = track.id.providerId == "url" && track.id.key.substringBefore('?').endsWith(".m3u8", ignoreCase = true)
+        val isHls = isHlsSource(track.id)
         return MediaItem.Builder()
             .setMediaId(track.id.value)
             .setUri(placeholderUri(track.id))

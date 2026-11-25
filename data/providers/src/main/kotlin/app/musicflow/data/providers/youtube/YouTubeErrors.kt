@@ -24,6 +24,8 @@ object YouTubeErrors {
         is SignInConfirmNotBotException -> ProviderError.RateLimited("YouTube temporarily blocked anonymous access from this IP", t)
         is AgeRestrictedContentException -> ProviderError.Restricted(Reason.AGE, "Age-restricted content requires sign-in", t)
         is GeographicRestrictionException -> ProviderError.Restricted(Reason.GEOGRAPHIC, "Not available in your country", t)
+        is org.schabi.newpipe.extractor.exceptions.SoundCloudGoPlusContentException ->
+            ProviderError.Restricted(Reason.PAID, "SoundCloud Go+ track: only a 30-second preview is available", t)
         is YoutubeMusicPremiumContentException -> ProviderError.Restricted(Reason.PAID, "Only available with YouTube Music Premium", t)
         is PaidContentException -> ProviderError.Restricted(Reason.PAID, "Paid or members-only content", t)
         is PrivateContentException -> ProviderError.Unavailable("This track is private", t)

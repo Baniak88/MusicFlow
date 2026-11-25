@@ -44,6 +44,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
         val resumeBt = booleanPreferencesKey("resume_bt")
         val discovery = booleanPreferencesKey("discovery_mode")
         val yt = booleanPreferencesKey("provider_yt")
+        val sc = booleanPreferencesKey("provider_sc")
         val history = booleanPreferencesKey("history_enabled")
         val diagnostics = booleanPreferencesKey("diagnostics_enabled")
         val buffer = stringPreferencesKey("buffer_profile")
@@ -74,6 +75,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
             resumeOnBluetooth = p[K.resumeBt] ?: d.resumeOnBluetooth,
             discoveryMode = p[K.discovery] ?: d.discoveryMode,
             youtubeProviderEnabled = p[K.yt] ?: d.youtubeProviderEnabled,
+            soundcloudProviderEnabled = p[K.sc] ?: d.soundcloudProviderEnabled,
             historyEnabled = p[K.history] ?: d.historyEnabled,
             diagnosticsEnabled = p[K.diagnostics] ?: d.diagnosticsEnabled,
             bufferProfile = p.enum(K.buffer, d.bufferProfile),
@@ -102,6 +104,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     suspend fun setResumeOnBluetooth(v: Boolean) { store.edit { it[K.resumeBt] = v } }
     suspend fun setDiscoveryMode(v: Boolean) { store.edit { it[K.discovery] = v } }
     suspend fun setYouTubeEnabled(v: Boolean) { store.edit { it[K.yt] = v } }
+    suspend fun setSoundCloudEnabled(v: Boolean) { store.edit { it[K.sc] = v } }
     suspend fun setHistoryEnabled(v: Boolean) { store.edit { it[K.history] = v } }
     suspend fun setDiagnosticsEnabled(v: Boolean) { store.edit { it[K.diagnostics] = v } }
     suspend fun setBufferProfile(v: BufferProfile) { store.edit { it[K.buffer] = v.name } }

@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** A source offered in Search, e.g. `yt` / "YouTube Music". */
+data class SearchSource(val id: String, val name: String)
+
 @Singleton
 class SearchRepository @Inject constructor(
     private val registry: ProviderRegistry,
@@ -34,23 +37,34 @@ class SearchRepository @Inject constructor(
     suspend fun deleteQuery(query: String) = db.history().deleteSearch(query)
     suspend fun clearHistory() = db.history().clearSearches()
 
+    /** Online sources the user can pick in Search (id to display name), main catalogue first. */
+    fun sources(): List<SearchSource> = registry.searchSources().map { SearchSource(it.id, it.displayName) }
+
     /**
-     * Searches the primary online catalogue. If no online provider is available, falls back to
-     * on-device music so search still works offline.
+     * Searches [sourceId] (default: the primary online catalogue). A pasted link goes to the
+     * provider that owns it, whatever source is selected. If no online provider is available,
+     * falls back to on-device music so search still works offline.
      */
-    suspend fun search(query: String, filter: SearchFilter, pageToken: String? = null): SearchPage {
-        val provider = registry.primaryCatalog()
+    suspend fun search(query: String, filter: SearchFilter, pageToken: String? = null, sourceId: String? = null): SearchPage {
+        val provider = linkOwner(query)
+            ?: sourceId?.let(registry::byId)?.takeIf { registry.isEnabled(it.id) && it.search != null }
+            ?: registry.primaryCatalog()
             ?: registry.enabled().filterIsInstance<LocalMusicProvider>().firstOrNull()
             ?: throw ProviderError.NotSupported("No search provider enabled")
         return registry.call(provider, "search") { it.search!!.search(query, filter, pageToken) }
     }
 
+    private fun linkOwner(query: String) = query.trim().takeIf { it.startsWith("http", ignoreCase = true) || ".com/" in it }?.let { q ->
+        registry.enabled().firstOrNull { p -> p.search != null && p.playlists?.let { it.parseTrackUrl(q) ?: it.parsePlaylistUrl(q) } != null }
+    }
+
     /** Local history matches first, then provider suggestions; de-duplicated case-insensitively. */
-    suspend fun suggestions(prefix: String): List<String> {
+    suspend fun suggestions(prefix: String, sourceId: String? = null): List<String> {
         val p = prefix.trim()
         if (p.isEmpty()) return emptyList()
         val local = db.history().searchesStartingWith(p, 4).map { it.query }
-        val remote = registry.primaryCatalog()?.let { provider ->
+        val source = sourceId?.let(registry::byId)?.takeIf { registry.isEnabled(it.id) && it.search != null } ?: registry.primaryCatalog()
+        val remote = source?.let { provider ->
             runCatching {
                 registry.call(provider, "suggestions", policy = app.musicflow.core.common.RetryPolicy.None) { it.search!!.suggestions(p) }
             }.getOrDefault(emptyList())

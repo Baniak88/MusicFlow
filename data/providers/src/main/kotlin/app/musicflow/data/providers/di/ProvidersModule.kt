@@ -7,6 +7,7 @@ import app.musicflow.data.providers.api.MusicProvider
 import app.musicflow.data.providers.direct.DirectUrlProvider
 import app.musicflow.data.providers.local.LocalMusicProvider
 import app.musicflow.data.providers.lyrics.LrcLibLyricsProvider
+import app.musicflow.data.providers.soundcloud.SoundCloudProvider
 import app.musicflow.data.providers.youtube.YouTubeMusicProvider
 import dagger.Module
 import dagger.Provides
@@ -22,6 +23,12 @@ import javax.inject.Singleton
 object ProvidersModule {
     @Provides @Singleton
     fun youTube(client: OkHttpClient, diagnostics: DiagnosticsLog) = YouTubeMusicProvider(client, diagnostics)
+
+    @Provides @Singleton
+    fun soundCloud(client: OkHttpClient, diagnostics: DiagnosticsLog) = SoundCloudProvider(client, diagnostics)
+
+    @Provides @IntoSet
+    fun bindSoundCloud(p: SoundCloudProvider): MusicProvider = p
 
     @Provides @Singleton
     fun local(@ApplicationContext context: Context) = LocalMusicProvider(context)

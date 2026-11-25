@@ -29,6 +29,8 @@ data class ResultsState(
     val error: Throwable? = null,
     val nextPageToken: String? = null,
     val correctedQuery: String? = null,
+    /** Provider id searched (e.g. `yt`, `sc`); null = main catalogue. */
+    val source: String? = null,
 )
 
 @OptIn(FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -38,6 +40,9 @@ class SearchViewModel @Inject constructor(
     private val playback: PlaybackEngine,
 ) : ViewModel() {
     val input = MutableStateFlow("")
+
+    /** Selectable online sources (shown as chips when there is more than one). */
+    val sources: List<app.musicflow.data.repositories.SearchSource> get() = repo.sources()
     val submitted = MutableStateFlow(false)
 
     val history: StateFlow<List<String>> = repo.history.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -46,7 +51,7 @@ class SearchViewModel @Inject constructor(
     val suggestions: StateFlow<List<String>> = input
         .debounce(300)
         .distinctUntilChanged()
-        .mapLatest { q -> if (q.length < 2) emptyList() else runCatching { repo.suggestions(q) }.getOrDefault(emptyList()) }
+        .mapLatest { q -> if (q.length < 2) emptyList() else runCatching { repo.suggestions(q, _results.value.source) }.getOrDefault(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _results = MutableStateFlow(ResultsState())
@@ -58,23 +63,28 @@ class SearchViewModel @Inject constructor(
         if (submitted.value && text != _results.value.query) submitted.value = false
     }
 
-    fun submit(query: String = input.value, filter: SearchFilter = _results.value.filter) {
+    fun submit(query: String = input.value, filter: SearchFilter = _results.value.filter, source: String? = _results.value.source) {
         val q = query.trim()
         if (q.isEmpty()) return
         input.value = q
         submitted.value = true
         searchJob?.cancel()
-        _results.value = ResultsState(query = q, filter = filter, loading = true)
+        _results.value = ResultsState(query = q, filter = filter, loading = true, source = source)
         searchJob = viewModelScope.launch {
             repo.recordQuery(q)
-            _results.value = runCatching { repo.search(q, filter) }.fold(
-                onSuccess = { ResultsState(q, filter, SearchRepository.dedupe(emptyList(), it.items), nextPageToken = it.nextPageToken, correctedQuery = it.correctedQuery) },
-                onFailure = { ResultsState(q, filter, error = it) },
+            _results.value = runCatching { repo.search(q, filter, sourceId = source) }.fold(
+                onSuccess = { ResultsState(q, filter, SearchRepository.dedupe(emptyList(), it.items), nextPageToken = it.nextPageToken, correctedQuery = it.correctedQuery, source = source) },
+                onFailure = { ResultsState(q, filter, error = it, source = source) },
             )
         }
     }
 
     fun setFilter(filter: SearchFilter) { if (filter != _results.value.filter) submit(_results.value.query, filter) }
+
+    fun setSource(source: String) {
+        val current = _results.value.source ?: sources.firstOrNull()?.id
+        if (source != current) submit(_results.value.query, _results.value.filter, source)
+    }
 
     /** Loads the next page; duplicate items across pages are dropped. Guarded against double calls. */
     fun loadMore() {
@@ -83,10 +93,10 @@ class SearchViewModel @Inject constructor(
         if (s.loading || s.loadingMore) return
         _results.value = s.copy(loadingMore = true)
         viewModelScope.launch {
-            runCatching { repo.search(s.query, s.filter, token) }
+            runCatching { repo.search(s.query, s.filter, token, s.source) }
                 .onSuccess { page ->
                     val cur = _results.value
-                    if (cur.query == s.query && cur.filter == s.filter) {
+                    if (cur.query == s.query && cur.filter == s.filter && cur.source == s.source) {
                         _results.value = cur.copy(items = cur.items + SearchRepository.dedupe(cur.items, page.items), nextPageToken = page.nextPageToken, loadingMore = false)
                     }
                 }

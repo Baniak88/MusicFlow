@@ -84,6 +84,12 @@ class ProviderRegistry @Inject constructor(
         return online.firstOrNull { !isOpen(it.id) } ?: online.firstOrNull()
     }
 
+    /** Online sources the user can search, main catalogue first (e.g. YouTube Music, SoundCloud). */
+    fun searchSources(): List<MusicProvider> {
+        val primary = primaryCatalog()
+        return listOfNotNull(primary) + enabled().filter { it.isSearchSource && it.search != null && it !== primary }
+    }
+
     private fun isOpen(providerId: String): Boolean {
         val until = _health.value[providerId]?.openUntil ?: return false
         return clock.now() < until

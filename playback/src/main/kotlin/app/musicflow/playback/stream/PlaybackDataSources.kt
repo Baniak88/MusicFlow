@@ -48,12 +48,25 @@ object PlaybackDataSources {
             CacheDataSource.Factory()
                 .setCache(cache)
                 .setUpstreamDataSourceFactory(remoteRouting)
-                .setCacheKeyFactory { spec -> spec.key ?: spec.uri.toString() }
+                .setCacheKeyFactory(::cacheKey)
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         } else remoteRouting
         val local = DefaultDataSource.Factory(context)
         val routing = DataSource.Factory { LocalOrRemoteDataSource(local.createDataSource(), remote.createDataSource()) }
         return ResolvingDataSource.Factory(routing) { spec -> resolve(spec, streams) }
+    }
+
+    /**
+     * Cache key: the resolver's stable key, else the URL. SoundCloud HLS segments are re-signed on
+     * every resolution, so their key drops the signature query — the same audio stays cached.
+     */
+    internal fun cacheKey(spec: DataSpec): String {
+        spec.key?.let { return it }
+        val uri = spec.uri
+        val host = uri.host.orEmpty()
+        return if (host.endsWith("sndcdn.com") || host.endsWith("media-streaming.soundcloud.cloud")) {
+            uri.buildUpon().clearQuery().fragment(null).build().toString()
+        } else uri.toString()
     }
 
     internal fun resolve(spec: DataSpec, streams: StreamRepository): DataSpec {

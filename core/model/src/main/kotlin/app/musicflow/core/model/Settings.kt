@@ -25,6 +25,7 @@ data class UserSettings(
     val resumeOnBluetooth: Boolean = false,
     val discoveryMode: Boolean = false,
     val youtubeProviderEnabled: Boolean = true,
+    val soundcloudProviderEnabled: Boolean = true,
     val historyEnabled: Boolean = true,
     val diagnosticsEnabled: Boolean = true,
     val bufferProfile: BufferProfile = BufferProfile.BALANCED,

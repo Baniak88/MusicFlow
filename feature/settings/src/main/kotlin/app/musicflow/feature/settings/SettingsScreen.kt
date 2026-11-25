@@ -140,6 +140,7 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
                         Text(statusLabel(h.status) + (h.lastError?.let { " — $it" } ?: ""), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
                     }
                     if (h.providerId == "yt") Switch(s.youtubeProviderEnabled, vm::setYouTube)
+                    if (h.providerId == "sc") Switch(s.soundcloudProviderEnabled, vm::setSoundCloud)
                 }
             }
         }

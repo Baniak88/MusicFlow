@@ -170,6 +170,16 @@ private fun Results(state: ResultsState, padding: PaddingValues, vm: SearchViewM
     LaunchedEffect(nearEnd, state.nextPageToken) { if (nearEnd) vm.loadMore() }
 
     LazyColumn(state = listState, contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp)) {
+        val sources = vm.sources
+        if (sources.size > 1) item(key = "sources") {
+            val selected = state.source ?: sources.first().id
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(bottom = 8.dp),
+            ) {
+                items(sources, key = { it.id }) { src -> PillChip(src.name, selected == src.id, { vm.setSource(src.id) }) }
+            }
+        }
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(SearchFilter.entries) { f -> PillChip(filterLabel(f), state.filter == f, { vm.setFilter(f) }) }

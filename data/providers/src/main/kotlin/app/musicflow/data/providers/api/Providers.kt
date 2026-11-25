@@ -71,6 +71,9 @@ interface MusicProvider {
     /** True for remote music catalogues used for discovery (search, home, explore). */
     val isOnlineCatalog: Boolean get() = false
 
+    /** True for online sources offered as a choice in Search (the main catalogue and extra sources). */
+    val isSearchSource: Boolean get() = isOnlineCatalog
+
     /** Additional [MediaId.providerId] prefixes this provider owns (e.g. playlists, channels). */
     val ownedPrefixes: Set<String> get() = setOf(id)
 
