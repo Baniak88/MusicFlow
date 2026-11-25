@@ -3,6 +3,21 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.13] - 2026-11-25
+
+### Fixed
+- **Radio search**: words typed together are split ("danceradio" → "dance radio", "openfm" →
+  "open fm"), an exact station name wins, and a country code in the query ("danceradio cz") prefers
+  that country. Verified live: Sunshine Live, Dance rádio CZ and Radio FAMA Kielce are found first
+  and play.
+- **Radio sound quality**: the directory lists many stations several times (e.g. AAC+ 32 kbps next
+  to MP3 192/320 kbps); only the best-sounding version of each station is shown, and the list shows
+  its format and bitrate as reported by the directory.
+
+### Known limitation
+- Open FM: the directory only contains third-party relays (reconv.pl) that refuse playback
+  (HTTP 403); Open FM's own streams are not published in Radio Browser.
+
 ## [1.0.0-beta.12] - 2026-11-25
 
 ### Fixed

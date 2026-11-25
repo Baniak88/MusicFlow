@@ -1,5 +1,14 @@
 ## MusicFlow — wersja testowa / test build
 
+**Poprawki w beta.13 (radio):**
+- Znajdują się i grają m.in. Sunshine Live, Dance rádio (CZ) i Radio FAMA Kielce. Wyszukiwanie
+  rozdziela sklejone słowa („danceradio” → „dance radio”), dokładna nazwa stacji jest pierwsza,
+  a kod kraju w zapytaniu („danceradio cz”) wybiera stacje z tego kraju.
+- Lepsza jakość: katalog często ma tę samą stację kilka razy (np. 32 kb/s i 320 kb/s) — teraz
+  pokazywana jest tylko najlepiej brzmiąca wersja, a na liście widać format i bitrate.
+- Open FM: w katalogu Radio Browser są tylko nieoficjalne kopie strumieni, które odmawiają
+  odtwarzania (błąd 403) — tych stacji na razie nie da się odtworzyć.
+
 **Poprawki w beta.12:**
 - **Wyszukiwanie radia** znajduje teraz dużo więcej stacji, np. „Radio Fama Kielce”: szuka po
   pojedynczych słowach w nazwie, regionie/mieście i gatunku, a najlepiej pasujące pokazuje
