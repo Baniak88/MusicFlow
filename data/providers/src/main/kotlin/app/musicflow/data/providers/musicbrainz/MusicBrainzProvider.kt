@@ -139,12 +139,17 @@ class MusicBrainzProvider(
         val q = query.trim()
         val offset = pageToken?.toIntOrNull() ?: 0
         val page = mapOf("query" to q, "limit" to PAGE.toString(), "offset" to offset.toString())
+        // Free text searches only titles by default; also match the artist field, so
+        // "karma police radiohead" finds Radiohead's recording rather than covers titled "Radiohead - …".
+        val terms = MbMapper.luceneTerms(q)
+        val recQuery = page + ("query" to "recording:($terms)^2 OR artist:($terms)")
+        val rgQuery = page + ("query" to "releasegroup:($terms)^2 OR artist:($terms)")
         fun next(count: Int, size: Int) = (offset + size).takeIf { size > 0 && it < count }?.toString()
         return when (filter) {
-            SearchFilter.SONGS -> get("recording", page, MbRecordingSearch.serializer()).let { r ->
+            SearchFilter.SONGS -> get("recording", recQuery, MbRecordingSearch.serializer()).let { r ->
                 SearchPage(q, filter, MbMapper.rankRecordings(q, r.recordings).map { MediaItemSummary.TrackItem(MbMapper.track(it)) }, next(r.count, r.recordings.size))
             }
-            SearchFilter.ALBUMS -> get("release-group", page, MbReleaseGroupSearch.serializer()).let { r ->
+            SearchFilter.ALBUMS -> get("release-group", rgQuery, MbReleaseGroupSearch.serializer()).let { r ->
                 SearchPage(q, filter, MbMapper.rankGroups(q, r.releaseGroups).map { MediaItemSummary.AlbumItem(MbMapper.album(it)) }, next(r.count, r.releaseGroups.size))
             }
             SearchFilter.ARTISTS -> get("artist", page, MbArtistSearch.serializer()).let { r ->
@@ -154,8 +159,8 @@ class MusicBrainzProvider(
             SearchFilter.ALL -> coroutineScope {
                 // Sequential under the rate limit anyway; artists and albums first, best matches only.
                 val artists = runCatching { get("artist", mapOf("query" to q, "limit" to "3"), MbArtistSearch.serializer()).artists.filter { (it.score ?: 0) >= 90 } }.getOrDefault(emptyList())
-                val songs = async { MbMapper.rankRecordings(q, get("recording", mapOf("query" to q, "limit" to "40"), MbRecordingSearch.serializer()).recordings).take(20) }
-                val albums = runCatching { MbMapper.rankGroups(q, get("release-group", mapOf("query" to q, "limit" to "15"), MbReleaseGroupSearch.serializer()).releaseGroups).take(8) }.getOrDefault(emptyList())
+                val songs = async { MbMapper.rankRecordings(q, get("recording", recQuery + ("limit" to "40") + ("offset" to "0"), MbRecordingSearch.serializer()).recordings).take(20) }
+                val albums = runCatching { MbMapper.rankGroups(q, get("release-group", rgQuery + ("limit" to "15") + ("offset" to "0"), MbReleaseGroupSearch.serializer()).releaseGroups).take(8) }.getOrDefault(emptyList())
                 val items = artists.take(2).map { MediaItemSummary.ArtistItem(MbMapper.artist(it)) } +
                     songs.await().map { MediaItemSummary.TrackItem(MbMapper.track(it)) } +
                     albums.map { MediaItemSummary.AlbumItem(MbMapper.album(it)) }
@@ -260,6 +265,21 @@ object MbIds {
 internal object MbMapper {
     fun year(date: String?): Int? = date?.take(4)?.toIntOrNull()
 
+    /** Query words for Lucene, with its special characters removed (no syntax injection). */
+    fun luceneTerms(query: String): String =
+        query.replace(Regex("""[+\-&|!(){}\[\]^"~*?:\\/]"""), " ").trim().replace(Regex("""\s+"""), " ").ifEmpty { "*" }
+
+    /** 2 = the title is exactly what was typed (minus the artist), 1 = close, 0 = other (medleys, remixes…). */
+    private fun titleFit(query: String, title: String, credit: String): Int {
+        val q = (" " + TextMatching.normalize(query) + " ").replace(" " + TextMatching.normalize(credit) + " ", " ").trim()
+        val t = TextMatching.normalize(title)
+        return when {
+            t == q -> 2
+            TextMatching.similarity(t, q) >= 0.8 -> 1
+            else -> 0
+        }
+    }
+
     /** Whether the user typed this artist's name (e.g. "karma police radiohead"). */
     private fun mentions(query: String, credit: String): Boolean {
         val c = TextMatching.normalize(credit)
@@ -274,6 +294,7 @@ internal object MbMapper {
     fun rankRecordings(query: String, items: List<MbRecording>): List<MbRecording> = items.filter { !it.video }
         .sortedWith(
             compareByDescending<MbRecording> { mentions(query, credit(it.artistCredit)) }
+                .thenByDescending { titleFit(query, it.title, credit(it.artistCredit)) }
                 .thenByDescending { (it.score ?: 0) / 10 }
                 .thenByDescending { it.releases.size }
                 .thenByDescending { it.releases.any { r -> r.status == "Official" } },
@@ -281,6 +302,7 @@ internal object MbMapper {
 
     fun rankGroups(query: String, items: List<MbReleaseGroupRef>): List<MbReleaseGroupRef> = items.sortedWith(
         compareByDescending<MbReleaseGroupRef> { mentions(query, credit(it.artistCredit)) }
+            .thenByDescending { titleFit(query, it.title, credit(it.artistCredit)) }
             .thenByDescending { (it.score ?: 0) / 10 }
             .thenByDescending { it.releases.size },
     )
