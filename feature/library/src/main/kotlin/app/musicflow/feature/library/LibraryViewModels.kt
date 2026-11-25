@@ -79,6 +79,12 @@ class LibraryViewModel @Inject constructor(
         _events.emit(LibraryEvent.OpenPlaylist(r.playlistId))
     }
 
+    /** Plays liked songs starting with [track] (tapping a song plays it, it doesn't navigate). */
+    fun playFavoritesFrom(track: Track) {
+        val list = favorites.value
+        playback.play(list, list.indexOfFirst { it.id == track.id }.coerceAtLeast(0))
+    }
+
     fun playFavorites(shuffle: Boolean) = favorites.value.takeIf { it.isNotEmpty() }?.let { playback.play(it, 0, shuffle) }
 
     private fun launchBusy(block: suspend () -> Unit) = viewModelScope.launch {

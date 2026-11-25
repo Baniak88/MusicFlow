@@ -76,7 +76,8 @@ fun SearchScreen(contentPadding: PaddingValues, initialQuery: String? = null, vm
     val focus = remember { FocusRequester() }
 
     LaunchedEffect(initialQuery) {
-        if (!initialQuery.isNullOrBlank()) vm.submit(initialQuery) else if (!submitted) runCatching { focus.requestFocus() }
+        // No automatic keyboard: it popped up every time the Search tab was revisited.
+        if (!initialQuery.isNullOrBlank()) vm.submit(initialQuery)
     }
 
     Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {

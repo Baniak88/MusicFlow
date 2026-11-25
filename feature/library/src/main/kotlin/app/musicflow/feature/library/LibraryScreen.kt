@@ -114,7 +114,7 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
             LibTab.PLAYLISTS -> if (playlists.isEmpty()) item { MessageState(stringResource(R.string.lib_no_playlists), body = stringResource(R.string.lib_no_playlists_body), actionLabel = stringResource(R.string.lib_new_playlist), onAction = { showCreate = true }) }
                 else items(playlists, key = { "p${it.id}" }) { p -> EntityRow(p.name, trackCount(p.trackCount), p.artworkUrl) { nav.openUserPlaylist(p.id) } }
             LibTab.SONGS -> if (favorites.isEmpty()) item { MessageState(stringResource(R.string.lib_no_favorites)) }
-                else items(favorites, key = { "f${it.id.value}" }) { t -> TrackRow(t, onClick = { nav.openLibrarySection(LibrarySection.FAVORITES) }, onMore = { menu.open(t) }) }
+                else items(favorites, key = { "f${it.id.value}" }) { t -> TrackRow(t, onClick = { vm.playFavoritesFrom(t) }, onMore = { menu.open(t) }) }
             LibTab.ALBUMS -> if (albums.isEmpty()) item { MessageState(stringResource(R.string.lib_no_albums)) }
                 else items(albums, key = { "a${it.id.value}" }) { a -> EntityRow(a.title, a.artistLine, a.artworkUrl) { nav.openCollection(a.id) } }
             LibTab.ARTISTS -> if (artists.isEmpty()) item { MessageState(stringResource(R.string.lib_no_artists)) }

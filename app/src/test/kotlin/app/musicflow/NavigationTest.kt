@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -159,6 +160,33 @@ class TabNavigationTest {
         compose.activity.onBackPressedDispatcher.onBackPressed()
         waitForText("Welcome to MusicFlow")
         tab("home").assertIsSelected()
+    }
+
+    @Test fun doubleTapOpensAScreenOnlyOnce() {
+        tab("explore").performClick()
+        waitForText("Electronic")
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithText("Electronic").performClick()
+        compose.onNodeWithText("Electronic").performClick() // second tap before any frame
+        compose.mainClock.autoAdvance = true
+        waitForText("Nothing found for this category right now.")
+        compose.activity.onBackPressedDispatcher.onBackPressed()
+        waitForText("Dance") // one Back is enough: there was only one copy of the screen
+        compose.onAllNodesWithText("Nothing found for this category right now.").assertCountEquals(0)
+    }
+
+    @Test fun doubleTapOnBackArrowGoesBackOnlyOnce() {
+        tab("explore").performClick()
+        waitForText("Electronic")
+        compose.onNodeWithText("Electronic").performClick()
+        waitForText("Nothing found for this category right now.")
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.mainClock.autoAdvance = true
+        waitForText("Dance") // still in Explore, not thrown out to Home
+        tab("explore").assertIsSelected()
+        compose.onAllNodesWithText("Welcome to MusicFlow").assertCountEquals(0)
     }
 
     @Test fun statusBarHasAScrimOverScrollingContent() {

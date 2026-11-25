@@ -1,6 +1,11 @@
 package app.musicflow.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -144,21 +149,39 @@ private class ShellNavigator(
     private val tabsNav: TabNavigation,
     private val showPlayer: (Boolean) -> Unit,
 ) : AppNavigator {
-    override fun openCollection(id: MediaId) = nav.navigate("collection/${Routes.enc(id.value)}")
-    override fun openArtist(id: MediaId) = nav.navigate("artist/${Routes.enc(id.value)}")
-    override fun openUserPlaylist(id: Long) = nav.navigate("playlist/$id")
-    override fun openCategory(name: String) = nav.navigate("category/$name")
-    override fun openLibrarySection(section: LibrarySection) = nav.navigate("section/${section.name}")
+    override fun openCollection(id: MediaId) = go("collection/${Routes.enc(id.value)}")
+    override fun openArtist(id: MediaId) = go("artist/${Routes.enc(id.value)}")
+    override fun openUserPlaylist(id: Long) = go("playlist/$id")
+    override fun openCategory(name: String) = go("category/$name")
+    override fun openLibrarySection(section: LibrarySection) = go("section/${section.name}")
     override fun openSearch(query: String?) {
         if (query.isNullOrBlank()) tabsNav.select(Routes.SEARCH) // the search icon switches to the Search tab
         else nav.navigate("search?q=${Routes.enc(query)}") { launchSingleTop = true }
     }
-    override fun openSettings() = nav.navigate(Routes.SETTINGS)
-    override fun openDiagnostics() = nav.navigate(Routes.DIAGNOSTICS)
-    override fun openLicenses() = nav.navigate(Routes.LICENSES)
-    override fun openEqualizer() = nav.navigate(Routes.EQUALIZER)
+    override fun openSettings() = go(Routes.SETTINGS)
+    override fun openDiagnostics() = go(Routes.DIAGNOSTICS)
+    override fun openLicenses() = go(Routes.LICENSES)
+    override fun openEqualizer() = go(Routes.EQUALIZER)
     override fun openPlayer() = showPlayer(true)
-    override fun back() { nav.popBackStack() }
+    override fun back() {
+        // A double tap on "back" must not pop two screens (or leave the tab).
+        if (isIdle()) nav.popBackStack()
+    }
+
+    private fun isIdle() = nav.currentBackStackEntry?.lifecycle?.currentState == androidx.lifecycle.Lifecycle.State.RESUMED
+
+    /** Opens a screen once: taps during a running transition (double taps) are ignored. */
+    private fun go(route: String) {
+        if (!isIdle()) return
+        if (nav.currentBackStackEntry?.let { routeOf(it) } == route) return // already there
+        nav.navigate(route)
+    }
+
+    private fun routeOf(entry: androidx.navigation.NavBackStackEntry): String {
+        var r = entry.destination.route.orEmpty()
+        entry.arguments?.let { args -> args.keySet().forEach { k -> r = r.replace("{$k}", args.get(k)?.toString().orEmpty()) } }
+        return r
+    }
 }
 
 @Composable
@@ -213,7 +236,15 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
                     },
                 ) { padding ->
                     val content = PaddingValues(bottom = padding.calculateBottomPadding())
-                    NavHost(nav, startDestination = Routes.HOME, modifier = Modifier.fillMaxSize()) {
+                    NavHost(
+                        nav, startDestination = Routes.HOME, modifier = Modifier.fillMaxSize(),
+                        // Short, predictable transitions: tab switches are instant, sub-screens
+                        // slide in quickly (the library default is a slow 700 ms cross-fade).
+                        enterTransition = { if (isTabSwitch()) EnterTransition.None else slideInHorizontally(tween(220)) { it / 8 } + fadeIn(tween(160)) },
+                        exitTransition = { if (isTabSwitch()) ExitTransition.None else fadeOut(tween(120)) },
+                        popEnterTransition = { if (isTabSwitch()) EnterTransition.None else fadeIn(tween(160)) },
+                        popExitTransition = { if (isTabSwitch()) ExitTransition.None else slideOutHorizontally(tween(200)) { it / 8 } + fadeOut(tween(140)) },
+                    ) {
                         composable(Routes.HOME) { HomeScreen(content) }
                         composable(Routes.EXPLORE) { ExploreScreen(content) }
                         composable(Routes.SEARCH, arguments = listOf(navArgument("q") { type = NavType.StringType; defaultValue = "" })) { entry ->
@@ -249,3 +280,9 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
         }
     }
 }
+
+private val tabRoutes = setOf(Routes.HOME, Routes.EXPLORE, Routes.SEARCH, Routes.LIBRARY)
+
+/** Both ends of the transition are tab roots → it is a tab switch. */
+private fun AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.isTabSwitch() =
+    initialState.destination.route in tabRoutes && targetState.destination.route in tabRoutes
