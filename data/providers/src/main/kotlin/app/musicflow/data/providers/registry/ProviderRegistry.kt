@@ -87,7 +87,9 @@ class ProviderRegistry @Inject constructor(
     /** Online sources the user can search, main catalogue first (e.g. YouTube Music, SoundCloud). */
     fun searchSources(): List<MusicProvider> {
         val primary = primaryCatalog()
+        val order = listOf("sc", "radio", "mbr")
         return listOfNotNull(primary) + enabled().filter { it.isSearchSource && it.search != null && it !== primary }
+            .sortedBy { p -> order.indexOf(p.id).let { if (it < 0) order.size else it } }
     }
 
     private fun isOpen(providerId: String): Boolean {

@@ -23,6 +23,13 @@ class SoundCloudPlaybackTest {
         assertThat(MediaItems.mediaIdFromUri(sc.localConfiguration!!.uri)?.value).isEqualTo("sc:soundcloud.com/a/b")
     }
 
+    @Test fun radioStationsAreQueuedByStreamType() {
+        val hls = MediaItems.toMediaItem(Track(MediaId("radio:hls/cccc"), "Station"))
+        assertThat(hls.localConfiguration?.mimeType).isEqualTo(MimeTypes.APPLICATION_M3U8)
+        val icecast = MediaItems.toMediaItem(Track(MediaId("radio:aaaa"), "Station"))
+        assertThat(icecast.localConfiguration?.mimeType).isNull() // progressive (MP3/AAC/Ogg)
+    }
+
     @Test fun soundCloudSegmentsStayCachedAcrossReSignedUrls() {
         fun key(url: String) = PlaybackDataSources.cacheKey(DataSpec(Uri.parse(url)))
         val a = key("https://cf-hls-media.sndcdn.com/media/0/31762/abc.128.mp3?Policy=AAA&Signature=1")

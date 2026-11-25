@@ -26,6 +26,8 @@ data class UserSettings(
     val discoveryMode: Boolean = false,
     val youtubeProviderEnabled: Boolean = true,
     val soundcloudProviderEnabled: Boolean = true,
+    val radioProviderEnabled: Boolean = true,
+    val musicbrainzEnabled: Boolean = true,
     val historyEnabled: Boolean = true,
     val diagnosticsEnabled: Boolean = true,
     val bufferProfile: BufferProfile = BufferProfile.BALANCED,

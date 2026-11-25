@@ -31,4 +31,13 @@
     <string name="cat_new_releases">New releases</string>
     <string name="cat_uk_charts">UK charts</string>
     <string name="cat_global_charts">Global charts</string>
+    <string name="group_radio">Radio</string>
+    <string name="cat_radio_local">Popular radio near you</string>
+    <string name="cat_radio_world">Top radio worldwide</string>
+    <string name="cat_radio_pop">Pop radio</string>
+    <string name="cat_radio_rock">Rock radio</string>
+    <string name="cat_radio_dance">Dance radio</string>
+    <string name="cat_radio_jazz">Jazz radio</string>
+    <string name="cat_radio_classical">Classical radio</string>
+    <string name="cat_radio_news">News &amp; talk</string>
 </resources>

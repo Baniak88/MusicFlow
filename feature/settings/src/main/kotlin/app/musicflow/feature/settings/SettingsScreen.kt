@@ -141,6 +141,8 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
                     }
                     if (h.providerId == "yt") Switch(s.youtubeProviderEnabled, vm::setYouTube)
                     if (h.providerId == "sc") Switch(s.soundcloudProviderEnabled, vm::setSoundCloud)
+                    if (h.providerId == "radio") Switch(s.radioProviderEnabled, vm::setRadio)
+                    if (h.providerId == "mbr") Switch(s.musicbrainzEnabled, vm::setMusicBrainz)
                 }
             }
         }

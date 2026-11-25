@@ -1,5 +1,7 @@
 package app.musicflow.feature.library
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -103,6 +105,7 @@ fun ArtistScreen(contentPadding: PaddingValues, vm: ArtistViewModel = hiltViewMo
     val menu = LocalTrackMenu.current
     val state by vm.state.collectAsStateWithLifecycle()
     val fav by vm.isFavorite.collectAsStateWithLifecycle()
+    val facts by vm.facts.collectAsStateWithLifecycle()
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding() + 16.dp)) {
         when (val s = state) {
@@ -136,6 +139,25 @@ fun ArtistScreen(contentPadding: PaddingValues, vm: ArtistViewModel = hiltViewMo
                 if (p.singles.isNotEmpty()) {
                     item { SectionHeader(stringResource(R.string.lib_singles)) }
                     item { LazyRow(contentPadding = HorizontalListPadding, horizontalArrangement = HorizontalListSpacing) { items(p.singles, key = { it.id.value }) { AlbumCard(it, onClick = { nav.openCollection(it.id) }) } } }
+                }
+                facts?.let { f ->
+                    item(key = "mb_facts") {
+                        SectionHeader(stringResource(R.string.lib_about_musicbrainz))
+                        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            listOfNotNull(
+                                f.type?.let { stringResource(R.string.lib_mb_type) to it },
+                                f.area?.let { stringResource(R.string.lib_mb_area) to it },
+                                f.begin?.let { b -> stringResource(R.string.lib_mb_active) to (b + if (f.ended) " – " + (f.end ?: "?") else " –") },
+                                f.genres.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.lib_mb_genres) to it.joinToString(", ") },
+                                f.disambiguation?.let { stringResource(R.string.lib_mb_note) to it },
+                            ).forEach { (k, v) ->
+                                Text("$k: $v", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            androidx.compose.material3.TextButton(onClick = { nav.openArtist(app.musicflow.core.model.MediaId.of("mba", f.mbid)) }, contentPadding = PaddingValues(0.dp)) {
+                                Text(stringResource(R.string.lib_mb_discography))
+                            }
+                        }
+                    }
                 }
                 p.description?.let { d ->
                     item { SectionHeader(stringResource(R.string.lib_about)) }

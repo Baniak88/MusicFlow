@@ -34,6 +34,7 @@ object MediaItems {
      */
     fun isHlsSource(id: MediaId): Boolean = when (id.providerId) {
         app.musicflow.core.model.ProviderIds.SOUNDCLOUD -> true
+        app.musicflow.core.model.ProviderIds.RADIO -> id.key.startsWith("hls/")
         app.musicflow.core.model.ProviderIds.DIRECT_URL -> id.key.substringBefore('?').endsWith(".m3u8", ignoreCase = true)
         else -> false
     }

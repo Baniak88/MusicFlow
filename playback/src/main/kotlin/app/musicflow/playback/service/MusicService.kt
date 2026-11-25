@@ -318,6 +318,23 @@ class MusicService : MediaLibraryService() {
 
         override fun onPlayerError(error: PlaybackException) = handleError(error)
 
+        /** Internet radio: show the song the station announces (ICY "StreamTitle") as now playing. */
+        override fun onMetadata(metadata: androidx.media3.common.Metadata) {
+            val item = player.currentMediaItem ?: return
+            if (MediaId.parseOrNull(item.mediaId)?.providerId != app.musicflow.core.model.ProviderIds.RADIO) return
+            val title = (0 until metadata.length()).asSequence().map { metadata.get(it) }
+                .filterIsInstance<androidx.media3.extractor.metadata.icy.IcyInfo>()
+                .mapNotNull { it.title?.trim()?.takeIf { t -> t.isNotEmpty() && t != "-" } }.firstOrNull() ?: return
+            val station = MediaItems.toTrack(item)?.title ?: item.mediaMetadata.title?.toString()
+            if (item.mediaMetadata.title?.toString() == title) return
+            val updated = item.buildUpon().setMediaMetadata(
+                item.mediaMetadata.buildUpon().setTitle(title).setDisplayTitle(title).setArtist(station).setSubtitle(station).build(),
+            ).build()
+            reloadingIndex = player.currentMediaItemIndex // same stream, new song title: not a new listen
+            player.replaceMediaItem(player.currentMediaItemIndex, updated)
+            diagnostics.d("radio", "Now playing on $station: $title")
+        }
+
         override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
             // Local/direct files: use ReplayGain tags when the provider gave no loudness.
             if (runtime.status.value.loudnessLufs != null && runtime.status.value.loudnessSource == app.musicflow.playback.LoudnessSource.PROVIDER) return
@@ -406,6 +423,8 @@ class MusicService : MediaLibraryService() {
                 diagnostics.enabled = s.diagnosticsEnabled
                 registry.setEnabled("yt", s.youtubeProviderEnabled)
                 registry.setEnabled("sc", s.soundcloudProviderEnabled)
+                registry.setEnabled("radio", s.radioProviderEnabled)
+                registry.setEnabled("mbr", s.musicbrainzEnabled)
                 if (old.skipSilence != s.skipSilence) player.skipSilenceEnabled = s.skipSilence
                 if (old.pauseOnDisconnect != s.pauseOnDisconnect) player.setHandleAudioBecomingNoisy(s.pauseOnDisconnect)
                 crossfader.fadeMs = s.crossfadeSeconds * 1000L

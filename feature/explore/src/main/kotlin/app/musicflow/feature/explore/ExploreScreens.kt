@@ -67,6 +67,14 @@ import app.musicflow.data.repositories.ExploreCategory
 @Composable
 fun categoryLabel(c: ExploreCategory): String = stringResource(
     when (c) {
+        ExploreCategory.RADIO_LOCAL -> R.string.cat_radio_local
+        ExploreCategory.RADIO_WORLD -> R.string.cat_radio_world
+        ExploreCategory.RADIO_POP -> R.string.cat_radio_pop
+        ExploreCategory.RADIO_ROCK -> R.string.cat_radio_rock
+        ExploreCategory.RADIO_DANCE -> R.string.cat_radio_dance
+        ExploreCategory.RADIO_JAZZ -> R.string.cat_radio_jazz
+        ExploreCategory.RADIO_CLASSICAL -> R.string.cat_radio_classical
+        ExploreCategory.RADIO_NEWS -> R.string.cat_radio_news
         ExploreCategory.ELECTRONIC -> R.string.cat_electronic
         ExploreCategory.DANCE -> R.string.cat_dance
         ExploreCategory.EDM -> R.string.cat_edm
@@ -91,6 +99,7 @@ fun categoryLabel(c: ExploreCategory): String = stringResource(
 @Composable
 private fun groupLabel(g: CategoryGroup) = stringResource(
     when (g) {
+        CategoryGroup.RADIO -> R.string.group_radio
         CategoryGroup.GENRE -> R.string.group_genre
         CategoryGroup.MOOD -> R.string.group_mood
         CategoryGroup.DECADE -> R.string.group_decade

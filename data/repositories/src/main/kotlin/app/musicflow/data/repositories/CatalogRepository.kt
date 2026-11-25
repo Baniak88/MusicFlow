@@ -49,4 +49,32 @@ class CatalogRepository @Inject constructor(
         ?: registry.callFor(id, "track") { p -> p.metadata?.track(id) ?: throw ProviderError.NotSupported() }
 
     fun hasOnlineCatalog(): Boolean = registry.primaryCatalog() != null
+
+    private inline fun <reified T : app.musicflow.data.providers.api.MusicProvider> enabled(): T? =
+        registry.enabled().filterIsInstance<T>().firstOrNull()
+
+    /** Internet radio stations (Radio Browser): popular in [country] (ISO code) or worldwide, or by genre tag. */
+    suspend fun radioStations(country: String? = null, tag: String? = null, worldwide: Boolean = false): List<Track> {
+        val radio = enabled<app.musicflow.data.providers.radio.RadioBrowserProvider>() ?: throw ProviderError.NotSupported("Radio Browser is turned off")
+        return registry.call(radio, "stations") { p ->
+            val r = p as app.musicflow.data.providers.radio.RadioBrowserProvider
+            when {
+                tag != null -> r.byTag(tag)
+                worldwide -> r.top(country = null)
+                else -> r.top(country = country ?: java.util.Locale.getDefault().country.takeIf { it.length == 2 })
+            }
+        }
+    }
+
+    /**
+     * MusicBrainz facts for an artist page from another source (matched by exact name only).
+     * Null when MusicBrainz is off, has no confident match, or the page is MusicBrainz's own.
+     */
+    suspend fun artistFacts(artist: app.musicflow.core.model.Artist): app.musicflow.data.providers.musicbrainz.ArtistFacts? {
+        if (artist.id.providerId == app.musicflow.data.providers.musicbrainz.MbIds.ARTIST) return null
+        val mb = enabled<app.musicflow.data.providers.musicbrainz.MusicBrainzProvider>() ?: return null
+        return runCatching {
+            registry.call(mb, "facts", policy = app.musicflow.core.common.RetryPolicy.None) { (it as app.musicflow.data.providers.musicbrainz.MusicBrainzProvider).factsFor(artist.name) }
+        }.getOrNull()
+    }
 }

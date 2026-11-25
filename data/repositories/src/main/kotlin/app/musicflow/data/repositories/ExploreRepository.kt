@@ -11,13 +11,22 @@ import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class CategoryGroup { GENRE, MOOD, DECADE, CHARTS }
+enum class CategoryGroup { RADIO, GENRE, MOOD, DECADE, CHARTS }
 
 /**
  * Explore categories. Content comes from the provider's own search for a descriptive query,
  * so everything shown is real catalogue data (no curated fake lists).
  */
 enum class ExploreCategory(val group: CategoryGroup, val query: String, val color: Long) {
+    /** Internet radio (Radio Browser): stations, not songs. Queries: "@local", "@world" or a genre tag. */
+    RADIO_LOCAL(CategoryGroup.RADIO, "@local", 0xFFC45BF6),
+    RADIO_WORLD(CategoryGroup.RADIO, "@world", 0xFF8B5CF6),
+    RADIO_POP(CategoryGroup.RADIO, "pop", 0xFFF43F5E),
+    RADIO_ROCK(CategoryGroup.RADIO, "rock", 0xFFDC2626),
+    RADIO_DANCE(CategoryGroup.RADIO, "dance", 0xFFEC4899),
+    RADIO_JAZZ(CategoryGroup.RADIO, "jazz", 0xFFF59E0B),
+    RADIO_CLASSICAL(CategoryGroup.RADIO, "classical", 0xFF14B8A6),
+    RADIO_NEWS(CategoryGroup.RADIO, "news", 0xFF64748B),
     ELECTRONIC(CategoryGroup.GENRE, "electronic music", 0xFF3B82F6),
     DANCE(CategoryGroup.GENRE, "dance hits", 0xFFEC4899),
     EDM(CategoryGroup.GENRE, "edm", 0xFF8B5CF6),
@@ -45,6 +54,14 @@ data class CategoryContent(val playlists: List<PlaylistSummary>, val tracks: Lis
 @Singleton
 class ExploreRepository @Inject constructor(private val catalog: CatalogRepository) {
     suspend fun load(category: ExploreCategory): CategoryContent = coroutineScope {
+        if (category.group == CategoryGroup.RADIO) {
+            val stations = when (category.query) {
+                "@local" -> catalog.radioStations()
+                "@world" -> catalog.radioStations(worldwide = true)
+                else -> catalog.radioStations(tag = category.query)
+            }
+            return@coroutineScope CategoryContent(playlists = emptyList(), tracks = stations)
+        }
         val q = category.resolvedQuery()
         val playlists = async { runCatching { catalog.searchItems(q, SearchFilter.PLAYLISTS) } }
         val songs = async { runCatching { catalog.searchItems(q, SearchFilter.SONGS) } }

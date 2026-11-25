@@ -42,6 +42,8 @@ data class ResolvedStream(
     val requiresChunkedPost: Boolean = false,
     /** True for HLS manifests (e.g. live streams); false for progressive files. */
     val isHls: Boolean = false,
+    /** Endless live stream (internet radio): never cached to disk, never crossfaded. */
+    val isLive: Boolean = false,
 ) {
     fun isExpired(nowMillis: Long, safetyMarginMillis: Long = 60_000): Boolean =
         expiresAtMillis != null && nowMillis + safetyMarginMillis >= expiresAtMillis

@@ -106,6 +106,8 @@ class SettingsViewModel @Inject constructor(
     fun setDiscovery(v: Boolean) = viewModelScope.launch { repo.setDiscoveryMode(v) }
     fun setYouTube(v: Boolean) = viewModelScope.launch { repo.setYouTubeEnabled(v); registry.setEnabled("yt", v) }
     fun setSoundCloud(v: Boolean) = viewModelScope.launch { repo.setSoundCloudEnabled(v); registry.setEnabled("sc", v) }
+    fun setRadio(v: Boolean) = viewModelScope.launch { repo.setRadioEnabled(v); registry.setEnabled("radio", v) }
+    fun setMusicBrainz(v: Boolean) = viewModelScope.launch { repo.setMusicBrainzEnabled(v); registry.setEnabled("mbr", v) }
     fun setHistory(v: Boolean) = viewModelScope.launch { repo.setHistoryEnabled(v) }
     fun setDiagnostics(v: Boolean) = viewModelScope.launch { repo.setDiagnosticsEnabled(v) }
     fun setCountry(v: String) = viewModelScope.launch { repo.setContentCountry(v); _events.emit(SettingsEvent.Message(R.string.set_applies_after_restart)) }

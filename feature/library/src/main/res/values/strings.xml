@@ -80,4 +80,11 @@
         <item quantity="one">%d entry could not be matched.</item>
         <item quantity="other">%d entries could not be matched.</item>
     </plurals>
+    <string name="lib_about_musicbrainz">About · MusicBrainz</string>
+    <string name="lib_mb_type">Type</string>
+    <string name="lib_mb_area">From</string>
+    <string name="lib_mb_active">Active</string>
+    <string name="lib_mb_genres">Genres</string>
+    <string name="lib_mb_note">Note</string>
+    <string name="lib_mb_discography">Full discography on MusicBrainz</string>
 </resources>

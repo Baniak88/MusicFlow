@@ -246,11 +246,16 @@ class ArtistViewModel @Inject constructor(
     val state: StateFlow<LoadState<ArtistPage>> = _state
     val isFavorite = library.isArtistFavorite(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    /** Facts from MusicBrainz (country, type, years, genres) when it knows this artist for sure. */
+    private val _facts = MutableStateFlow<app.musicflow.data.providers.musicbrainz.ArtistFacts?>(null)
+    val facts: StateFlow<app.musicflow.data.providers.musicbrainz.ArtistFacts?> = _facts
+
     init { load() }
 
     fun load() = viewModelScope.launch {
         _state.value = LoadState.Loading
         _state.value = runCatching { catalog.artist(id) }.fold({ LoadState.Loaded(it) }, { LoadState.Failed(it) })
+        (_state.value as? LoadState.Loaded)?.value?.artist?.let { a -> _facts.value = catalog.artistFacts(a) }
     }
 
     fun toggleFavorite() = viewModelScope.launch {

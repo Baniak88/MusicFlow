@@ -23,6 +23,8 @@ import java.io.File
 /** Header used internally to route a resolved spec to the chunked YouTube transport. */
 internal const val TRANSPORT_HEADER = "X-MusicFlow-Transport"
 internal const val TRANSPORT_CHUNKED = "chunked-post"
+/** Live streams (radio) bypass the disk cache: they never end and would only evict music. */
+internal const val TRANSPORT_LIVE = "live"
 
 @UnstableApi
 object PlaybackDataSources {
@@ -52,7 +54,7 @@ object PlaybackDataSources {
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         } else remoteRouting
         val local = DefaultDataSource.Factory(context)
-        val routing = DataSource.Factory { LocalOrRemoteDataSource(local.createDataSource(), remote.createDataSource()) }
+        val routing = DataSource.Factory { LocalOrRemoteDataSource(local.createDataSource(), remote.createDataSource(), plainHttp.createDataSource()) }
         return ResolvingDataSource.Factory(routing) { spec -> resolve(spec, streams) }
     }
 
@@ -80,6 +82,7 @@ object PlaybackDataSources {
         }
         val headers = stream.requestHeaders.toMutableMap()
         if (stream.requiresChunkedPost) headers[TRANSPORT_HEADER] = TRANSPORT_CHUNKED
+        if (stream.isLive) headers[TRANSPORT_HEADER] = TRANSPORT_LIVE
         return spec.buildUpon()
             .setUri(Uri.parse(stream.url))
             .setKey(stream.cacheKey)
@@ -90,13 +93,17 @@ object PlaybackDataSources {
 
 /** Sends `content://`/`file://` to the local source, everything else to the remote chain. */
 @UnstableApi
-private class LocalOrRemoteDataSource(private val local: DataSource, private val remote: DataSource) : DataSource {
+private class LocalOrRemoteDataSource(private val local: DataSource, private val remote: DataSource, private val live: DataSource) : DataSource {
     private var active: DataSource? = null
     override fun addTransferListener(transferListener: TransferListener) {
-        local.addTransferListener(transferListener); remote.addTransferListener(transferListener)
+        local.addTransferListener(transferListener); remote.addTransferListener(transferListener); live.addTransferListener(transferListener)
     }
     override fun open(dataSpec: DataSpec): Long {
         val scheme = dataSpec.uri.scheme?.lowercase()
+        if (dataSpec.httpRequestHeaders[TRANSPORT_HEADER] == TRANSPORT_LIVE) {
+            active = live
+            return live.open(dataSpec.buildUpon().setHttpRequestHeaders(dataSpec.httpRequestHeaders - TRANSPORT_HEADER).build())
+        }
         val src = if (scheme == "http" || scheme == "https") remote else local
         active = src
         return src.open(dataSpec)

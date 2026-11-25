@@ -86,4 +86,11 @@
         <item quantity="many">Nie dopasowano %d pozycji.</item>
         <item quantity="other">Nie dopasowano %d pozycji.</item>
     </plurals>
+    <string name="lib_about_musicbrainz">O wykonawcy · MusicBrainz</string>
+    <string name="lib_mb_type">Rodzaj</string>
+    <string name="lib_mb_area">Pochodzenie</string>
+    <string name="lib_mb_active">Aktywność</string>
+    <string name="lib_mb_genres">Gatunki</string>
+    <string name="lib_mb_note">Uwagi</string>
+    <string name="lib_mb_discography">Pełna dyskografia w MusicBrainz</string>
 </resources>
