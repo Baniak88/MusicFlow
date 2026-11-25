@@ -72,5 +72,7 @@ subprojects {
         testLogging { events("failed", "skipped"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
         // Live runs print what the services returned, so CI logs show it without downloading reports.
         if (project.findProperty("liveTests") == "true") testLogging { showStandardStreams = true; events("passed", "failed", "skipped") }
+        // Live runs select tests across modules with one --tests filter.
+        if (project.findProperty("liveTests") == "true") filter.isFailOnNoMatchingTests = false
     }
 }

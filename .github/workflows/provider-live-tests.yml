@@ -30,7 +30,7 @@ jobs:
       - name: Live tests
         run: |
           FILTER="${{ github.event.inputs.tests }}"
-          ./gradlew :data:providers:testDebugUnitTest -PliveTests=true --tests "${FILTER:-*Live*}" --console=plain
+          ./gradlew :data:providers:testDebugUnitTest :playback:testDebugUnitTest -PliveTests=true --tests "${FILTER:-*Live*}" --console=plain
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
