@@ -47,12 +47,21 @@ class LivePlaybackTest {
     @Before fun onlyWhenEnabled() = assumeTrue(System.getProperty("musicflow.liveTests") == "true")
     @After fun tearDown() { player?.release() }
 
+    private lateinit var renderer: androidx.media3.test.utils.FakeAudioRenderer
+
     private fun play(streams: StreamRepository, track: app.musicflow.core.model.Track, untilMs: Long): ExoPlayer {
+        renderer = androidx.media3.test.utils.FakeAudioRenderer(
+            androidx.media3.common.util.Clock.DEFAULT.createHandler(android.os.Looper.getMainLooper(), null),
+            object : androidx.media3.exoplayer.audio.AudioRendererEventListener {},
+        )
         val cache = PlaybackDataSources.createCache(context, 50L * 1024 * 1024)
         val factory = PlaybackDataSources.factory(context, client, cache, streams)
         // Real time: network downloads are real, so a fake auto-advancing clock would race them.
         val p = TestExoPlayerBuilder(context)
             .setClock(androidx.media3.common.util.Clock.DEFAULT)
+            // Media3's fake renderer reads the extracted samples without a platform decoder: this
+            // checks everything up to the decoder (Robolectric cannot emulate real-time audio).
+            .setRenderers(renderer)
             .setMediaSourceFactory(DefaultMediaSourceFactory(factory).setLoadErrorHandlingPolicy(StreamErrorPolicy(streams, DiagnosticsLog()) { true }))
             .build().also { player = it }
         p.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
@@ -70,12 +79,13 @@ class LivePlaybackTest {
         }
         assertThat(p.playerError).isNull()
         assertThat(p.playbackState).isEqualTo(Player.STATE_READY)
-        println("ready: ${track.title} duration=${p.duration} format=${p.audioFormat?.sampleMimeType} ${p.audioFormat?.sampleRate} Hz ch=${p.audioFormat?.channelCount}")
+        println("ready: ${track.title} duration=${p.duration} tracks=${p.currentTracks.groups.map { g -> (0 until g.length).map { g.getTrackFormat(it).let { f -> "${f.sampleMimeType} ${f.sampleRate}Hz ${f.channelCount}ch ${f.bitrate}" } } }}")
         val playDeadline = System.currentTimeMillis() + untilMs + 30_000
         while (p.currentPosition < untilMs && p.playerError == null && System.currentTimeMillis() < playDeadline) {
             org.robolectric.shadows.ShadowLooper.idleMainLooper(); Thread.sleep(50)
         }
-        println("played to ${p.currentPosition} ms, error=${p.playerError}")
+        println("played to ${p.currentPosition} ms, samples read=${renderer.sampleBufferReadCount}, error=${p.playerError}")
+        assertThat(renderer.sampleBufferReadCount).isGreaterThan(50)
         return p
     }
 
