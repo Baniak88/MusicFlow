@@ -291,6 +291,12 @@ internal object MbMapper {
     private fun fits(query: String, title: String, credit: String): Boolean =
         titleFit(query, title, "") == 2 || (mentions(query, credit) && titleFit(query, title, credit) >= 1)
 
+    /** Appears on an original album/single/EP (not a live album, compilation, karaoke…). */
+    fun onStudioRelease(r: MbRecording): Boolean = r.releases.any { rel ->
+        val g = rel.releaseGroup ?: return@any false
+        g.primaryType in setOf("Album", "Single", "EP") && g.secondaryTypes.isEmpty() && rel.status != "Bootleg"
+    }
+
     /** Whether the user typed this artist's name (e.g. "karma police radiohead"). */
     private fun mentions(query: String, credit: String): Boolean {
         val c = TextMatching.normalize(credit)
@@ -305,6 +311,7 @@ internal object MbMapper {
     fun rankRecordings(query: String, items: List<MbRecording>): List<MbRecording> = items.filter { !it.video }
         .sortedWith(
             compareByDescending<MbRecording> { fits(query, it.title, credit(it.artistCredit)) }
+                .thenByDescending { onStudioRelease(it) }
                 .thenByDescending { it.releases.size }
                 .thenByDescending { it.score ?: 0 },
         )

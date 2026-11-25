@@ -211,6 +211,18 @@ class MusicBrainzRetryTest {
 }
 
 class MusicBrainzRankingTest {
+    @Test fun studioRecordingBeatsLiveVersionsOnManyLiveAlbums() = runBlocking {
+        fun rec(id: String, groupJson: String, releases: Int) = """{"id":"$id","score":100,"title":"Karma Police","length":264000,
+           "artist-credit":[{"name":"Radiohead","joinphrase":"","artist":{"id":"a1","name":"Radiohead"}}],
+           "releases":[${(1..releases).joinToString(",") { """{"id":"r$id$it","title":"x","status":"Official","release-group":$groupJson}""" }}]}"""
+        val live = rec("live", """{"id":"g1","primary-type":"Album","secondary-types":["Live"]}""", 30)
+        val studio = rec("studio", """{"id":"g2","primary-type":"Album","secondary-types":[]}""", 5)
+        MockWebServer().apply { enqueue(MockResponse().setBody("""{"count":2,"offset":0,"recordings":[$live,$studio]}""")) }.use { s ->
+            val p = MusicBrainzProvider(OkHttpClient(), DiagnosticsLog(), null, "UA", s.url("/ws/2/"), minIntervalMs = 0, clock = { 0L })
+            assertThat(p.search("karma police radiohead", SearchFilter.SONGS).items.first().id.value).isEqualTo("mbr:studio")
+        }
+    }
+
     @Test fun namedArtistAndWidelyReleasedVersionsComeFirst() = runBlocking {
         fun rec(id: String, artist: String, releases: Int) = """{"id":"$id","score":100,"title":"Bohemian Rhapsody","length":354000,
            "artist-credit":[{"name":"$artist","joinphrase":"","artist":{"id":"a$id","name":"$artist"}}],
