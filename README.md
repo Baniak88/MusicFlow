@@ -38,6 +38,11 @@ Explore, Library, Home with listening history, full player. See `docs/screenshot
 2. On your phone allow *Install unknown apps* for your browser/file manager and open the APK.
 3. Android 9 (API 28) or newer is required.
 
+## Testing the app (testers)
+
+Test builds are published as GitHub **pre-releases**. Polish tester guide and checklist:
+[docs/TESTY.md](docs/TESTY.md).
+
 ## Build
 
 Everything builds in GitHub Actions — no Android Studio needed. See [BUILD.md](BUILD.md).
