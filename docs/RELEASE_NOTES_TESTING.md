@@ -1,6 +1,11 @@
 ## MusicFlow — wersja testowa / test build
 
-**Nowości / What's new:** see CHANGELOG.md.
+**Nowości w tej wersji:**
+- Wyszukiwanie obejmuje też utwory spoza oficjalnego katalogu YouTube Music (wrzutki na YouTube),
+  np. „D-Bomb – Powiedz mi co czujesz”. Wklejony link z YouTube od razu pokazuje utwór.
+- Zmiana jakości dźwięku bezpośrednio w odtwarzaczu (stuknij linię z formatem albo ⋮ → Jakość
+  dźwięku) — działa od razu, bez przerywania utworu.
+- Przenikanie utworów jak w Spotify: Ustawienia → Odtwarzanie → Przenikanie (0–12 s).
 
 **PL:** To jest wersja do testów (pre-release). Pobierz plik `MusicFlow-*.apk` poniżej,
 zainstaluj na Androidzie 9 lub nowszym i postępuj według [instrukcji dla testerów](https://github.com/Baniak88/MusicFlow/blob/ccr-08f57c60-5k88o7/docs/TESTY.md).
