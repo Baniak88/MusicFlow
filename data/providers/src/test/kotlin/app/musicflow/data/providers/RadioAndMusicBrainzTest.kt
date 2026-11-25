@@ -309,3 +309,15 @@ class RadioQualityAndWordsTest {
         assertThat(r.quality(list[1])).isEqualTo("MP3 320 kbps")
     }
 }
+
+class RadioExactNameTest {
+    private fun st(uuid: String, name: String, cc: String, clicks: Int) =
+        app.musicflow.data.providers.radio.RadioStation(uuid, name, url = "http://x/$uuid", countryCode = cc, clickCount = clicks)
+
+    @Test fun exactNameAndCountryCodeWin() {
+        val r = app.musicflow.data.providers.radio.RadioSearch
+        val list = listOf(st("hu", "MegaDance Rádió", "HU", 900), st("cz", "Dance Radio", "CZ", 50), st("ru", "Russian Dance Radio", "KZ", 700))
+        assertThat(r.rank(r.unglue("danceradio"), list).first().uuid).isEqualTo("cz")
+        assertThat(r.rank(r.unglue("danceradio cz"), list).first().uuid).isEqualTo("cz")
+    }
+}

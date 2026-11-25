@@ -294,11 +294,20 @@ object RadioSearch {
     /** Stations matching more query words (in name, region, tags or country) first, then popularity. */
     fun rank(query: String, stations: List<RadioStation>): List<RadioStation> {
         val ws = words(query)
-        if (ws.isEmpty()) return stations
+        val norm = app.musicflow.core.common.TextMatching.normalize(query)
+        // A two-letter word that is a country code ("danceradio cz") points to that country.
+        val countries = norm.split(' ').filter { it.length == 2 }.map { it.uppercase() }.toSet()
+        val nameQuery = norm.split(' ').filter { it.length != 2 || it.uppercase() !in countries }.joinToString(" ")
+        fun exact(s: RadioStation) = app.musicflow.core.common.TextMatching.normalize(s.name) == nameQuery
+        if (ws.isEmpty()) return stations.sortedWith(compareByDescending<RadioStation> { exact(it) }.thenByDescending { it.countryCode.uppercase() in countries })
         fun hits(s: RadioStation): Int {
             val hay = " " + app.musicflow.core.common.TextMatching.normalize(listOf(s.name, s.state, s.tags, s.country).joinToString(" ")) + " "
             return ws.count { w -> hay.contains(w) }
         }
-        return stations.sortedWith(compareByDescending<RadioStation> { hits(it) }.thenByDescending { it.clickCount })
+        return stations.sortedWith(
+            compareByDescending<RadioStation> { hits(it) + (if (it.countryCode.uppercase() in countries) 1 else 0) }
+                .thenByDescending { exact(it) }
+                .thenByDescending { it.clickCount },
+        )
     }
 }
