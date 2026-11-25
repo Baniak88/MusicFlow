@@ -100,3 +100,21 @@ class RadioMusicBrainzLiveTest {
         assertThat(r.isSuccess).isTrue()
     }
 }
+
+/** Diagnosis for a reported miss: "Radio Fama Kielce". Prints what the directory holds. */
+class RadioSearchDiagnosisLiveTest {
+    private val client = OkHttpClient.Builder().readTimeout(30, TimeUnit.SECONDS).build()
+    @Before fun onlyWhenEnabled() = assumeTrue(System.getProperty("musicflow.liveTests") == "true")
+
+    @Test fun printDirectoryEntries() {
+        fun q(params: String): String = client.newCall(Request.Builder().url("https://de1.api.radio-browser.info/json/stations/search?limit=30&$params")
+            .header("User-Agent", "MusicFlow/diagnosis").build()).execute().use { it.body!!.string() }
+        val re = Regex(""""name":"([^"]*)".*?"url_resolved":"([^"]*)".*?"tags":"([^"]*)".*?"countrycode":"([^"]*)".*?"state":"([^"]*)".*?"lastcheckok":(\d)""")
+        for (p in listOf("name=fama", "name=radio%20fama%20kielce", "name=kielce", "tag=kielce", "state=kielce&countrycode=PL", "name=fama&is_https=true", "countrycode=PL&limit=1000&hidebroken=true")) {
+            val body = q(p)
+            val rows = re.findAll(body).map { m -> m.groupValues.drop(1).let { (n, u, t, c, s, ok) -> "$n | ${u.take(60)} | tags=$t | $c/$s | ok=$ok" } }.toList()
+            println("[$p] ${rows.size} stations" + if (p.startsWith("countrycode")) " (https: ${rows.count { "| https://" in it }})" else "")
+            if (!p.startsWith("countrycode")) rows.take(12).forEach { println("    $it") }
+        }
+    }
+}
