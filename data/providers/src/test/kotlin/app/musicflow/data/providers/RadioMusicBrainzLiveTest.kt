@@ -77,6 +77,24 @@ class RadioMusicBrainzLiveTest {
         }
     }
 
+    /** Reported: Sunshine Live and Danceradio (CZ) "do not work". */
+    @Test fun findsAndPlaysSunshineLiveAndDanceRadio() = runBlocking {
+        val guarded = client.newBuilder().addNetworkInterceptor(app.musicflow.core.network.CleartextGuard()).build()
+        val radio = RadioBrowserProvider(guarded, DiagnosticsLog(), ua, countryCode = { "PL" })
+        for ((query, expect) in listOf("sunshine live" to "sunshine live", "danceradio" to "dance radio")) {
+            val found = radio.search(query, SearchFilter.ALL).items.tracks()
+            println("$query: " + found.take(6).map { "${it.title} / ${it.artistLine}" })
+            val hit = found.first { it.title.lowercase().contains(expect) }
+            val stream = radio.resolve(hit.id, AudioQuality.BEST)
+            val marker = if (stream.allowCleartext) mapOf(app.musicflow.core.network.CleartextGuard.ALLOW_HEADER to "radio") else emptyMap()
+            guarded.newCall(Request.Builder().url(stream.url).headers(okhttp3.Headers.headersOf(*(stream.requestHeaders + marker).flatMap { listOf(it.key, it.value) }.toTypedArray())).build()).execute().use { r ->
+                val bytes = r.body!!.source().readByteArray(4096)
+                println("$query plays: ${hit.title} ${stream.codec} ${stream.bitrateKbps} → HTTP ${r.code} ${r.header("Content-Type")} ${bytes.size} bytes")
+                assertThat(r.header("Content-Type")).startsWith("audio/")
+            }
+        }
+    }
+
     @Test fun musicBrainzSearchAlbumArtistAndFacts() = mbOrSkip {
         val mb = MusicBrainzProvider(client, DiagnosticsLog(), null, ua)
         val songs = mb.search("Bohemian Rhapsody Queen", SearchFilter.SONGS).items.tracks()

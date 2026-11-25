@@ -130,12 +130,14 @@ class RadioBrowserProvider(
         if (filter == SearchFilter.ARTISTS || filter == SearchFilter.ALBUMS) return SearchPage(query, filter, emptyList(), null)
         val offset = pageToken?.toIntOrNull() ?: 0
         val q = query.trim()
-        val byName = stations("json/stations/search", common(PAGE, offset) + ("name" to q))
+        val spaced = RadioSearch.unglue(q) // "danceradio" → "dance radio", "openfm" → "open fm"
+        val byName = stations("json/stations/search", common(PAGE, offset) + ("name" to q)) +
+            (if (spaced != q && offset == 0) runCatching { stations("json/stations/search", common(PAGE) + ("name" to spaced)) }.getOrDefault(emptyList()) else emptyList())
         if (offset > 0) return SearchPage(query, filter, byName.map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }, if (byName.size >= PAGE) (offset + PAGE).toString() else null)
         // "radio fama kielce": the station is "Radio FAMA" with region "Kielce". Search each
         // distinctive word in names and regions, plus the whole query as a genre tag, then rank
         // stations matching the most words first.
-        val words = RadioSearch.words(q)
+        val words = RadioSearch.words(spaced)
         val extra = coroutineScope {
             val calls = buildList {
                 add(async { runCatching { stations("json/stations/search", common(PAGE) + ("tag" to q.lowercase())) }.getOrDefault(emptyList()) })
@@ -146,7 +148,7 @@ class RadioBrowserProvider(
             }
             calls.flatMap { it.await() }
         }
-        val ranked = RadioSearch.rank(q, (byName + extra).distinctBy { it.uuid })
+        val ranked = RadioSearch.rank(spaced, RadioSearch.bestVersions((byName + extra).distinctBy { it.uuid }))
         val next = if (byName.size >= PAGE) PAGE.toString() else null
         return SearchPage(query, filter, ranked.take(60).map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }, next)
     }
@@ -155,11 +157,11 @@ class RadioBrowserProvider(
 
     /** Most popular stations in [country] (ISO code), or worldwide when null. */
     suspend fun top(country: String? = countryCode(), limit: Int = 40): List<Track> =
-        stations("json/stations/search", common(limit) + (country?.let { mapOf("countrycode" to it) } ?: emptyMap())).map(RadioIds::toTrack)
+        RadioSearch.bestVersions(stations("json/stations/search", common(limit) + (country?.let { mapOf("countrycode" to it) } ?: emptyMap()))).map(RadioIds::toTrack)
 
     /** Most popular stations for a genre tag (e.g. "rock", "jazz"). */
     suspend fun byTag(tag: String, limit: Int = 40): List<Track> =
-        stations("json/stations/search", common(limit) + ("tag" to tag)).map(RadioIds::toTrack)
+        RadioSearch.bestVersions(stations("json/stations/search", common(limit) + ("tag" to tag))).map(RadioIds::toTrack)
 
     // ---------------------------------------------------------------- metadata
 
@@ -232,6 +234,7 @@ object RadioIds {
         val line = listOfNotNull(
             listOfNotNull(s.state.trim().takeIf { it.isNotBlank() }, s.country.takeIf { it.isNotBlank() }).joinToString(", ").ifEmpty { null },
             tags.joinToString(", ").takeIf { it.isNotBlank() },
+            RadioSearch.quality(s),
         ).joinToString(" · ").ifEmpty { "Radio" }
         return Track(
             id = of(s),
@@ -252,6 +255,41 @@ object RadioSearch {
 
     fun words(query: String): List<String> = app.musicflow.core.common.TextMatching.normalize(query).split(' ')
         .filter { it.length >= 3 && it !in generic }.distinct().sortedByDescending { it.length }
+
+    private val glue = Regex("""(?i)^(.{3,}?)(radio|fm|music)$|^(radio|open)(.{3,})$""")
+
+    /** Splits words typed together: "danceradio" → "dance radio", "openfm" → "open fm", "radiozet" → "radio zet". */
+    fun unglue(query: String): String = query.trim().split(Regex("""\s+""")).joinToString(" ") { w ->
+        glue.matchEntire(w)?.groupValues?.let { g -> if (g[1].isNotEmpty()) "${g[1]} ${g[2]}" else "${g[3]} ${g[4]}" } ?: w
+    }
+
+    /** "MP3 320 kbps" — only what the directory reports. */
+    fun quality(s: RadioStation): String? {
+        val codec = s.codec.takeIf { it.isNotBlank() && !it.equals("UNKNOWN", true) }
+        val kbps = s.bitrate.takeIf { it > 0 }?.let { "$it kbps" }
+        return listOfNotNull(codec, kbps).joinToString(" ").ifEmpty { null }
+    }
+
+    /** Sound quality score from listed data: bitrate, with HE-AAC (AAC+) counted as roughly double. */
+    private fun qualityScore(s: RadioStation): Int {
+        val b = s.bitrate.takeIf { it > 0 } ?: Regex("""(?i)(?:mp3|aac)[-_]?(\d{2,3})|(\d{3})\.mp3""").find(s.urlResolved.ifBlank { s.url })
+            ?.groupValues?.drop(1)?.firstOrNull { it.isNotEmpty() }?.toIntOrNull() ?: 0
+        return if (s.codec.contains("+")) b * 2 else b
+    }
+
+    /**
+     * The directory often lists one station several times (different bitrates, mirrors, HTTP and
+     * HTTPS). Keep one entry per name: the best sound quality, HTTPS if equal, then the most popular.
+     */
+    fun bestVersions(stations: List<RadioStation>): List<RadioStation> {
+        val best = stations.groupBy { app.musicflow.core.common.TextMatching.normalize(it.name) }.mapValues { (_, list) ->
+            list.maxWithOrNull(compareBy<RadioStation> { qualityScore(it) }.thenBy { if (it.urlResolved.startsWith("https", true)) 1 else 0 }.thenBy { it.clickCount })!!
+        }
+        val popularity = stations.groupBy { app.musicflow.core.common.TextMatching.normalize(it.name) }.mapValues { (_, l) -> l.sumOf { it.clickCount } }
+        // Keep the original order of first appearance; the group's popularity is the sum of its entries.
+        return stations.map { app.musicflow.core.common.TextMatching.normalize(it.name) }.distinct()
+            .map { key -> best.getValue(key).copy(clickCount = popularity.getValue(key)) }
+    }
 
     /** Stations matching more query words (in name, region, tags or country) first, then popularity. */
     fun rank(query: String, stations: List<RadioStation>): List<RadioStation> {

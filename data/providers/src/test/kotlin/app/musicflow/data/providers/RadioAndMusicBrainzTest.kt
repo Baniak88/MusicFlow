@@ -42,7 +42,7 @@ class RadioBrowserTest {
             assertThat(tracks.map { it.id.value }).containsExactly("radio:aaaa", "radio:hls/cccc").inOrder()
             val first = tracks.first()
             assertThat(first.title).isEqualTo("Radio HTTPS")
-            assertThat(first.artistLine).isEqualTo("Poland · pop, rock, hits")
+            assertThat(first.artistLine).isEqualTo("Poland · pop, rock, hits · MP3 128 kbps")
             assertThat(first.durationMs).isNull() // live
             assertThat(first.artworkUrl).isEqualTo("https://s1/f.png")
             val req = s.takeRequest()
@@ -279,5 +279,33 @@ class CleartextGuardTest {
             }
             assertThat(s.takeRequest().getHeader(app.musicflow.core.network.CleartextGuard.ALLOW_HEADER)).isNull()
         }
+    }
+}
+
+class RadioQualityAndWordsTest {
+    private fun st(uuid: String, name: String, codec: String, kbps: Int, url: String = "http://x/$uuid", clicks: Int = 0) =
+        app.musicflow.data.providers.radio.RadioStation(uuid, name, url = url, urlResolved = url, codec = codec, bitrate = kbps, clickCount = clicks)
+
+    @Test fun gluedWordsAreSplit() {
+        val r = app.musicflow.data.providers.radio.RadioSearch
+        assertThat(r.unglue("danceradio")).isEqualTo("dance radio")
+        assertThat(r.unglue("openfm")).isEqualTo("open fm")
+        assertThat(r.unglue("radiozet")).isEqualTo("radio zet")
+        assertThat(r.unglue("Sunshine Live")).isEqualTo("Sunshine Live")
+        assertThat(r.unglue("fm")).isEqualTo("fm")
+    }
+
+    @Test fun duplicatesKeepTheBestSoundingVersion() {
+        val r = app.musicflow.data.providers.radio.RadioSearch
+        val list = r.bestVersions(listOf(
+            st("a", "DanceRadioUK", "AAC+", 32, clicks = 50),
+            st("b", "Dance Radio", "MP3", 320, clicks = 10),
+            st("c", "Dance Radio", "MP3", 128, url = "https://y/c", clicks = 40),
+            st("d", "Sunshine Live", "MP3", 0, url = "http://s/live/mp3-192/", clicks = 5),
+            st("e", "Sunshine Live", "AAC+", 32, clicks = 5),
+        ))
+        assertThat(list.map { it.uuid }).containsExactly("a", "b", "d").inOrder()
+        assertThat(list[1].clickCount).isEqualTo(50) // popularity of all entries of the station
+        assertThat(r.quality(list[1])).isEqualTo("MP3 320 kbps")
     }
 }
