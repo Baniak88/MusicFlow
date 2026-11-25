@@ -99,6 +99,22 @@ class SoundCloudLiveTest {
         println("reported fallback: ${viaYt.getOrNull()?.codec} ${viaYt.getOrNull()?.bitrateKbps} error=${viaYt.exceptionOrNull()}")
     }
 
+    /** How many popular SoundCloud tracks are playable vs DRM-only (no fallback). */
+    @Test fun drmShareOfPopularTracks() = runBlocking {
+        var ok = 0; var drm = 0; var other = 0
+        for (q in listOf("dance", "techno", "hip hop", "disco polo", "pop hits", "remix", "dj set", "lofi")) {
+            provider.search(q, SearchFilter.SONGS).items.tracks().take(8).forEach { t ->
+                val r = runCatching { provider.resolve(t.id, AudioQuality.BEST) }
+                when {
+                    r.isSuccess -> ok++
+                    r.exceptionOrNull()?.message?.contains("DRM") == true -> drm++
+                    else -> { other++; println("  other: ${t.title}: ${r.exceptionOrNull()}") }
+                }
+            }
+            println("after '$q': playable=$ok drm=$drm other=$other")
+        }
+    }
+
     @Test fun metadataPlaylistsArtistsAndRelated() = runBlocking {
         val track = provider.search("odesza say my name", SearchFilter.SONGS).items.tracks().first()
         val full = provider.track(track.id)
