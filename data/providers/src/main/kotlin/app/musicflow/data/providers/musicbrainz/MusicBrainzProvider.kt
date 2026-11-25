@@ -90,28 +90,41 @@ class MusicBrainzProvider(
             addQueryParameter("fmt", "json")
         }.build()
         val text = gate.withLock {
-            val wait = lastRequest + minIntervalMs - clock()
-            if (wait > 0) delay(wait)
-            try {
-                withContext(Dispatchers.IO) {
-                    client.newCall(Request.Builder().url(url).header("User-Agent", userAgent).header("Accept", "application/json").build()).execute().use { r ->
-                        when {
-                            r.code == 503 || r.code == 429 -> throw ProviderError.RateLimited("MusicBrainz is busy, try again shortly")
-                            r.code == 404 -> throw ProviderError.Unavailable("Not found in MusicBrainz")
-                            !r.isSuccessful -> throw IOException("MusicBrainz HTTP ${r.code}")
+            var attempt = 0
+            while (true) {
+                val wait = lastRequest + minIntervalMs - clock()
+                if (wait > 0) delay(wait)
+                var retryAfterMs: Long? = null
+                try {
+                    return@withLock withContext(Dispatchers.IO) {
+                        client.newCall(Request.Builder().url(url).header("User-Agent", userAgent).header("Accept", "application/json").build()).execute().use { r ->
+                            when {
+                                r.code == 503 || r.code == 429 -> {
+                                    retryAfterMs = r.header("Retry-After")?.toLongOrNull()?.times(1000)
+                                    throw ProviderError.RateLimited("MusicBrainz is busy, try again shortly")
+                                }
+                                r.code == 404 -> throw ProviderError.Unavailable("Not found in MusicBrainz")
+                                !r.isSuccessful -> throw IOException("MusicBrainz HTTP ${r.code}")
+                            }
+                            r.body?.string().orEmpty()
                         }
-                        r.body?.string().orEmpty()
                     }
+                } catch (e: ProviderError.RateLimited) {
+                    // MusicBrainz asks clients to slow down and retry (503 + Retry-After).
+                    if (++attempt > MAX_RETRIES) throw e
+                    lastRequest = clock()
+                    delay((retryAfterMs ?: (attempt * 2_000L)).coerceAtMost(8_000))
+                } catch (e: ProviderError) {
+                    throw e
+                } catch (c: kotlinx.coroutines.CancellationException) {
+                    throw c
+                } catch (t: Throwable) {
+                    throw defaultClassify(t)
+                } finally {
+                    lastRequest = clock()
                 }
-            } catch (e: ProviderError) {
-                throw e
-            } catch (c: kotlinx.coroutines.CancellationException) {
-                throw c
-            } catch (t: Throwable) {
-                throw defaultClassify(t)
-            } finally {
-                lastRequest = clock()
             }
+            @Suppress("UNREACHABLE_CODE") ""
         }
         return try {
             json.decodeFromString(serializer, text)
@@ -221,6 +234,7 @@ class MusicBrainzProvider(
 
     companion object {
         const val PAGE = 25
+        private const val MAX_RETRIES = 3
         private val SKIP_SECONDARY = setOf("Compilation", "Live", "Remix", "DJ-mix", "Mixtape/Street", "Interview", "Audiobook", "Spokenword", "Demo")
 
         /** First candidate that is the same recording (title, artist and duration agree). */

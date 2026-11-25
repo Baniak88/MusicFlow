@@ -196,3 +196,16 @@ class MusicBrainzTest {
         }
     }
 }
+
+class MusicBrainzRetryTest {
+    @Test fun busyServerIsRetriedThenSucceeds() = runBlocking {
+        MockWebServer().apply {
+            enqueue(MockResponse().setResponseCode(503).setHeader("Retry-After", "0"))
+            enqueue(MockResponse().setBody("""{"count":0,"offset":0,"recordings":[]}"""))
+        }.use { s ->
+            val p = MusicBrainzProvider(OkHttpClient(), DiagnosticsLog(), null, "UA", s.url("/ws/2/"), minIntervalMs = 0, clock = { 0L })
+            assertThat(p.search("x", SearchFilter.SONGS).items).isEmpty()
+            assertThat(s.requestCount).isEqualTo(2)
+        }
+    }
+}
