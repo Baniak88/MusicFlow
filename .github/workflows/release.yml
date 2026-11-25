@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Manual release from the Actions tab (or API): the workflow creates the tag itself.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to create, e.g. v1.0.0-beta.1 (a '-' suffix marks a pre-release)"
+        required: true
 
 permissions:
   contents: write
@@ -28,8 +34,9 @@ jobs:
       - name: Derive version from tag
         id: version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+          TAG="${{ github.event.inputs.version || github.ref_name }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "name=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Unit tests
         run: ./gradlew test --stacktrace
@@ -71,5 +78,8 @@ jobs:
           files: dist/*
           generate_release_notes: true
           # Tags like v1.0.0-beta.1 are published as pre-releases (test builds).
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: MusicFlow ${{ steps.version.outputs.name }}
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
           body_path: docs/RELEASE_NOTES_TESTING.md
