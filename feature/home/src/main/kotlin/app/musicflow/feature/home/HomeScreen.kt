@@ -112,9 +112,13 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
             }
             update?.takeIf { !updateDismissed }?.let { u ->
                 item(key = "update") {
-                    UpdateBanner(u.version.toString(), onDownload = {
-                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.apkUrl)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                    }, onDismiss = vm::dismissUpdate)
+                    val install by vm.installState.collectAsStateWithLifecycle()
+                    UpdateBanner(
+                        u.version.toString(), install,
+                        onInstall = vm::installUpdate,
+                        onBrowser = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.apkUrl)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } },
+                        onDismiss = vm::dismissUpdate,
+                    )
                 }
             }
             if (!network.isConnected) item(key = "offline") { OfflineBanner() }
@@ -275,7 +279,15 @@ private fun Header(greeting: Greeting, onSettings: () -> Unit) {
 }
 
 @Composable
-private fun UpdateBanner(version: String, onDownload: () -> Unit, onDismiss: () -> Unit) {
+private fun UpdateBanner(
+    version: String,
+    install: app.musicflow.data.repositories.InstallState,
+    onInstall: () -> Unit,
+    onBrowser: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val busy = install is app.musicflow.data.repositories.InstallState.Downloading || install is app.musicflow.data.repositories.InstallState.Installing
+    val failed = install is app.musicflow.data.repositories.InstallState.Failed
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -285,8 +297,19 @@ private fun UpdateBanner(version: String, onDownload: () -> Unit, onDismiss: () 
         Row(Modifier.padding(start = 14.dp, top = 6.dp, bottom = 6.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.SystemUpdate, null)
             Spacer(Modifier.width(12.dp))
-            Text(stringResource(R.string.home_update_available, version), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-            TextButton(onClick = onDownload) { Text(stringResource(R.string.home_update_download)) }
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_update_available, version), style = MaterialTheme.typography.bodyMedium)
+                val line = when (install) {
+                    is app.musicflow.data.repositories.InstallState.Downloading -> stringResource(R.string.home_update_downloading)
+                    is app.musicflow.data.repositories.InstallState.Installing -> stringResource(R.string.home_update_installing)
+                    is app.musicflow.data.repositories.InstallState.Failed -> stringResource(R.string.home_update_failed, install.message)
+                    else -> null
+                }
+                line?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
+            }
+            if (busy) androidx.compose.material3.CircularProgressIndicator(Modifier.padding(horizontal = 12.dp).size(20.dp), strokeWidth = 2.dp)
+            else if (failed) TextButton(onClick = onBrowser) { Text(stringResource(R.string.home_update_browser)) }
+            else TextButton(onClick = onInstall) { Text(stringResource(R.string.home_update_install)) }
             IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, stringResource(R.string.home_update_dismiss)) }
         }
     }

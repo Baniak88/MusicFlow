@@ -41,4 +41,9 @@
     <string name="home_update_available">Dostępna nowa wersja MusicFlow %1$s</string>
     <string name="home_update_download">Pobierz</string>
     <string name="home_update_dismiss">Ukryj</string>
+    <string name="home_update_install">Zainstaluj</string>
+    <string name="home_update_downloading">Pobieranie i sprawdzanie…</string>
+    <string name="home_update_installing">Instalowanie…</string>
+    <string name="home_update_failed">Nie zainstalowano: %1$s</string>
+    <string name="home_update_browser">Przeglądarka</string>
 </resources>

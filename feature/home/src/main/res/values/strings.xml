@@ -39,4 +39,9 @@
     <string name="home_update_available">MusicFlow %1$s is available</string>
     <string name="home_update_download">Download</string>
     <string name="home_update_dismiss">Hide</string>
+    <string name="home_update_install">Install</string>
+    <string name="home_update_downloading">Downloading and verifying…</string>
+    <string name="home_update_installing">Installing…</string>
+    <string name="home_update_failed">Not installed: %1$s</string>
+    <string name="home_update_browser">Browser</string>
 </resources>

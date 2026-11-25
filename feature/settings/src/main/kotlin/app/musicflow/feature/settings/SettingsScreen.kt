@@ -170,6 +170,31 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
             val checking by vm.checkingUpdates.collectAsStateWithLifecycle()
             Clickable(stringResource(R.string.set_check_now), if (checking) stringResource(R.string.set_checking) else null) { vm.checkUpdatesNow() }
         }
+        item { Toggle(stringResource(R.string.set_auto_install), stringResource(R.string.set_auto_install_desc), s.autoInstallUpdates, vm::setAutoInstall) }
+        item {
+            val canInstall by vm.canInstall.collectAsStateWithLifecycle()
+            androidx.lifecycle.compose.LifecycleResumeEffect(Unit) { vm.refreshCanInstall(); onPauseOrDispose { } }
+            if (!canInstall) Clickable(stringResource(R.string.set_allow_install), stringResource(R.string.set_allow_install_desc)) {
+                runCatching { context.startActivity(vm.installPermissionIntent()) }
+            }
+        }
+        item {
+            val update by vm.availableUpdate.collectAsStateWithLifecycle()
+            val install by vm.installState.collectAsStateWithLifecycle()
+            update?.let { u ->
+                val status = when (val st = install) {
+                    is app.musicflow.data.repositories.InstallState.Downloading -> stringResource(R.string.set_update_downloading)
+                    is app.musicflow.data.repositories.InstallState.Installing -> stringResource(R.string.set_update_installing)
+                    is app.musicflow.data.repositories.InstallState.NeedsConfirmation -> stringResource(R.string.set_update_confirm)
+                    is app.musicflow.data.repositories.InstallState.Failed -> stringResource(R.string.set_update_install_failed, st.message)
+                    else -> null
+                }
+                Clickable(stringResource(R.string.set_install_version, u.version.toString()), status) { vm.installUpdate() }
+            }
+        }
+        item {
+            Clickable(stringResource(R.string.set_extractor), stringResource(R.string.set_extractor_value, vm.appInfo.extractorVersion.ifEmpty { "?" })) {}
+        }
     }
 
     when (dialog) {

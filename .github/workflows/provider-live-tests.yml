@@ -30,9 +30,7 @@ jobs:
       - name: Live tests
         run: |
           FILTER="${{ github.event.inputs.tests }}"
-          ./gradlew :data:providers:testDebugUnitTest -PliveTests=true --tests "${FILTER:-*Live*}" -i --console=plain 2>&1 \
-            | grep -E "^(tracks|stream|playlist|segment|track|related|set|artist|songs|page2|skip)|Test.*(PASSED|FAILED|SKIPPED)|> Task|BUILD|Exception|expected|but was" || true
-          exit ${PIPESTATUS[0]}
+          ./gradlew :data:providers:testDebugUnitTest -PliveTests=true --tests "${FILTER:-*Live*}" --console=plain
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4

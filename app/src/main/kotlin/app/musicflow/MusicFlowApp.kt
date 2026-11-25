@@ -44,6 +44,7 @@ class MusicFlowApp : Application(), SingletonImageLoader.Factory {
             settings.settings.collect { s ->
                 registry.setEnabled("yt", s.youtubeProviderEnabled)
                 registry.setEnabled("sc", s.soundcloudProviderEnabled)
+                app.musicflow.data.repositories.UpdateJobService.schedule(this@MusicFlowApp, s.checkUpdates)
                 diagnostics.enabled = s.diagnosticsEnabled
             }
         }
@@ -72,5 +73,6 @@ object AppModule {
         sdkInt = Build.VERSION.SDK_INT,
         device = "${Build.MANUFACTURER} ${Build.MODEL}",
         updateRepo = BuildConfig.UPDATE_REPO,
+        extractorVersion = BuildConfig.NEWPIPE_EXTRACTOR,
     )
 }

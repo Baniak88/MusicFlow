@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- In-app updates of MusicFlow itself (see PRIVACY.md): install the verified APK of a newer
+         release, and on Android 12+ update without a prompt once the user allowed installs. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+
+    <application>
+        <receiver android:name="app.musicflow.data.repositories.UpdateInstallReceiver" android:exported="false" />
+        <service
+            android:name="app.musicflow.data.repositories.UpdateJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+    </application>
+</manifest>

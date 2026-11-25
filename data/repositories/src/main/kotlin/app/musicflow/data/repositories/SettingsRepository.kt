@@ -50,6 +50,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
         val buffer = stringPreferencesKey("buffer_profile")
         val country = stringPreferencesKey("content_country")
         val updates = booleanPreferencesKey("check_updates")
+        val autoInstall = booleanPreferencesKey("auto_install_updates")
     }
 
     private inline fun <reified E : Enum<E>> Preferences.enum(key: Preferences.Key<String>, default: E): E =
@@ -81,6 +82,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
             bufferProfile = p.enum(K.buffer, d.bufferProfile),
             contentCountry = p[K.country] ?: d.contentCountry,
             checkUpdates = p[K.updates] ?: d.checkUpdates,
+            autoInstallUpdates = p[K.autoInstall] ?: d.autoInstallUpdates,
         )
     }
 
@@ -98,6 +100,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     suspend fun setCrossfadeSeconds(v: Int) { store.edit { it[K.crossfade] = v.coerceIn(0, MAX_CROSSFADE) } }
     suspend fun setNormalization(v: app.musicflow.core.model.NormalizationLevel) { store.edit { it[K.normalization] = v.name } }
     suspend fun setCheckUpdates(v: Boolean) { store.edit { it[K.updates] = v } }
+    suspend fun setAutoInstallUpdates(v: Boolean) { store.edit { it[K.autoInstall] = v } }
     suspend fun setVolumeLeveling(v: Boolean) { store.edit { it[K.leveling] = v } }
     suspend fun setSkipSilence(v: Boolean) { store.edit { it[K.skipSilence] = v } }
     suspend fun setPauseOnDisconnect(v: Boolean) { store.edit { it[K.pauseOnDisconnect] = v } }

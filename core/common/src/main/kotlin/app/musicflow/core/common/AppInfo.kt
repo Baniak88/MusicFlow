@@ -9,4 +9,6 @@ data class AppInfo(
     val device: String,
     /** "owner/repo" whose GitHub Releases provide updates. */
     val updateRepo: String = "Baniak88/MusicFlow",
+    /** NewPipe Extractor version built into this APK (kept current by CI, see PROVIDERS.md). */
+    val extractorVersion: String = "",
 )

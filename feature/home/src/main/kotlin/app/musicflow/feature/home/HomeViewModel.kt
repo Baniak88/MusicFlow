@@ -51,7 +51,13 @@ class HomeViewModel @Inject constructor(
     connectivity: ConnectivityMonitor,
     val playback: PlaybackEngine,
     private val updates: AppUpdateRepository,
+    private val installer: app.musicflow.data.repositories.AppUpdateInstaller,
 ) : ViewModel() {
+
+    val installState: StateFlow<app.musicflow.data.repositories.InstallState> = installer.state
+
+    /** Downloads, verifies and installs the update; Android may ask the user to confirm. */
+    fun installUpdate() { val u = update.value ?: return; viewModelScope.launch { installer.install(u, interactive = true) } }
 
     /** A newer MusicFlow build published on GitHub (null when up to date or checks are off). */
     val update: StateFlow<UpdateInfo?> = updates.available

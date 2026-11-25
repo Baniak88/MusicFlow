@@ -57,6 +57,7 @@ class SettingsViewModel @Inject constructor(
     private val search: SearchRepository,
     private val cache: AudioCacheHolder,
     private val updates: app.musicflow.data.repositories.AppUpdateRepository,
+    private val installer: app.musicflow.data.repositories.AppUpdateInstaller,
     val appInfo: AppInfo,
 ) : ViewModel() {
     val settings: StateFlow<UserSettings> = repo.settings.stateIn(viewModelScope, SharingStarted.Eagerly, UserSettings())
@@ -82,6 +83,14 @@ class SettingsViewModel @Inject constructor(
     fun setAutoContinue(v: Boolean) = viewModelScope.launch { repo.setAutoContinue(v) }
     fun setSkipSilence(v: Boolean) = viewModelScope.launch { repo.setSkipSilence(v) }
     fun setCheckUpdates(v: Boolean) = viewModelScope.launch { repo.setCheckUpdates(v) }
+    fun setAutoInstall(v: Boolean) = viewModelScope.launch { repo.setAutoInstallUpdates(v) }
+    val availableUpdate = updates.available
+    val installState = installer.state
+    /** Re-read on resume: the user may have just allowed installs in system settings. */
+    val canInstall = MutableStateFlow(installer.canInstall())
+    fun refreshCanInstall() { canInstall.value = installer.canInstall() }
+    fun installPermissionIntent() = installer.permissionIntent()
+    fun installUpdate() { val u = updates.available.value ?: return; viewModelScope.launch { installer.install(u, interactive = true) } }
     val checkingUpdates = MutableStateFlow(false)
     fun checkUpdatesNow() = viewModelScope.launch {
         if (checkingUpdates.value) return@launch

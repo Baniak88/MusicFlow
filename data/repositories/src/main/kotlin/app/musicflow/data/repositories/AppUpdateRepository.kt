@@ -38,7 +38,14 @@ data class AppVersion(val major: Int, val minor: Int, val patch: Int, val beta: 
     }
 }
 
-data class UpdateInfo(val version: AppVersion, val apkUrl: String, val pageUrl: String, val sizeBytes: Long?)
+data class UpdateInfo(
+    val version: AppVersion,
+    val apkUrl: String,
+    val pageUrl: String,
+    val sizeBytes: Long?,
+    /** The release's SHA256SUMS.txt, used to verify the downloaded APK. */
+    val checksumUrl: String? = null,
+)
 
 /**
  * Checks GitHub Releases of the project for a newer build of the installed channel.
@@ -108,7 +115,7 @@ class AppUpdateRepository internal constructor(
                 .mapNotNull { rel ->
                     val v = AppVersion.parse(rel.tag) ?: return@mapNotNull null
                     val asset = rel.assets.firstOrNull { wantsAsset(it.name) } ?: return@mapNotNull null
-                    UpdateInfo(v, asset.url, rel.htmlUrl, asset.size)
+                    UpdateInfo(v, asset.url, rel.htmlUrl, asset.size, rel.assets.firstOrNull { it.name == "SHA256SUMS.txt" }?.url)
                 }
                 .maxByOrNull { it.version }
                 ?.takeIf { current != null && it.version > current }
@@ -122,13 +129,13 @@ class AppUpdateRepository internal constructor(
         val apk = prefs.getString(KEY_APK, null) ?: return null
         val installed = AppVersion.parse(appInfo.versionName) ?: return null
         if (v <= installed) return null
-        return UpdateInfo(v, apk, prefs.getString(KEY_PAGE, null).orEmpty(), prefs.getLong(KEY_SIZE, -1).takeIf { it >= 0 })
+        return UpdateInfo(v, apk, prefs.getString(KEY_PAGE, null).orEmpty(), prefs.getLong(KEY_SIZE, -1).takeIf { it >= 0 }, prefs.getString(KEY_SUMS, null))
     }
 
     private fun persist(u: UpdateInfo?) {
         prefs.edit().apply {
-            if (u == null) remove(KEY_VERSION).remove(KEY_APK).remove(KEY_PAGE).remove(KEY_SIZE)
-            else putString(KEY_VERSION, u.version.toString()).putString(KEY_APK, u.apkUrl).putString(KEY_PAGE, u.pageUrl).putLong(KEY_SIZE, u.sizeBytes ?: -1)
+            if (u == null) remove(KEY_VERSION).remove(KEY_APK).remove(KEY_PAGE).remove(KEY_SIZE).remove(KEY_SUMS)
+            else putString(KEY_VERSION, u.version.toString()).putString(KEY_APK, u.apkUrl).putString(KEY_PAGE, u.pageUrl).putLong(KEY_SIZE, u.sizeBytes ?: -1).putString(KEY_SUMS, u.checksumUrl)
         }.apply()
     }
 
@@ -138,5 +145,6 @@ class AppUpdateRepository internal constructor(
         private const val KEY_APK = "found_apk"
         private const val KEY_PAGE = "found_page"
         private const val KEY_SIZE = "found_size"
+        private const val KEY_SUMS = "found_sums"
     }
 }

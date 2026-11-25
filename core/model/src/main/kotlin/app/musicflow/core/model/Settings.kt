@@ -32,6 +32,8 @@ data class UserSettings(
     val contentCountry: String = "",
     /** Periodically check GitHub Releases for a newer version (no account, no identifiers). */
     val checkUpdates: Boolean = true,
+    /** Download, verify and install newer builds in the background (Android may ask once). */
+    val autoInstallUpdates: Boolean = true,
 )
 
 /** Configurable buffering; larger buffers survive network drops better at the cost of RAM/data. */

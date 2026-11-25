@@ -117,4 +117,15 @@
     <string name="set_update_found">Dostępna wersja MusicFlow %1$s – zobacz baner na ekranie głównym</string>
     <string name="set_update_none">Masz najnowszą wersję</string>
     <string name="set_update_failed">Nie udało się sprawdzić aktualizacji. Spróbuj później.</string>
+    <string name="set_auto_install">Instaluj aktualizacje automatycznie</string>
+    <string name="set_auto_install_desc">W tle pobiera nowszą wersję MusicFlow (np. z nowym NewPipe Extractor dla YouTube), sprawdza sumę kontrolną i podpis, i ją instaluje. Za pierwszym razem Android może poprosić o potwierdzenie.</string>
+    <string name="set_allow_install">Zezwól MusicFlow na instalowanie aktualizacji</string>
+    <string name="set_allow_install_desc">Potrzebne jednorazowo do aktualizacji w aplikacji i w tle (Android: „Instalowanie nieznanych aplikacji”).</string>
+    <string name="set_install_version">Zainstaluj MusicFlow %1$s</string>
+    <string name="set_update_downloading">Pobieranie i sprawdzanie…</string>
+    <string name="set_update_installing">Instalowanie…</string>
+    <string name="set_update_confirm">Czeka na Twoje potwierdzenie – stuknij, aby kontynuować</string>
+    <string name="set_update_install_failed">Nie zainstalowano: %1$s</string>
+    <string name="set_extractor">NewPipe Extractor (YouTube, SoundCloud)</string>
+    <string name="set_extractor_value">%1$s · aktualizowany automatycznie z nowymi wersjami aplikacji</string>
 </resources>

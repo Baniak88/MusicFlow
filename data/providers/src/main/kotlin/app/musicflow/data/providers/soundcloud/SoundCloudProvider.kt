@@ -43,7 +43,7 @@ import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.services.soundcloud.linkHandler.SoundcloudSearchQueryHandlerFactory
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
-import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import java.util.Collections
 import java.util.Locale
@@ -170,16 +170,23 @@ class SoundCloudProvider(
 
     // ---------------------------------------------------------------- metadata
 
-    override suspend fun track(id: MediaId): Track = io("track") { trackFrom(StreamInfo.getInfo(service(), SoundCloudIds.url(id)), id) }
+    /**
+     * The stream extractor reads the track page directly. Unlike `StreamInfo`, it does not fail
+     * when no audio stream is available, and it throws the precise reason (Go+, geo-blocked) on
+     * fetch, so restrictions are reported as such.
+     */
+    private fun extractor(id: MediaId): StreamExtractor = service().getStreamExtractor(SoundCloudIds.url(id)).apply { fetchPage() }
 
-    private fun trackFrom(info: StreamInfo, id: MediaId): Track = Track(
-        id = SoundCloudIds.trackFromUrl(info.url) ?: id,
-        title = info.name,
-        artists = SoundCloudMapper.artistRef(info.uploaderName, info.uploaderUrl),
-        durationMs = info.duration.takeIf { it > 0 }?.times(1000),
-        artworkUrl = SoundCloudMapper.bestImage(info.thumbnails),
-        releaseYear = runCatching { info.uploadDate?.offsetDateTime()?.year }.getOrNull(),
-        genre = info.category?.takeIf { it.isNotBlank() },
+    override suspend fun track(id: MediaId): Track = io("track") { trackFrom(extractor(id), id) }
+
+    private fun trackFrom(e: StreamExtractor, id: MediaId): Track = Track(
+        id = SoundCloudIds.trackFromUrl(runCatching { e.url }.getOrNull()) ?: id,
+        title = e.name,
+        artists = SoundCloudMapper.artistRef(runCatching { e.uploaderName }.getOrNull(), runCatching { e.uploaderUrl }.getOrNull()),
+        durationMs = runCatching { e.length }.getOrNull()?.takeIf { it > 0 }?.times(1000),
+        artworkUrl = runCatching { SoundCloudMapper.bestImage(e.thumbnails) }.getOrNull(),
+        releaseYear = runCatching { e.uploadDate?.offsetDateTime()?.year }.getOrNull(),
+        genre = runCatching { e.category }.getOrNull()?.takeIf { it.isNotBlank() },
     )
 
     override suspend fun album(id: MediaId, pageToken: String?): CollectionPage = playlist(id, pageToken)
@@ -245,8 +252,7 @@ class SoundCloudProvider(
     override fun canResolve(id: MediaId) = id.providerId == SoundCloudIds.TRACK
 
     override suspend fun resolve(id: MediaId, quality: AudioQuality): ResolvedStream = io("resolve") {
-        val info = StreamInfo.getInfo(service(), SoundCloudIds.url(id))
-        val chosen = select(info.audioStreams, quality)
+        val chosen = select(extractor(id).audioStreams, quality)
             ?: throw ProviderError.Unavailable("SoundCloud returned no playable audio stream for this track")
         val url = chosen.content
         ResolvedStream(
@@ -268,7 +274,7 @@ class SoundCloudProvider(
     override suspend fun related(seed: MediaId, limit: Int): List<Track> {
         if (seed.providerId != SoundCloudIds.TRACK) return emptyList()
         return io("related") {
-            StreamInfo.getInfo(service(), SoundCloudIds.url(seed)).relatedItems
+            extractor(seed).relatedItems?.items.orEmpty()
                 .filterIsInstance<StreamInfoItem>().mapNotNull(SoundCloudMapper::track)
                 .filter { it.id != seed && (it.durationMs ?: 180_000L) in 60_000L..900_000L }
                 .distinctBy { TextMatching.trackKey(it.title, it.primaryArtist) }
