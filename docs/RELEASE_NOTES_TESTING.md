@@ -1,25 +1,18 @@
 ## MusicFlow — wersja testowa / test build
 
-**Nowości w tej wersji (beta.5):**
-- **Przenikanie bez ubytków dźwięku:** końcówka utworu jest buforowana kilka sekund wcześniej,
-  a przełączenie następuje dopiero, gdy faktycznie gra. Gdyby nie zdążyła się załadować,
-  przejście odbywa się bez przenikania, ale też bez dziury.
-- **Lepsza jakość dźwięku:** domyślnie najlepsza jakość (Opus ok. 160 kb/s także na danych
-  komórkowych zamiast AAC 128 kb/s). Normalizacja w trybach Cicho/Normalnie tylko ścisza zbyt
-  głośne utwory, bez limitera w torze dźwięku. Podbijanie cichych utworów tylko w trybie Głośno.
-  Uwaga: jeśli wcześniej zmieniałeś jakość w Ustawieniach, ustaw „Najlepsza dostępna”.
-- **Nowy wygląd i ikona:** fioletowy motyw, „Kontynuuj słuchanie” z animacją odtwarzanego
-  utworu, mini odtwarzacz połączony z nawigacją, nowy odtwarzacz („Odtwarzanie na: <urządzenie>”,
-  udostępnianie, „Odtwarzanie z: <źródło>”), nowa ikona aplikacji.
+**Nowości w tej wersji (beta.6):**
+- **Przenikanie jak w Spotify:** poprzedni utwór zawsze płynnie wycisza się do samego końca,
+  a następny płynnie się pojawia — nawet jeśli następny utwór z YouTube ładuje się 1–2 sekundy.
+  Wcześniej w takiej sytuacji poprzedni utwór urywał się w połowie przenikania.
+- Krótkie doładowywanie następnego utworu nie przerywa już przenikania, a moment przejęcia
+  dźwięku jest zsynchronizowany (bez „zająknięcia” na początku przenikania).
+- Wskazówka: przenikanie włączasz w Ustawienia → Odtwarzanie → Przenikanie (np. 6–8 s).
+  Działa przy automatycznym przejściu do następnego utworu (jak w Spotify), nie przy ręcznym
+  przeskakiwaniu.
 
-- **Automatyczne aktualizacje NewPipe Extractor:** co 6 godzin serwer budowania sprawdza, czy
-  YouTube działa, pobiera nowszą wersję NewPipe Extractor, testuje ją i publikuje nową wersję
-  testową. Aplikacja sama sprawdza (co kilka godzin), czy jest nowsza wersja i pokazuje baner
-  „Dostępna nowa wersja… — Pobierz” na ekranie głównym. Można to wyłączyć w Ustawieniach
-  („Sprawdzaj aktualizacje aplikacji”), jest też „Sprawdź aktualizacje teraz”.
-
-**Wcześniej (beta.4):** normalizacja głośności, poprawki nawigacji, albumy na stronach
-wykonawców, mały plik (~9,5 MB), stały klucz podpisu (aktualizacja bez odinstalowywania).
+**Wcześniej (beta.5):** automatyczne aktualizacje NewPipe Extractor i powiadomienie o nowej
+wersji w aplikacji, nowy wygląd i ikona, lepsza jakość dźwięku. (beta.4): normalizacja
+głośności, poprawki nawigacji, stały klucz podpisu (aktualizacja bez odinstalowywania).
 
 **EN:** Test build (pre-release). Download the `MusicFlow-*.apk` below and install it on
 Android 9+. See the tester guide (docs/TESTY.md, Polish) and TESTING.md for the full test plan.

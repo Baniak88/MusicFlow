@@ -5,6 +5,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -17,10 +18,14 @@ import kotlin.math.sin
  * 1. **Prepare** ([preloadMs] before the fade): the fader loads the outgoing track, paused, at the
  *    fade position — so its buffer is ready in advance (usually straight from the disk cache).
  * 2. **Start**: at the fade point the fader starts *muted* at the main player's position.
- * 3. **Switch**: only once the fader is really playing does it take over the outgoing audio and
- *    the main player skip to the next track. If the fader is not ready in time, this transition
- *    simply plays gaplessly instead — never with a hole in the sound.
- * 4. **Ramp**: equal-power fade over [fadeMs] once the next track actually plays.
+ * 3. **Switch**: only once the fader is really producing sound (its position advances, and it is
+ *    in sync with the main player) does it take over the outgoing audio and the main player skip
+ *    to the next track. If the fader is not ready in time, this transition simply plays
+ *    gaplessly instead — never with a hole in the sound.
+ * 4. **Ramp**: equal-power curves tied to *media positions*, not wall-clock time: the outgoing
+ *    track always reaches silence exactly at its own end (never cut off mid-fade, however long
+ *    the next track takes to start), and the incoming track fades in over its first [fadeMs]
+ *    (a buffering stall pauses its fade instead of ending it).
  *
  * Driven by [tick] (~every 50 ms while playing), so it is deterministic and testable.
  */
@@ -29,6 +34,8 @@ interface CrossfadePlayer {
     val duration: Long
     val position: Long
     val isPlaying: Boolean
+    /** False once the user paused (unlike [isPlaying], which is also false while buffering). */
+    val playWhenReady: Boolean
     val playbackState: Int
     val hasNext: Boolean
     val repeatOne: Boolean
@@ -53,6 +60,7 @@ class ExoCrossfadePlayer(val player: ExoPlayer) : CrossfadePlayer {
     override val duration get() = player.duration
     override val position get() = player.currentPosition
     override val isPlaying get() = player.isPlaying
+    override val playWhenReady get() = player.playWhenReady
     override val playbackState get() = player.playbackState
     override val hasNext get() = player.hasNextMediaItem()
     override val repeatOne get() = player.repeatMode == Player.REPEAT_MODE_ONE
@@ -84,7 +92,6 @@ class ExoCrossfadePlayer(val player: ExoPlayer) : CrossfadePlayer {
 class Crossfader(
     private val main: CrossfadePlayer,
     private val createFader: () -> CrossfadePlayer,
-    private val clock: () -> Long = { android.os.SystemClock.elapsedRealtime() },
     /** Gain of the main (incoming) player; the service multiplies it with normalisation etc. */
     private val setMainGain: (Float) -> Unit = { main.volume = it },
     private val preloadMs: Long = 6_000,
@@ -101,8 +108,12 @@ class Crossfader(
     private var phase = Phase.IDLE
     private var preparedFor: String? = null
     private var skippedFor: String? = null
-    private var fadeStartedAt: Long? = null
     private var faderBase = 1f
+    private var outgoingDuration = 0L
+    private var faderPlayFrom = 0L
+    private var realigned = false
+    private var faderDone = false
+    private var mainStarted = false
     private var selfTransition = false
 
     /** True while the fader is audible (switch done, ramp running). */
@@ -135,7 +146,9 @@ class Crossfader(
                     val f = fader ?: return cancel()
                     if (f.playbackState == Player.STATE_READY) {
                         f.volume = 0f // muted until it really plays: no doubled audio, no gap
-                        f.seekTo(main.position)
+                        faderPlayFrom = main.position
+                        realigned = false
+                        f.seekTo(faderPlayFrom)
                         f.play()
                         phase = Phase.STARTING
                     } else {
@@ -148,8 +161,16 @@ class Crossfader(
             Phase.STARTING -> {
                 val f = fader ?: return cancel()
                 if (currentId != preparedFor) { cancel(); return } // user skipped meanwhile
-                if (f.isPlaying && f.playbackState == Player.STATE_READY) switchToNext(f)
-                else if (remaining() <= 150) { skippedFor = currentId; cancel() } // too late: gapless
+                val flowing = f.isPlaying && f.playbackState == Player.STATE_READY && f.position >= faderPlayFrom + FLOW_MS
+                if (flowing) {
+                    // Positions reflect what is audible, so the difference is the real offset.
+                    val lag = main.position - f.position
+                    if (abs(lag) > SYNC_TOLERANCE_MS && !realigned && remaining() > fadeMs / 2) {
+                        realigned = true
+                        faderPlayFrom = main.position + lag.coerceAtLeast(0)
+                        f.seekTo(faderPlayFrom) // compensates the start-up latency once
+                    } else switchToNext(f)
+                } else if (remaining() <= 150) { skippedFor = currentId; cancel() } // too late: gapless
             }
             Phase.RAMP -> advance()
         }
@@ -158,6 +179,7 @@ class Crossfader(
     private fun prepare(itemId: String) {
         val item = main.currentItem ?: return
         val f = fader ?: createFader().also { fader = it }
+        outgoingDuration = main.duration
         f.load(item, (main.duration - fadeMs).coerceAtLeast(0), main.audioSessionId, main.playbackParameters)
         preparedFor = itemId
         phase = Phase.PREPARED
@@ -169,24 +191,30 @@ class Crossfader(
         selfTransition = true
         setMainGain(0f)
         main.skipToNext()
-        fadeStartedAt = null
+        faderDone = false
+        mainStarted = false
         phase = Phase.RAMP
     }
 
     private fun advance() {
         val f = fader ?: return finish()
-        val started = fadeStartedAt
-        if (started == null) {
-            // Ramp only once the next track actually plays; until then the old track continues.
-            if (main.playbackState == Player.STATE_READY && main.isPlaying) fadeStartedAt = clock()
-            else if (f.playbackState == Player.STATE_ENDED) finish()
-            return
+        if (!main.playWhenReady) return finish() // user paused: stop the tail, no resume surprises
+        // Outgoing: by its remaining audio → silent exactly at its end, never cut mid-fade.
+        if (!faderDone) {
+            val left = outgoingDuration - f.position
+            if (f.playbackState == Player.STATE_ENDED || left <= 0) {
+                faderDone = true
+                f.stopAndClear()
+            } else {
+                val (out, _) = gains(1f - left.toFloat() / fadeMs.coerceAtLeast(1))
+                f.volume = out * faderBase
+            }
         }
-        val t = ((clock() - started).toFloat() / fadeMs.coerceAtLeast(1)).coerceIn(0f, 1f)
-        val (out, inn) = gains(t)
-        f.volume = out * faderBase
-        setMainGain(inn)
-        if (t >= 1f || f.playbackState == Player.STATE_ENDED) finish()
+        // Incoming: by its own position, once it really plays; a stall pauses the ramp.
+        if (main.isPlaying && main.playbackState == Player.STATE_READY) mainStarted = true
+        val tIn = if (mainStarted) main.position.toFloat() / fadeMs.coerceAtLeast(1) else 0f
+        setMainGain(gains(tIn).second)
+        if (faderDone && tIn >= 1f) finish()
     }
 
     private fun cancel() {
@@ -199,7 +227,6 @@ class Crossfader(
     fun finish() {
         cancel()
         setMainGain(1f)
-        fadeStartedAt = null
     }
 
     /** True exactly once after the crossfade's own skip, so it is not counted as a user skip. */
@@ -208,7 +235,7 @@ class Crossfader(
     fun onMainPlayingChanged(playing: Boolean) {
         if (playing) return
         when (phase) {
-            Phase.RAMP -> if (fadeStartedAt != null) finish()
+            Phase.RAMP -> if (!main.playWhenReady) finish() // paused by the user, not buffering
             Phase.PREPARED, Phase.STARTING -> cancel()
             Phase.IDLE -> Unit
         }
@@ -219,6 +246,10 @@ class Crossfader(
     companion object {
         /** Minimum track length for crossfading: shorter tracks play gaplessly. */
         private const val MIN_TRACK_FACTOR = 3
+        /** The fader counts as audible once its position has advanced this far. */
+        private const val FLOW_MS = 100L
+        /** Larger offsets between the two copies of the outgoing track are realigned once. */
+        private const val SYNC_TOLERANCE_MS = 40L
 
         fun shouldStart(
             fadeMs: Long, durationMs: Long?, positionMs: Long, isPlaying: Boolean,

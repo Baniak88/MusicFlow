@@ -3,6 +3,17 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.6] - 2026-11-25
+
+### Fixed
+- **Crossfade now behaves like Spotify's**: fade curves follow the media positions instead of a
+  timer that started only once the next track played. Previously a next track that needed 1–2 s
+  to buffer (typical for YouTube) made the outgoing track stop abruptly mid-fade; now it always
+  fades smoothly to silence at its own end while the next one fades in from its start.
+- A short buffering stall of the incoming track no longer aborts the crossfade (only a user pause
+  does), and the hand-over between the two copies of the outgoing track is aligned to within
+  ~40 ms (start-up latency compensated), so there is no audible stutter at the start of the fade.
+
 ## [1.0.0-beta.5] - 2026-11-25
 
 ### Fixed
