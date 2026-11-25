@@ -26,6 +26,8 @@ secrets below.
 
 ### Signed release builds
 
+Step-by-step guide in Polish (Windows/macOS/Linux): [docs/KLUCZ_WYDAN.md](docs/KLUCZ_WYDAN.md).
+
 Create a keystore once (never commit it):
 
 ```bash
