@@ -131,7 +131,7 @@ class MusicService : MediaLibraryService() {
 
         player = buildPlayer(settings)
         player.addListener(playerListener)
-        crossfader = Crossfader(player, ::buildFader).apply {
+        crossfader = Crossfader(player, ::buildFader, setMainGain = { g -> crossfadeGain = g; applyVolume() }).apply {
             fadeMs = settings.crossfadeSeconds * 1000L
             blocked = { sleepTimer.state.value == SleepTimerState.EndOfTrack }
         }
@@ -193,6 +193,34 @@ class MusicService : MediaLibraryService() {
     }
     private var reloadingIndex: Int? = null
 
+    // ---------------------------------------------------------------- volume & normalisation
+
+    /** Player volume = normalisation × crossfade × sleep-timer fade, so features never fight. */
+    private var normalizationGain = 1f
+    private var crossfadeGain = 1f
+    private var sleepGain = 1f
+
+    private fun applyVolume() { player.volume = (normalizationGain * crossfadeGain * sleepGain).coerceIn(0f, 1f) }
+
+    /** Applies per-track loudness normalisation for the current track (no data → unity gain). */
+    private fun applyNormalization(lufs: Float?, source: app.musicflow.playback.LoudnessSource) {
+        val gain = app.musicflow.playback.LoudnessNormalizer.gainFor(lufs, settings.normalization, source)
+        normalizationGain = gain?.volume ?: 1f
+        effects.setNormalizationBoost(gain?.boostMb ?: 0)
+        applyVolume()
+        runtime.update { it.copy(normalizationDb = gain?.gainDb, loudnessLufs = lufs, loudnessSource = gain?.source) }
+    }
+
+    private fun refreshNormalizationFromStream() {
+        val id = player.currentMediaItem?.mediaId?.let(MediaId::parseOrNull) ?: return
+        scope.launch {
+            val lufs = streams.cached(id)?.loudnessLufs
+            if (lufs != null || runtime.status.value.loudnessSource != app.musicflow.playback.LoudnessSource.REPLAYGAIN) {
+                applyNormalization(lufs, app.musicflow.playback.LoudnessSource.PROVIDER)
+            }
+        }
+    }
+
     // ---------------------------------------------------------------- player
 
     private fun buildPlayer(s: UserSettings): ExoPlayer {
@@ -246,7 +274,8 @@ class MusicService : MediaLibraryService() {
                 scope.launch { runCatching { library.remember(t) } }
             }
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) consecutiveAutoSkips = 0
-            runtime.update { it.copy(stream = null, format = null) }
+            runtime.update { it.copy(stream = null, format = null, loudnessSource = null) }
+            refreshNormalizationFromStream()
             runtime.clearError()
             maybeContinueQueue()
             prefetchNext()
@@ -268,6 +297,7 @@ class MusicService : MediaLibraryService() {
                     val id = player.currentMediaItem?.mediaId?.let(MediaId::parseOrNull) ?: return@launch
                     val cached = streams.cached(id)
                     runtime.update { it.copy(stream = cached) }
+                    if (cached?.loudnessLufs != null) applyNormalization(cached.loudnessLufs, app.musicflow.playback.LoudnessSource.PROVIDER)
                 }
             }
             if (state == Player.STATE_ENDED) finishListening(userSkipped = false, now = System.currentTimeMillis())
@@ -285,6 +315,15 @@ class MusicService : MediaLibraryService() {
         }
 
         override fun onPlayerError(error: PlaybackException) = handleError(error)
+
+        override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+            // Local/direct files: use ReplayGain tags when the provider gave no loudness.
+            if (runtime.status.value.loudnessLufs != null && runtime.status.value.loudnessSource == app.musicflow.playback.LoudnessSource.PROVIDER) return
+            val rg = tracks.groups.asSequence().filter { it.type == C.TRACK_TYPE_AUDIO }
+                .flatMap { g -> (0 until g.length).asSequence().map { g.getTrackFormat(it).metadata } }
+                .firstNotNullOfOrNull { app.musicflow.playback.LoudnessNormalizer.replayGainTrackGain(it) } ?: return
+            applyNormalization(app.musicflow.playback.LoudnessNormalizer.lufsFromReplayGain(rg), app.musicflow.playback.LoudnessSource.REPLAYGAIN)
+        }
     }
 
     private val analyticsListener = object : AnalyticsListener {
@@ -374,6 +413,10 @@ class MusicService : MediaLibraryService() {
                     if (changedNow) reloadCurrentForQuality()
                 }
                 effects.setLeveling(s.volumeLeveling)
+                if (old.normalization != s.normalization) {
+                    val st = runtime.status.value
+                    applyNormalization(st.loudnessLufs, st.loudnessSource ?: app.musicflow.playback.LoudnessSource.PROVIDER)
+                }
             }
         }
     }
@@ -383,14 +426,14 @@ class MusicService : MediaLibraryService() {
             sleepTimer.state.collect { state ->
                 sleepJob?.cancel()
                 player.pauseAtEndOfMediaItems = state == SleepTimerState.EndOfTrack
-                player.volume = 1f
+                sleepGain = 1f; applyVolume()
                 if (state is SleepTimerState.At) sleepJob = scope.launch {
                     while (isActive) {
                         val remaining = state.endsAtMillis - System.currentTimeMillis()
                         // Gentle 15 s fade-out before pausing.
-                        if (remaining in 1..15_000) player.volume = (remaining / 15_000f).coerceIn(0f, 1f)
+                        if (remaining in 1..15_000) { sleepGain = (remaining / 15_000f).coerceIn(0f, 1f); applyVolume() }
                         if (sleepTimer.consumeIfExpired()) {
-                            player.pause(); player.volume = 1f
+                            player.pause(); sleepGain = 1f; applyVolume()
                             diagnostics.i("sleep", "Sleep timer paused playback")
                             break
                         }

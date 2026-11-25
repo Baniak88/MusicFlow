@@ -79,7 +79,7 @@ class CrossfaderPlaybackTest {
         fun newPlayer() = TestExoPlayerBuilder(context).setMediaSourceFactory(factory).build().also { players += it }
         val main = newPlayer()
         var now = 0L
-        val crossfader = Crossfader(main, ::newPlayer) { now }.apply { fadeMs = 1_000 }
+        val crossfader = Crossfader(main, ::newPlayer, clock = { now }).apply { fadeMs = 1_000 }
 
         main.setMediaItems(listOf(1, 2).map { MediaItems.toMediaItem(Track(MediaId("yt:t$it"), "T$it", durationMs = 4_000)) })
         main.prepare(); main.play()
@@ -119,7 +119,7 @@ class CrossfaderPlaybackTest {
         fun newPlayer() = TestExoPlayerBuilder(context).setMediaSourceFactory(factory).build().also { players += it }
         val main = newPlayer()
         var now = 0L
-        val crossfader = Crossfader(main, ::newPlayer) { now }.apply { fadeMs = 1_000 }
+        val crossfader = Crossfader(main, ::newPlayer, clock = { now }).apply { fadeMs = 1_000 }
         main.setMediaItems(listOf(1, 2).map { MediaItems.toMediaItem(Track(MediaId("yt:p$it"), "P$it")) })
         main.prepare(); main.play()
         TestPlayerRunHelper.run(main).untilPosition(0, 3_200)

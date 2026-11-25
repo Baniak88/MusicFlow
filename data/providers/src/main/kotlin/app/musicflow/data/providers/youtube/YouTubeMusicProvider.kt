@@ -326,7 +326,10 @@ class YouTubeMusicProvider(
     override fun canResolve(id: MediaId) = id.providerId == YouTubeIds.TRACK
 
     override suspend fun resolve(id: MediaId, quality: AudioQuality): ResolvedStream = io("resolve") {
-        val info = StreamInfo.getInfo(service(), YouTubeIds.watchUrl(id.key))
+        val extractor = service().getStreamExtractor(YouTubeIds.watchUrl(id.key))
+        extractor.fetchPage()
+        val loudness = YouTubeLoudness.read(extractor)
+        val info = StreamInfo.getInfo(extractor)
         val candidates = info.audioStreams
             .filter { it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.isUrl && !it.content.isNullOrBlank() }
             .map { a ->
@@ -363,6 +366,7 @@ class YouTubeMusicProvider(
                 requestHeaders = headers,
                 cacheKey = "yt:${id.key}:${chosen.formatId}",
                 requiresChunkedPost = chunked,
+                loudnessLufs = loudness,
             )
         } else if (!info.hlsUrl.isNullOrBlank()) {
             ResolvedStream(

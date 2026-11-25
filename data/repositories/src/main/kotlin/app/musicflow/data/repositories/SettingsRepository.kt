@@ -38,6 +38,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
         val autoContinue = booleanPreferencesKey("auto_continue")
         val crossfade = intPreferencesKey("crossfade_seconds")
         val leveling = booleanPreferencesKey("volume_leveling")
+        val normalization = stringPreferencesKey("normalization")
         val skipSilence = booleanPreferencesKey("skip_silence")
         val pauseOnDisconnect = booleanPreferencesKey("pause_on_disconnect")
         val resumeBt = booleanPreferencesKey("resume_bt")
@@ -66,6 +67,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
             autoContinueQueue = p[K.autoContinue] ?: d.autoContinueQueue,
             crossfadeSeconds = p[K.crossfade] ?: d.crossfadeSeconds,
             volumeLeveling = p[K.leveling] ?: d.volumeLeveling,
+            normalization = p.enum(K.normalization, d.normalization),
             skipSilence = p[K.skipSilence] ?: d.skipSilence,
             pauseOnDisconnect = p[K.pauseOnDisconnect] ?: d.pauseOnDisconnect,
             resumeOnBluetooth = p[K.resumeBt] ?: d.resumeOnBluetooth,
@@ -90,6 +92,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     suspend fun setCacheSizeMb(v: Int) { store.edit { it[K.cache] = v.coerceIn(64, 4096) } }
     suspend fun setAutoContinue(v: Boolean) { store.edit { it[K.autoContinue] = v } }
     suspend fun setCrossfadeSeconds(v: Int) { store.edit { it[K.crossfade] = v.coerceIn(0, MAX_CROSSFADE) } }
+    suspend fun setNormalization(v: app.musicflow.core.model.NormalizationLevel) { store.edit { it[K.normalization] = v.name } }
     suspend fun setVolumeLeveling(v: Boolean) { store.edit { it[K.leveling] = v } }
     suspend fun setSkipSilence(v: Boolean) { store.edit { it[K.skipSilence] = v } }
     suspend fun setPauseOnDisconnect(v: Boolean) { store.edit { it[K.pauseOnDisconnect] = v } }

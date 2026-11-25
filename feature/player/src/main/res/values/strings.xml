@@ -51,4 +51,6 @@
     <string name="player_q_high_hint">up to 192 kbps</string>
     <string name="player_q_best">Best available</string>
     <string name="player_q_best_hint">highest bitrate the source offers</string>
+    <string name="player_norm_applied">Normalisation: %1$s dB (track measures %2$s LUFS)</string>
+    <string name="player_norm_none">Normalisation: not applied (off, or no loudness data for this track)</string>
 </resources>

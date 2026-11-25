@@ -29,6 +29,10 @@ data class EngineStatus(
     val lastErrorMessage: String? = null,
     val lastErrorAt: Long? = null,
     val autoSkipped: Int = 0,
+    /** Measured loudness of the current track and the normalisation gain applied to it. */
+    val loudnessLufs: Float? = null,
+    val normalizationDb: Float? = null,
+    val loudnessSource: LoudnessSource? = null,
 )
 
 /**

@@ -120,3 +120,17 @@ class ArtistMatchTest {
         com.google.common.truth.Truth.assertThat(m.creditedTo("Random", "Punk covers", "Daft Punk", "ytch:x", emptyList())).isFalse()
     }
 }
+
+class YouTubeLoudnessTest {
+    private val l = app.musicflow.data.providers.youtube.YouTubeLoudness
+    @Test fun readsAbsoluteThenPerceptualThenPerFormatLoudness() {
+        val abs = mapOf("playerConfig" to mapOf("audioConfig" to mapOf("trackAbsoluteLoudnessLkfs" to -15.17, "perceptualLoudnessDb" to -16.0)))
+        com.google.common.truth.Truth.assertThat(l.fromPlayerResponse(abs)).isWithin(0.01f).of(-15.17f)
+        val per = mapOf("playerConfig" to mapOf("audioConfig" to mapOf("perceptualLoudnessDb" to -9.5)))
+        com.google.common.truth.Truth.assertThat(l.fromPlayerResponse(per)).isWithin(0.01f).of(-9.5f)
+        val fmt = mapOf("streamingData" to mapOf("adaptiveFormats" to listOf(mapOf("itag" to 251, "loudnessDb" to 3.0))))
+        com.google.common.truth.Truth.assertThat(l.fromPlayerResponse(fmt)).isWithin(0.01f).of(-11f) // -14 target + 3 dB
+        com.google.common.truth.Truth.assertThat(l.fromPlayerResponse(emptyMap<String, Any>())).isNull()
+        com.google.common.truth.Truth.assertThat(l.fromPlayerResponse(mapOf("playerConfig" to mapOf("audioConfig" to mapOf("trackAbsoluteLoudnessLkfs" to Double.NaN))))).isNull()
+    }
+}

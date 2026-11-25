@@ -40,6 +40,8 @@ class AudioEffects @Inject constructor(
     private var sessionId = 0
     private var equalizer: Equalizer? = null
     private var dynamics: DynamicsProcessing? = null
+    private var enhancer: android.media.audiofx.LoudnessEnhancer? = null
+    private var boostMb = 0
     private var wantLeveling = false
     private val savedLevels = HashMap<Int, Int>()
     private var savedEnabled = false
@@ -64,7 +66,21 @@ class AudioEffects @Inject constructor(
             runCatching { eq.enabled = savedEnabled }
         }
         setLeveling(wantLeveling)
+        setNormalizationBoost(boostMb)
         publish()
+    }
+
+    /**
+     * Positive loudness-normalisation gain (quiet tracks), in millibels. LoudnessEnhancer
+     * includes a limiter, so boosting cannot clip. 0 disables it.
+     */
+    fun setNormalizationBoost(mb: Int) {
+        boostMb = mb.coerceIn(0, 1500)
+        if (sessionId == 0) return
+        if (boostMb == 0) { runCatching { enhancer?.enabled = false }; return }
+        val e = enhancer ?: runCatching { android.media.audiofx.LoudnessEnhancer(sessionId) }
+            .onFailure { diagnostics.w("effects", "LoudnessEnhancer unavailable: ${it.message}") }.getOrNull()?.also { enhancer = it }
+        runCatching { e?.setTargetGain(boostMb); e?.setEnabled(true) }
     }
 
     private fun publish() {
@@ -142,6 +158,7 @@ class AudioEffects @Inject constructor(
         }
         runCatching { equalizer?.release() }; equalizer = null
         runCatching { dynamics?.release() }; dynamics = null
+        runCatching { enhancer?.release() }; enhancer = null
         sessionId = 0
     }
 }

@@ -76,6 +76,7 @@ class SettingsViewModel @Inject constructor(
     fun setQualityMobile(v: AudioQuality) = viewModelScope.launch { repo.setQualityMobile(v) }
     fun setBuffer(v: BufferProfile) = viewModelScope.launch { repo.setBufferProfile(v); _events.emit(SettingsEvent.Message(R.string.set_applies_after_restart)) }
     fun setCacheSize(mb: Int) = viewModelScope.launch { repo.setCacheSizeMb(mb); _events.emit(SettingsEvent.Message(R.string.set_applies_after_restart)) }
+    fun setNormalization(v: app.musicflow.core.model.NormalizationLevel) = viewModelScope.launch { repo.setNormalization(v) }
     fun setCrossfade(seconds: Int) = viewModelScope.launch { repo.setCrossfadeSeconds(seconds) }
     fun setAutoContinue(v: Boolean) = viewModelScope.launch { repo.setAutoContinue(v) }
     fun setSkipSilence(v: Boolean) = viewModelScope.launch { repo.setSkipSilence(v) }

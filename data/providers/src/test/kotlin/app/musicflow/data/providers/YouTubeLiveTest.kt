@@ -98,7 +98,8 @@ class YouTubeLiveTest {
         val viaLink = provider.search("https://youtu.be/I5uH5-JHh3k?is=kPN3R9CeGB_FzP6t", SearchFilter.ALL).items.tracks()
         assertThat(viaLink.single().id.key).isEqualTo("I5uH5-JHh3k")
         val stream = provider.resolve(viaLink.single().id, AudioQuality.BEST)
-        println("upload stream: ${stream.describe()}")
+        println("upload stream: ${stream.describe()} loudness=${stream.loudnessLufs} LUFS")
+        assertThat(stream.loudnessLufs).isNotNull()
         assertThat(stream.bitrateKbps).isAtLeast(128)
     }
 

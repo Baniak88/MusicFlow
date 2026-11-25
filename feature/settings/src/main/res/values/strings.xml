@@ -36,8 +36,13 @@
     <string name="set_crossfade_desc">Overlaps the end of a song with the start of the next one. Not applied to the last song, to repeat-one, or to songs shorter than three times the crossfade.</string>
     <string name="set_autoplay">Autoplay similar songs</string>
     <string name="set_autoplay_desc">Continue with related music when the queue ends</string>
-    <string name="set_leveling">Volume levelling</string>
-    <string name="set_leveling_desc">Reduce volume differences between tracks (dynamic range compression)</string>
+    <string name="set_normalization">Volume normalisation</string>
+    <string name="set_norm_off">Off</string>
+    <string name="set_norm_quiet">Quiet (−19 LUFS)</string>
+    <string name="set_norm_normal">Normal (−14 LUFS)</string>
+    <string name="set_norm_loud">Loud (−11 LUFS)</string>
+    <string name="set_leveling">Dynamic compression</string>
+    <string name="set_leveling_desc">Also evens out loud and quiet passages inside songs (changes the sound; normalisation alone does not)</string>
     <string name="set_skip_silence">Skip silence</string>
     <string name="set_pause_disconnect">Pause when headphones disconnect</string>
     <string name="set_pause_disconnect_desc">Wired or Bluetooth</string>

@@ -24,7 +24,10 @@ class Crossfader(
     private val main: ExoPlayer,
     private val createFader: () -> ExoPlayer,
     private val clock: () -> Long = { android.os.SystemClock.elapsedRealtime() },
+    /** Gain of the main (incoming) player; the service multiplies it with normalisation etc. */
+    private val setMainGain: (Float) -> Unit = { main.volume = it },
 ) {
+    private var faderBase = 1f
     /** Crossfade length in ms; 0 disables crossfading. */
     var fadeMs: Long = 0
 
@@ -61,14 +64,15 @@ class Crossfader(
         val f = fader ?: createFader().also { fader = it }
         if (main.audioSessionId != C.AUDIO_SESSION_ID_UNSET) f.setAudioSessionId(main.audioSessionId) // shared EQ/levelling
         f.playbackParameters = main.playbackParameters
-        f.volume = main.volume
+        faderBase = main.volume // the outgoing track keeps its own (normalised) level
+        f.volume = faderBase
         f.setMediaItem(item, main.currentPosition)
         f.prepare()
         f.play()
         isFading = true
         fadeStartedAt = null
         selfTransition = true
-        main.volume = 0f
+        setMainGain(0f)
         main.seekToNextMediaItem()
     }
 
@@ -83,15 +87,15 @@ class Crossfader(
         }
         val t = ((clock() - started).toFloat() / fadeMs.coerceAtLeast(1)).coerceIn(0f, 1f)
         val (out, inn) = gains(t)
-        f.volume = out
-        main.volume = inn
+        f.volume = out * faderBase
+        setMainGain(inn)
         if (t >= 1f || f.playbackState == Player.STATE_ENDED) finish()
     }
 
     /** Ends any running fade: the outgoing track stops, the main player returns to full volume. */
     fun finish() {
         fader?.let { it.stop(); it.clearMediaItems() }
-        main.volume = 1f
+        setMainGain(1f)
         isFading = false
         fadeStartedAt = null
     }

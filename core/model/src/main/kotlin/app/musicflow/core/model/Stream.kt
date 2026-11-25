@@ -33,7 +33,8 @@ data class ResolvedStream(
     val requestHeaders: Map<String, String> = emptyMap(),
     /** A stable cache key (same audio → same key even if the URL is re-signed). */
     val cacheKey: String,
-    val loudnessDb: Float? = null,
+    /** Measured integrated loudness of the track in LUFS, when the source reports it. */
+    val loudnessLufs: Float? = null,
     /**
      * YouTube "UMP-less" progressive URLs must be fetched as POST requests in bounded byte
      * ranges (`&range=a-b&rn=n`). The playback layer uses a chunked data source when set.

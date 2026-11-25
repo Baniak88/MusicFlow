@@ -36,8 +36,13 @@
     <string name="set_crossfade_desc">Nakłada koniec utworu na początek następnego. Nie dotyczy ostatniego utworu, powtarzania utworu ani utworów krótszych niż trzykrotność czasu przenikania.</string>
     <string name="set_autoplay">Autoodtwarzanie podobnych utworów</string>
     <string name="set_autoplay_desc">Kontynuuj podobną muzyką, gdy kolejka się skończy</string>
-    <string name="set_leveling">Wyrównywanie głośności</string>
-    <string name="set_leveling_desc">Zmniejsza różnice głośności między utworami (kompresja dynamiki)</string>
+    <string name="set_normalization">Normalizacja głośności</string>
+    <string name="set_norm_off">Wyłączona</string>
+    <string name="set_norm_quiet">Cicho (−19 LUFS)</string>
+    <string name="set_norm_normal">Normalnie (−14 LUFS)</string>
+    <string name="set_norm_loud">Głośno (−11 LUFS)</string>
+    <string name="set_leveling">Kompresja dynamiki</string>
+    <string name="set_leveling_desc">Dodatkowo wyrównuje głośne i ciche fragmenty wewnątrz utworów (zmienia brzmienie; sama normalizacja tego nie robi)</string>
     <string name="set_skip_silence">Pomijaj ciszę</string>
     <string name="set_pause_disconnect">Wstrzymaj po odłączeniu słuchawek</string>
     <string name="set_pause_disconnect_desc">Przewodowych lub Bluetooth</string>

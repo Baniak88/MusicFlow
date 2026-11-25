@@ -120,6 +120,7 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
             ) { dialog = "crossfade" }
         }
         item { Toggle(stringResource(R.string.set_autoplay), stringResource(R.string.set_autoplay_desc), s.autoContinueQueue, vm::setAutoContinue) }
+        item { Clickable(stringResource(R.string.set_normalization), normalizationLabel(s.normalization)) { dialog = "normalization" } }
         item { Toggle(stringResource(R.string.set_leveling), stringResource(R.string.set_leveling_desc), s.volumeLeveling, vm::setLeveling) }
         item { Toggle(stringResource(R.string.set_skip_silence), null, s.skipSilence, vm::setSkipSilence) }
         item { Toggle(stringResource(R.string.set_pause_disconnect), stringResource(R.string.set_pause_disconnect_desc), s.pauseOnDisconnect, vm::setPauseOnDisconnect) }
@@ -172,6 +173,11 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
         "qmobile" -> ChoiceDialog(stringResource(R.string.set_quality_mobile), AudioQuality.entries.map { Choice(it, qualityLabel(it)) }, s.qualityMobile, { dialog = null }, vm::setQualityMobile)
         "buffer" -> ChoiceDialog(stringResource(R.string.set_buffer), BufferProfile.entries.map { Choice(it, bufferLabel(it)) }, s.bufferProfile, { dialog = null }, vm::setBuffer)
         "cache" -> ChoiceDialog(stringResource(R.string.set_cache_size), listOf(128, 256, 512, 1024, 2048, 4096).map { Choice(it, "$it MB") }, s.cacheSizeMb, { dialog = null }, vm::setCacheSize)
+        "normalization" -> ChoiceDialog(
+            stringResource(R.string.set_normalization),
+            app.musicflow.core.model.NormalizationLevel.entries.map { Choice(it, normalizationLabel(it)) },
+            s.normalization, { dialog = null }, vm::setNormalization,
+        )
         "crossfade" -> CrossfadeDialog(s.crossfadeSeconds, { dialog = null }, vm::setCrossfade)
         "country" -> CountryDialog(s.contentCountry, { dialog = null }, vm::setCountry)
         "clear_cache" -> Confirm(stringResource(R.string.set_clear_cache), stringResource(R.string.set_clear_cache_desc), { dialog = null }, vm::clearCache)
@@ -180,6 +186,12 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
     }
 }
 
+@Composable private fun normalizationLabel(l: app.musicflow.core.model.NormalizationLevel) = stringResource(when (l) {
+    app.musicflow.core.model.NormalizationLevel.OFF -> R.string.set_norm_off
+    app.musicflow.core.model.NormalizationLevel.QUIET -> R.string.set_norm_quiet
+    app.musicflow.core.model.NormalizationLevel.NORMAL -> R.string.set_norm_normal
+    app.musicflow.core.model.NormalizationLevel.LOUD -> R.string.set_norm_loud
+})
 @Composable private fun themeLabel(t: ThemeMode) = stringResource(when (t) { ThemeMode.SYSTEM -> R.string.set_theme_system; ThemeMode.DARK -> R.string.set_theme_dark; ThemeMode.LIGHT -> R.string.set_theme_light })
 @Composable private fun languageLabel(tag: String) = when (tag) { "en" -> "English"; "pl" -> "Polski"; else -> stringResource(R.string.set_language_system) }
 @Composable private fun bufferLabel(b: BufferProfile) = stringResource(when (b) { BufferProfile.LOW -> R.string.set_buffer_low; BufferProfile.BALANCED -> R.string.set_buffer_balanced; BufferProfile.LARGE -> R.string.set_buffer_large })

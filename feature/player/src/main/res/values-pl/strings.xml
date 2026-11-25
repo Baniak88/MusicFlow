@@ -51,4 +51,6 @@
     <string name="player_q_high_hint">do 192 kb/s</string>
     <string name="player_q_best">Najlepsza dostępna</string>
     <string name="player_q_best_hint">najwyższy bitrate oferowany przez źródło</string>
+    <string name="player_norm_applied">Normalizacja: %1$s dB (głośność utworu %2$s LUFS)</string>
+    <string name="player_norm_none">Normalizacja: nie zastosowano (wyłączona lub brak danych o głośności utworu)</string>
 </resources>

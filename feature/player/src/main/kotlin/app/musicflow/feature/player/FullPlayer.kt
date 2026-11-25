@@ -314,6 +314,12 @@ private fun QualityDialog(vm: PlayerViewModel, onDismiss: () -> Unit) {
                 status.stream?.describe()?.takeIf { it.isNotEmpty() }?.let {
                     Text(stringResource(R.string.player_quality_now, it), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
                 }
+                Text(
+                    status.normalizationDb?.let { db ->
+                        stringResource(R.string.player_norm_applied, "%+.1f".format(db), "%.1f".format(status.loudnessLufs ?: 0f))
+                    } ?: stringResource(R.string.player_norm_none),
+                    style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp),
+                )
                 Text(stringResource(R.string.player_quality_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
             }
         },

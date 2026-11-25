@@ -18,6 +18,8 @@ data class UserSettings(
     /** Overlap between consecutive tracks, 0 = off (gapless). */
     val crossfadeSeconds: Int = 0,
     val volumeLeveling: Boolean = false,
+    /** Per-track loudness normalisation target (Spotify-like levels). */
+    val normalization: NormalizationLevel = NormalizationLevel.NORMAL,
     val skipSilence: Boolean = false,
     val pauseOnDisconnect: Boolean = true,
     val resumeOnBluetooth: Boolean = false,
@@ -34,4 +36,12 @@ enum class BufferProfile(val minBufferMs: Int, val maxBufferMs: Int) {
     LOW(15_000, 30_000),
     BALANCED(30_000, 90_000),
     LARGE(60_000, 240_000),
+}
+
+/** Loudness normalisation targets, matching the levels Spotify offers. */
+enum class NormalizationLevel(val targetLufs: Float?) {
+    OFF(null),
+    QUIET(-19f),
+    NORMAL(-14f),
+    LOUD(-11f),
 }
