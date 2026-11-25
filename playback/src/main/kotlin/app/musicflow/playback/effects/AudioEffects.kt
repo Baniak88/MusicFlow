@@ -60,7 +60,7 @@ class AudioEffects @Inject constructor(
             putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
             putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
         })
-        equalizer = runCatching { Equalizer(0, sessionId) }.onFailure { diagnostics.w("effects", "Equalizer unavailable: ${it.message}") }.getOrNull()
+        equalizer = runCatching { Equalizer(PRIORITY, sessionId).also(::watch) }.onFailure { diagnostics.w("effects", "Equalizer unavailable: ${it.message}") }.getOrNull()
         equalizer?.let { eq ->
             savedLevels.forEach { (band, level) -> runCatching { eq.setBandLevel(band.toShort(), level.toShort()) } }
             runCatching { eq.enabled = savedEnabled }
@@ -78,7 +78,7 @@ class AudioEffects @Inject constructor(
         boostMb = mb.coerceIn(0, 1500)
         if (sessionId == 0) return
         if (boostMb == 0) { runCatching { enhancer?.enabled = false }; return }
-        val e = enhancer ?: runCatching { android.media.audiofx.LoudnessEnhancer(sessionId) }
+        val e = enhancer ?: runCatching { android.media.audiofx.LoudnessEnhancer(sessionId).also(::watch) }
             .onFailure { diagnostics.w("effects", "LoudnessEnhancer unavailable: ${it.message}") }.getOrNull()?.also { enhancer = it }
         runCatching { e?.setTargetGain(boostMb); e?.setEnabled(true) }
     }
@@ -128,15 +128,73 @@ class AudioEffects @Inject constructor(
             val config = DynamicsProcessing.Config.Builder(
                 DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, 2, false, 0, false, 0, false, 0, true,
             ).build()
-            DynamicsProcessing(0, sessionId, config).apply {
+            DynamicsProcessing(PRIORITY, sessionId, config).apply {
                 for (ch in 0 until 2) {
                     setInputGainbyChannel(ch, 0f)
                     setLimiterByChannelIndex(ch, DynamicsProcessing.Limiter(true, true, 0, 1f, 60f, 4f, -10f, 6f))
                 }
                 setEnabled(true)
+                watch(this)
             }
         }.onFailure { diagnostics.w("effects", "Volume levelling unavailable: ${it.message}") }.getOrNull()
         publish()
+    }
+
+    /**
+     * Another effect client (e.g. the phone maker's sound effects, which we invite via
+     * ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION) can take control of our effects or switch them
+     * off, while the settings still show them as on. Re-check when that happens.
+     */
+    private fun watch(effect: AudioEffect) {
+        runCatching {
+            effect.setControlStatusListener { _, hasControl -> if (!hasControl) restoreSoon() }
+            effect.setEnableStatusListener { _, enabled -> if (!enabled) restoreSoon() }
+        }
+    }
+
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var lastListenerRestore = 0L
+
+    /** Listener-driven restores are rate-limited, so two apps can never fight in a tight loop. */
+    private fun restoreSoon() {
+        mainHandler.post {
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (now - lastListenerRestore >= LISTENER_RESTORE_INTERVAL_MS) { lastListenerRestore = now; ensureActive() }
+        }
+    }
+
+    /** Whether an effect really runs for us (swappable: Robolectric does not emulate hasControl). */
+    internal var isWorking: (AudioEffect) -> Boolean = { it.hasControl() && it.enabled }
+
+    private fun AudioEffect.working(): Boolean = runCatching { isWorking(this) }.getOrDefault(false)
+
+    /**
+     * Makes sure every effect the user switched on really runs; recreates (and so reclaims) any
+     * that lost control or were disabled from outside. Called on playback start, on track
+     * changes and from the effects' status listeners. Returns the number of effects restored.
+     */
+    fun ensureActive(): Int {
+        if (sessionId == 0) return 0
+        var restored = 0
+        dynamics?.let { d ->
+            if (wantLeveling && !d.working()) { runCatching { d.release() }; dynamics = null }
+        }
+        if (wantLeveling && dynamics == null) { setLeveling(true); if (dynamics != null) restored++ }
+        enhancer?.let { e ->
+            if (boostMb > 0 && !e.working()) { runCatching { e.release() }; enhancer = null; setNormalizationBoost(boostMb); restored++ }
+        }
+        equalizer?.let { eq ->
+            if (savedEnabled && !eq.working()) {
+                runCatching { eq.release() }
+                equalizer = runCatching { Equalizer(PRIORITY, sessionId).also(::watch) }.getOrNull()?.also { n ->
+                    savedLevels.forEach { (band, level) -> runCatching { n.setBandLevel(band.toShort(), level.toShort()) } }
+                    runCatching { n.enabled = true }
+                }
+                restored++
+            }
+        }
+        if (restored > 0) { diagnostics.i("effects", "Restored $restored audio effect(s) taken over or disabled by another app"); publish() }
+        return restored
     }
 
     /** Intent for the system/third-party equaliser panel, or null if none is installed. */
@@ -147,6 +205,12 @@ class AudioEffects @Inject constructor(
             putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
         }
         return intent.takeIf { it.resolveActivity(context.packageManager) != null }
+    }
+
+    companion object {
+        /** Above normal (0), so system sound-effect apps attaching to our session do not win. */
+        const val PRIORITY = 1
+        private const val LISTENER_RESTORE_INTERVAL_MS = 5_000L
     }
 
     fun release() {

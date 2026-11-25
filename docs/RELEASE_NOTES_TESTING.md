@@ -7,6 +7,13 @@ publikacją — kolejne wersje (beta.8 i dalej) zainstalują się na tej bez odi
 Przed odinstalowaniem możesz zachować bibliotekę: Ustawienia → Kopia zapasowa → Eksport,
 a po instalacji Import.
 
+**Poprawki w beta.7:**
+- **Kompresja dynamiki działa stale:** efekty dźwiękowe telefonu (np. Samsung) potrafiły
+  przejąć lub wyłączyć kompresję MusicFlow — w ustawieniach była włączona, ale nie działała,
+  dopóki się jej nie wyłączyło i włączyło. Teraz aplikacja sama to wykrywa i przywraca
+  kompresję (a także korektor i podbicie cichych utworów) przy każdym starcie odtwarzania
+  i zmianie utworu.
+
 **Wcześniej (beta.6):**
 - **Przenikanie jak w Spotify:** poprzedni utwór zawsze płynnie wycisza się do samego końca,
   a następny płynnie się pojawia — nawet jeśli następny utwór z YouTube ładuje się 1–2 sekundy.

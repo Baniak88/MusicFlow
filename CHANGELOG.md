@@ -11,6 +11,11 @@ versioning: [SemVer](https://semver.org).
   update. Betas now use a dedicated, cached test key; the release workflow verifies the
   certificate against the previous beta and refuses to publish on a mismatch. One last
   uninstall is needed when moving from beta.6 or older to beta.7.
+- **Dynamic range compression (and the equaliser / quiet-track boost) silently stopping** until
+  toggled off and on: the phone's own sound effects (invited to the session for system EQ apps)
+  could take control of MusicFlow's effects or disable them. Effects now request above-normal
+  priority, listen for loss of control, and are re-checked and restored on every play start and
+  track change (rate-limited, so two apps never fight in a loop).
 
 ## [1.0.0-beta.6] - 2026-11-25
 

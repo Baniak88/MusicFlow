@@ -95,6 +95,8 @@ class Crossfader(
     /** Gain of the main (incoming) player; the service multiplies it with normalisation etc. */
     private val setMainGain: (Float) -> Unit = { main.volume = it },
     private val preloadMs: Long = 6_000,
+    /** Diagnostics sink (switches, fallbacks, early endings), so reports from devices are explainable. */
+    private val log: (String) -> Unit = {},
 ) {
     private enum class Phase { IDLE, PREPARED, STARTING, RAMP }
 
@@ -153,6 +155,7 @@ class Crossfader(
                         phase = Phase.STARTING
                     } else {
                         // Not buffered in time: play this transition gaplessly rather than with a hole.
+                        log("Crossfade skipped (outgoing tail not buffered in time): gapless transition")
                         skippedFor = currentId
                         cancel()
                     }
@@ -170,7 +173,7 @@ class Crossfader(
                         faderPlayFrom = main.position + lag.coerceAtLeast(0)
                         f.seekTo(faderPlayFrom) // compensates the start-up latency once
                     } else switchToNext(f)
-                } else if (remaining() <= 150) { skippedFor = currentId; cancel() } // too late: gapless
+                } else if (remaining() <= 150) { log("Crossfade skipped (fader did not start in time): gapless transition"); skippedFor = currentId; cancel() }
             }
             Phase.RAMP -> advance()
         }
@@ -187,6 +190,7 @@ class Crossfader(
 
     private fun switchToNext(f: CrossfadePlayer) {
         faderBase = main.volume // the outgoing track keeps its own (normalised) level
+        log("Crossfade start: ${remaining()} ms of the outgoing track left, fade ${fadeMs} ms, offset ${main.position - f.position} ms")
         f.volume = faderBase
         selfTransition = true
         setMainGain(0f)
@@ -198,11 +202,13 @@ class Crossfader(
 
     private fun advance() {
         val f = fader ?: return finish()
-        if (!main.playWhenReady) return finish() // user paused: stop the tail, no resume surprises
+        if (!main.playWhenReady) { log("Crossfade stopped: paused by the user"); return finish() } // no resume surprises
         // Outgoing: by its remaining audio → silent exactly at its end, never cut mid-fade.
         if (!faderDone) {
             val left = outgoingDuration - f.position
             if (f.playbackState == Player.STATE_ENDED || left <= 0) {
+                val gain = gains(1f - left.coerceAtLeast(0).toFloat() / fadeMs.coerceAtLeast(1)).first
+                if (gain > 0.1f) log("Outgoing track ended early: $left ms before its reported end (gain ${"%.2f".format(gain)})")
                 faderDone = true
                 f.stopAndClear()
             } else {

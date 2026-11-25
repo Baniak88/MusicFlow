@@ -131,7 +131,7 @@ class MusicService : MediaLibraryService() {
 
         player = buildPlayer(settings)
         player.addListener(playerListener)
-        crossfader = Crossfader(ExoCrossfadePlayer(player), { ExoCrossfadePlayer(buildFader()) }, setMainGain = { g -> crossfadeGain = g; applyVolume() }).apply {
+        crossfader = Crossfader(ExoCrossfadePlayer(player), { ExoCrossfadePlayer(buildFader()) }, setMainGain = { g -> crossfadeGain = g; applyVolume() }, log = { diagnostics.i("crossfade", it) }).apply {
             fadeMs = settings.crossfadeSeconds * 1000L
             blocked = { sleepTimer.state.value == SleepTimerState.EndOfTrack }
         }
@@ -276,6 +276,7 @@ class MusicService : MediaLibraryService() {
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) consecutiveAutoSkips = 0
             runtime.update { it.copy(stream = null, format = null, loudnessSource = null) }
             refreshNormalizationFromStream()
+            effects.ensureActive()
             runtime.clearError()
             maybeContinueQueue()
             prefetchNext()
@@ -286,6 +287,7 @@ class MusicService : MediaLibraryService() {
             val now = System.currentTimeMillis()
             listening?.let { if (isPlaying) it.resumedAt = now else it.pause(now) }
             crossfader.onMainPlayingChanged(isPlaying)
+            if (isPlaying) effects.ensureActive() // compression/EQ may have been taken over meanwhile
             if (!isPlaying) persistPosition()
         }
 
