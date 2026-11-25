@@ -92,6 +92,7 @@ class SoundCloudLiveTest {
         val withFallback = SoundCloudProvider(client, DiagnosticsLog(), { Locale.US }, fallback = object : app.musicflow.data.providers.api.AudioMatcher {
             override val name = "YouTube Music"
             override suspend fun candidates(query: String) = yt.search(query, SearchFilter.SONGS).items.tracks().take(10)
+                .also { c -> println("reported candidates for '$query' (SC ${t.durationMs} ms): " + c.map { "${it.title} / ${it.artistLine} / ${it.durationMs}" }) }
             override suspend fun resolve(id: app.musicflow.core.model.MediaId, quality: AudioQuality) = yt.resolve(id, quality)
         })
         val viaYt = runCatching { withFallback.resolve(t.id, AudioQuality.BEST) }

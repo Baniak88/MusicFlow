@@ -271,8 +271,10 @@ class SoundCloudProvider(
         // Monetised label tracks are often served only as DRM-encrypted HLS, which MusicFlow does
         // not (and must not) decrypt. Play the identical recording elsewhere, or say why not.
         val f = fallback ?: throw ProviderError.Unavailable(DRM_MESSAGE)
-        val match = runCatching { app.musicflow.data.providers.api.AudioMatch.best(track, f.candidates("${track.primaryArtist.orEmpty()} ${track.title}".trim())) }
-            .getOrNull() ?: throw ProviderError.Unavailable("$DRM_MESSAGE; no identical recording was found on ${f.name}")
+        // A failing search (network, rate limit) is reported as such, not as "no match".
+        val candidates = f.candidates("${track.primaryArtist.orEmpty()} ${track.title}".trim())
+        val match = app.musicflow.data.providers.api.AudioMatch.best(track, candidates)
+            ?: throw ProviderError.Unavailable("$DRM_MESSAGE; no identical recording was found on ${f.name}")
         diagnostics.i("soundcloud", "DRM-only on SoundCloud: playing ${track.title} via ${match.id}")
         return f.resolve(match.id, quality).copy(mediaId = id, cacheKey = f.name + ":" + match.id.key)
     }
