@@ -239,7 +239,8 @@ enum YTMParser {
         if !isLive, let f = chosen, let url = URL(string: J.str(f["url"])!) {
             let kbps = bitrate(f) / 1000
             return ResolvedStream(url: url, userAgent: userAgent, expiresAt: expires, codec: "AAC",
-                                  bitrateKbps: kbps > 0 ? kbps : nil, isLive: false, duration: length)
+                                  bitrateKbps: kbps > 0 ? kbps : nil, isLive: false, duration: length,
+                                  chunked: true, contentLength: J.int(f["contentLength"]).map { Int64($0) })
         }
         if let hls = J.str(J.at(sd, "hlsManifestUrl")), let url = URL(string: hls) {
             return ResolvedStream(url: url, userAgent: userAgent, expiresAt: expires, codec: nil, bitrateKbps: nil, isLive: isLive, duration: length)

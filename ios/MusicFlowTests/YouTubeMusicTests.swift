@@ -42,6 +42,8 @@ final class YouTubeMusicTests: XCTestCase {
         XCTAssertEqual(high.userAgent, "UA")
         XCTAssertEqual(high.expiresAt, now.addingTimeInterval(21540))
         XCTAssertFalse(high.isLive)
+        XCTAssertTrue(high.chunked)
+        XCTAssertEqual(high.contentLength, 4705682)
         let saver = try YTMParser.stream(root, quality: .saver, userAgent: "UA", now: now)
         XCTAssertTrue(saver.url.absoluteString.contains("itag=139"))
     }
@@ -71,5 +73,11 @@ final class YouTubeMusicTests: XCTestCase {
         XCTAssertTrue(s.isLive)
         XCTAssertEqual(s.url.absoluteString, "https://manifest.googlevideo.com/x/index.m3u8")
         XCTAssertNil(s.duration)
+    }
+
+    func testAudioLoaderReadsLengthFromUrl() {
+        let url = URL(string: "https://rr1---sn-x.googlevideo.com/videoplayback?itag=140&clen=4705682&expire=1")!
+        XCTAssertEqual(YouTubeAudioLoader.clen(url), 4705682)
+        XCTAssertNil(YouTubeAudioLoader.clen(URL(string: "https://x/videoplayback?itag=140")!))
     }
 }

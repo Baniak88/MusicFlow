@@ -88,6 +88,24 @@ build through the in-app update check (see PRIVACY.md); code is never downloaded
 **Alternative providers.** When a track fails permanently, MusicFlow may play an on-device file
 instead — only when title, artist (similarity ≥ 0.7) and duration (± 5 s) match reliably.
 
+### On iPhone (`ios/`)
+
+NewPipe Extractor is Java and cannot run on iOS, so the iPhone app sends the same InnerTube requests
+itself (`ios/MusicFlow/Providers/YouTubeMusic.swift`):
+
+* **Search:** `music.youtube.com/youtubei/v1/search` with the WEB_REMIX client and NewPipe's
+  *Songs* filter. When that tab comes back empty (seen from some data-centre networks), the
+  unfiltered results are used: songs and music videos only, no podcasts.
+* **Streams:** `visitor_id`, then `youtubei.googleapis.com/youtubei/v1/player` with the VISIONOS
+  client. This returns direct, unciphered URLs.
+  * Only AAC (`audio/mp4`) is used, because AVPlayer cannot play WebM/Opus: itag 140
+    (≈128 kbps), or itag 139 (≈48 kbps) in data-saver mode.
+  * The audio is read in bounded POST ranges (`&range=…&rn=…`) through an
+    `AVAssetResourceLoader` (`YouTubeAudioLoader`), like Android's `YouTubeChunkedDataSource`.
+* **When YouTube changes its API,** update the client version and parameters in
+  `YouTubeMusic.swift`, matching the current NewPipe Extractor release. The live tests in the
+  **iOS** workflow (`LiveTests`) show what broke.
+
 ## SoundCloud (experimental)
 
 Built on the same NewPipe Extractor as YouTube Music (shared initialisation in

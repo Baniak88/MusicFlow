@@ -9,6 +9,20 @@ final class LiveTests: XCTestCase {
     }
 
     private func firstBytes(_ s: ResolvedStream) async throws -> Int {
+        if s.chunked {
+            let loader = YouTubeAudioLoader(url: s.url, userAgent: s.userAgent, contentLength: s.contentLength)
+            let data = try await loader.fetch(from: 0, to: 65_535)
+            let next = try await loader.fetch(from: 65_536, to: 65_536 + 524_287)
+            print("LIVE stream \(s.url.host ?? "?") chunked POST: \(data.count) + \(next.count) bytes, \(s.qualityLabel ?? "-"), length \(s.contentLength ?? -1)")
+            // Informational: does a plain GET also work for these URLs?
+            var g = URLRequest(url: s.url)
+            g.setValue("bytes=0-65535", forHTTPHeaderField: "Range")
+            if let ua = s.userAgent { g.setValue(ua, forHTTPHeaderField: "User-Agent") }
+            let (gd, gr) = try await URLSession.shared.data(for: g)
+            print("LIVE plain GET: HTTP \((gr as? HTTPURLResponse)?.statusCode ?? 0), \(gd.count) bytes")
+            XCTAssertEqual(data.count, 65_536)
+            return data.count
+        }
         var r = URLRequest(url: s.url)
         r.setValue("bytes=0-65535", forHTTPHeaderField: "Range")
         if let ua = s.userAgent { r.setValue(ua, forHTTPHeaderField: "User-Agent") }
@@ -25,7 +39,8 @@ final class LiveTests: XCTestCase {
         print("LIVE yt search:", tracks.prefix(5).map { "\($0.title) — \($0.artist) [\(Format.time($0.duration))]" })
         XCTAssertFalse(tracks.isEmpty)
         let stream = try await yt.resolve(videoId: tracks[0].key)
-        XCTAssertGreaterThan(try await firstBytes(stream), 1000)
+        let bytes = try await firstBytes(stream)
+        XCTAssertGreaterThan(bytes, 1000)
     }
 
     func testRadioSearchFindsRegionalStation() async throws {
@@ -49,6 +64,7 @@ final class LiveTests: XCTestCase {
         let videoId = try await resolver.match(first)
         print("LIVE mb → yt:", videoId)
         let stream = try await resolver.resolve(first)
-        XCTAssertGreaterThan(try await firstBytes(stream), 1000)
+        let bytes = try await firstBytes(stream)
+        XCTAssertGreaterThan(bytes, 1000)
     }
 }

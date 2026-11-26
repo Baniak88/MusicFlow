@@ -33,6 +33,8 @@ final class PlayerModel: ObservableObject {
     private var metadataOutput: AVPlayerItemMetadataOutput?
     private let metadataDelegate = MetadataDelegate()
     private var artworkTask: Task<Void, Never>?
+    /// Keeps the resource loader of the current YouTube item alive (AVFoundation holds it weakly).
+    private var audioLoader: YouTubeAudioLoader?
     private var artwork: (id: String, art: MPMediaItemArtwork)?
     private var consecutiveFailures = 0
     private var wantsPlay = false
@@ -223,9 +225,16 @@ final class PlayerModel: ObservableObject {
     }
 
     private func attach(_ stream: ResolvedStream, for track: Track) {
-        var options: [String: Any] = [:]
-        if let ua = stream.userAgent { options[AVURLAssetHTTPUserAgentKey] = ua }
-        let asset = AVURLAsset(url: stream.url, options: options)
+        let asset: AVURLAsset
+        if stream.chunked {
+            let loader = YouTubeAudioLoader(url: stream.url, userAgent: stream.userAgent, contentLength: stream.contentLength)
+            audioLoader = loader
+            asset = loader.makeAsset()
+        } else {
+            var options: [String: Any] = [:]
+            if let ua = stream.userAgent { options[AVURLAssetHTTPUserAgentKey] = ua }
+            asset = AVURLAsset(url: stream.url, options: options)
+        }
         let item = AVPlayerItem(asset: asset)
         if stream.isLive {
             let output = AVPlayerItemMetadataOutput(identifiers: nil)
@@ -279,6 +288,8 @@ final class PlayerModel: ObservableObject {
         failObserver = nil
         if let out = metadataOutput { player.currentItem?.remove(out) }
         metadataOutput = nil
+        audioLoader?.cancelAll()
+        audioLoader = nil
     }
 
     private func itemEnded() {

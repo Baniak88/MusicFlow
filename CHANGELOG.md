@@ -3,6 +3,22 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [iOS 0.1.0-beta.1] - 2026-11-26
+
+### Added
+- **MusicFlow for iPhone** (stage 1), a native SwiftUI app in `ios/`, iOS 17+:
+  - YouTube Music search and playback (AAC 128 kbps, or 48 kbps in data-saver mode);
+  - Radio Browser stations: search by name, city and genre, popular stations and live titles;
+  - MusicBrainz catalogue, played only through a reliable YouTube Music match;
+  - background playback with lock screen, Control Center, headphone and car controls;
+  - a queue (play next, add, shuffle, repeat, reorder), likes, playlists and history, all
+    stored on the device;
+  - the glass look of the Android app, in Polish and English.
+- iOS workflow on a macOS runner:
+  - runs unit tests with recorded responses, live provider tests and a UI test with
+    screenshots;
+  - builds an unsigned IPA for sideloading (see `docs/IPHONE.md`).
+
 ## [1.0.0-beta.16] - 2026-11-26
 
 ### Changed

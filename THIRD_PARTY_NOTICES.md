@@ -22,6 +22,11 @@ MIT, BSD-3-Clause, MPL-2.0 texts at https://opensource.org/licenses.
 | Guava (transitive, Media3) | — | Apache-2.0 | © Google LLC |
 | Desugar JDK libs | 2.1.5 | GPL-2.0 with Classpath Exception | © Oracle / Google |
 
+**iPhone app (`ios/`):** uses only Apple system frameworks (SwiftUI, AVFoundation, MediaPlayer,
+Foundation, UIKit) — no third-party code is shipped. Build tool only: XcodeGen (MIT, © Yonas
+Kolb). Its YouTube Music requests mirror NewPipe Extractor's (GPL-3.0) client parameters; no
+NewPipe code is included.
+
 Build/test only (not shipped): Robolectric (MIT), JUnit 4 (EPL-1.0), Truth (Apache-2.0),
 Turbine (Apache-2.0), MockWebServer (Apache-2.0), AndroidX Test (Apache-2.0).
 

@@ -56,6 +56,27 @@ asks you to allow installs once, and on Android 12+ later updates can install wi
 turn off *Install updates automatically* to keep full manual control).
 No location, contacts, microphone, phone or notification permission is requested.
 
+## iPhone app (`ios/`)
+
+The iPhone app follows the same rules: no ads, analytics, tracking, crash reporting, account or
+server of its own.
+
+- **On the device only:** likes, playlists and listening history (`library.json` in the app's
+  Application Support folder, iOS file protection), settings (UserDefaults). Deleting the app
+  deletes them.
+- **Network:** the same hosts as the Android providers above, for the same actions:
+  - YouTube Music: `music.youtube.com`, `www.youtube.com`, `youtubei.googleapis.com`,
+    `*.googlevideo.com`, artwork hosts;
+  - Radio Browser mirrors and station hosts;
+  - `musicbrainz.org` and `coverartarchive.org`;
+  - `github.com` only when you open *Source code* in Settings.
+- **No cookies** are stored (the HTTP session keeps none), and no identifiers are sent.
+- **Plain HTTP** is allowed by App Transport Security only for media
+  (`NSAllowsArbitraryLoadsForMedia`), i.e. radio streams played by AVFoundation, and MusicFlow
+  offers HTTP stations only while *Unencrypted radio streams* is on.
+- **Permissions:** none. Background audio (`UIBackgroundModes: audio`) is a capability, not a
+  permission prompt.
+
 ## Diagnostics
 
 Logs are sanitised when written: signed stream URLs, `sig`/`n`/`pot`/`key`/`token` parameters,

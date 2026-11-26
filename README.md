@@ -39,6 +39,13 @@ Explore, Library, Home with listening history, full player. See `docs/screenshot
 2. On your phone allow *Install unknown apps* for your browser/file manager and open the APK.
 3. Android 9 (API 28) or newer is required.
 
+### iPhone
+
+A native iPhone app (iOS 17+) lives in [`ios/`](ios). It is published as an unsigned `.ipa` in
+**MusicFlow iOS** pre-releases and installed with AltStore, SideStore or Sideloadly using your own
+Apple ID. Polish guide: [docs/IPHONE.md](docs/IPHONE.md). Built and tested by the **iOS** workflow
+on a macOS runner.
+
 ## Testing the app (testers)
 
 Test builds are published as GitHub **pre-releases**. Polish tester guide and checklist:

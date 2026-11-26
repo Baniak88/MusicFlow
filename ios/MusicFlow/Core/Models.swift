@@ -56,6 +56,9 @@ struct ResolvedStream: Sendable, Equatable {
     var bitrateKbps: Int?
     var isLive: Bool = false
     var duration: TimeInterval?
+    /// YouTube progressive audio: read in bounded POST ranges (see YouTubeAudioLoader).
+    var chunked: Bool = false
+    var contentLength: Int64?
 
     /// e.g. "AAC · 128 kbps" — only what the source reported.
     var qualityLabel: String? {
