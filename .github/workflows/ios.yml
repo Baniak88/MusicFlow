@@ -182,6 +182,14 @@ jobs:
             xcrun xcresulttool export attachments --path ui.xcresult --output-path shots || true
           fi
           ls -la shots
+          # Downscaled copies in the log (base64), readable where artifact storage is not reachable.
+          for f in shots/*.png; do
+            [ -f "$f" ] || continue
+            sips -Z 900 "$f" --out /tmp/small.png >/dev/null 2>&1 || cp "$f" /tmp/small.png
+            echo "SHOT-BEGIN $(basename "$f")"
+            base64 -i /tmp/small.png | fold -w 1000
+            echo "SHOT-END"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
