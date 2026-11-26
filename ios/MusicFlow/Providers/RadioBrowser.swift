@@ -165,10 +165,18 @@ enum RadioSearch {
 
     static func words(_ query: String) -> [String] {
         var seen = Set<String>()
-        return TextMatching.normalize(query).split(separator: " ").map(String.init)
-            .filter { $0.count >= 3 && !generic.contains($0) && seen.insert($0).inserted }
-            .enumerated().sorted { $0.element.count != $1.element.count ? $0.element.count > $1.element.count : $0.offset < $1.offset }
-            .map(\.element)
+        var kept: [String] = []
+        for part in TextMatching.normalize(query).split(separator: " ") {
+            let w = String(part)
+            if w.count >= 3, !generic.contains(w), seen.insert(w).inserted { kept.append(w) }
+        }
+        // Longest first; equal lengths keep their order (stable).
+        let indexed: [(offset: Int, word: String)] = kept.enumerated().map { ($0.offset, $0.element) }
+        let sorted = indexed.sorted { (a: (offset: Int, word: String), b: (offset: Int, word: String)) -> Bool in
+            if a.word.count != b.word.count { return a.word.count > b.word.count }
+            return a.offset < b.offset
+        }
+        return sorted.map { $0.word }
     }
 
     private static let glue = try! NSRegularExpression(pattern: #"^(.{3,}?)(radio|fm|music)$|^(radio|open)(.{3,})$"#, options: [.caseInsensitive])
