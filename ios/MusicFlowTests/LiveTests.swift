@@ -8,6 +8,16 @@ final class LiveTests: XCTestCase {
         try XCTSkipUnless(ProcessInfo.processInfo.environment["LIVE_TESTS"] == "1", "live tests disabled")
     }
 
+    /// YouTube blocks anonymous playback from many data-centre IPs (CI runners) with a bot check;
+    /// NewPipe gets the same answer there. That is reported as inconclusive (skipped), not passed.
+    private func resolveOrSkip(_ body: () async throws -> ResolvedStream) async throws -> ResolvedStream {
+        do {
+            return try await body()
+        } catch ProviderError.restricted(let reason) where reason.lowercased().contains("bot") {
+            throw XCTSkip("Inconclusive: YouTube bot check for this IP (\(reason))")
+        }
+    }
+
     private func firstBytes(_ s: ResolvedStream) async throws -> Int {
         if s.chunked {
             let loader = YouTubeAudioLoader(url: s.url, userAgent: s.userAgent, contentLength: s.contentLength)
@@ -38,7 +48,7 @@ final class LiveTests: XCTestCase {
         let tracks = try await yt.search("dawid podsiadło małomiasteczkowy")
         print("LIVE yt search:", tracks.prefix(5).map { "\($0.title) — \($0.artist) [\(Format.time($0.duration))]" })
         XCTAssertFalse(tracks.isEmpty)
-        let stream = try await yt.resolve(videoId: tracks[0].key)
+        let stream = try await resolveOrSkip { try await yt.resolve(videoId: tracks[0].key) }
         let bytes = try await firstBytes(stream)
         XCTAssertGreaterThan(bytes, 1000)
     }
@@ -63,7 +73,7 @@ final class LiveTests: XCTestCase {
         let resolver = StreamResolver(youtube: YouTubeMusic(), radio: RadioBrowser(), musicbrainz: mb)
         let videoId = try await resolver.match(first)
         print("LIVE mb → yt:", videoId)
-        let stream = try await resolver.resolve(first)
+        let stream = try await resolveOrSkip { try await resolver.resolve(first) }
         let bytes = try await firstBytes(stream)
         XCTAssertGreaterThan(bytes, 1000)
     }

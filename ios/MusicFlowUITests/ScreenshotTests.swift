@@ -19,6 +19,11 @@ final class ScreenshotTests: XCTestCase {
         add(a)
     }
 
+    /// Result rows of the visible screen (other tabs stay alive in the background).
+    private func rows(containing text: String) -> XCUIElementQuery {
+        app.buttons.matching(NSPredicate(format: "identifier == 'track.row' AND label CONTAINS[c] %@", text))
+    }
+
     private func clear(_ field: XCUIElement) {
         field.tap()
         let text = (field.value as? String) ?? ""
@@ -35,7 +40,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()
         field.typeText("dawid podsiadło\n")
-        let row = app.buttons["track.row"].firstMatch
+        let row = rows(containing: "Podsiad").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 25), "YouTube Music results")
         sleep(2)
         shot("02-search-youtube")
@@ -59,14 +64,14 @@ final class ScreenshotTests: XCTestCase {
         app.buttons["search.source.radio"].tap()
         clear(field)
         field.typeText("radio fama kielce\n")
-        XCTAssertTrue(app.buttons["track.row"].firstMatch.waitForExistence(timeout: 25), "radio results")
+        XCTAssertTrue(rows(containing: "FAMA").firstMatch.waitForExistence(timeout: 25), "radio results")
         sleep(2)
         shot("06-search-radio")
 
         app.buttons["search.source.musicbrainz"].tap()
         clear(field)
         field.typeText("karma police radiohead\n")
-        XCTAssertTrue(app.buttons["track.row"].firstMatch.waitForExistence(timeout: 30), "MusicBrainz results")
+        XCTAssertTrue(rows(containing: "Radiohead").firstMatch.waitForExistence(timeout: 30), "MusicBrainz results")
         sleep(3)
         shot("07-search-musicbrainz")
 
