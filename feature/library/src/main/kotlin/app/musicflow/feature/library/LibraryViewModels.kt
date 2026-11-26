@@ -44,6 +44,8 @@ sealed interface LibraryEvent {
     data class Added(val result: AddResult, val playlistName: String) : LibraryEvent
     data object Exported : LibraryEvent
     data class OpenPlaylist(val id: Long) : LibraryEvent
+    /** Confirmation for "Play next" ([next]) / "Add to queue". */
+    data class Queued(val title: String, val next: Boolean) : LibraryEvent
 }
 
 @HiltViewModel
@@ -290,8 +292,8 @@ class TrackMenuViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun bind(track: Track) { current.value = track }
-    fun playNext(t: Track) = playback.playNext(t)
-    fun addToQueue(t: Track) = playback.addToQueue(listOf(t))
+    fun playNext(t: Track) { playback.playNext(t); _events.tryEmit(LibraryEvent.Queued(t.title, next = true)) }
+    fun addToQueue(t: Track) { playback.addToQueue(listOf(t)); _events.tryEmit(LibraryEvent.Queued(t.title, next = false)) }
     fun toggleFavorite(t: Track) = viewModelScope.launch { library.toggleFavorite(t) }
     fun startRadio(t: Track) = viewModelScope.launch {
         playback.play(listOf(t), 0)

@@ -88,4 +88,6 @@
     <string name="lib_mb_note">Note</string>
     <string name="lib_mb_discography">Full discography on MusicBrainz</string>
     <string name="lib_settings">Settings</string>
+    <string name="lib_queued_next">Plays next: %1$s</string>
+    <string name="lib_queued">Added to queue: %1$s</string>
 </resources>

@@ -94,4 +94,6 @@
     <string name="lib_mb_note">Uwagi</string>
     <string name="lib_mb_discography">Pełna dyskografia w MusicBrainz</string>
     <string name="lib_settings">Ustawienia</string>
+    <string name="lib_queued_next">Zagra jako następny: %1$s</string>
+    <string name="lib_queued">Dodano do kolejki: %1$s</string>
 </resources>

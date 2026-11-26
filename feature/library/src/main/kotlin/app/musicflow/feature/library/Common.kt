@@ -128,6 +128,7 @@ fun LibraryEventsEffect(events: Flow<LibraryEvent>, onOpenPlaylist: (Long) -> Un
                 is LibraryEvent.Added -> if (e.result.added == 0 && e.result.duplicates.isNotEmpty()) resources.getString(R.string.lib_already_in_playlist, e.playlistName)
                     else resources.getString(R.string.lib_added_to, e.playlistName)
                 LibraryEvent.Exported -> resources.getString(R.string.lib_exported)
+                is LibraryEvent.Queued -> resources.getString(if (e.next) R.string.lib_queued_next else R.string.lib_queued, e.title)
                 is LibraryEvent.OpenPlaylist -> { onOpenPlaylist(e.id); null }
             }
             msg?.let { host.showSnackbar(it) }

@@ -1,5 +1,6 @@
 package app.musicflow.ui
 
+import androidx.compose.ui.Alignment
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -279,7 +280,6 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
             Box(Modifier.fillMaxSize()) {
                 Scaffold(
                     modifier = Modifier.appBackground(),
-                    snackbarHost = { SnackbarHost(snackbar) },
                     contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                     containerColor = androidx.compose.ui.graphics.Color.Transparent,
                     // Transparent container (gradient shows through) → content colour must be explicit.
@@ -334,6 +334,13 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
                 ) {
                     FullPlayer(playerVm, onCollapse = { playerOpen = false })
                 }
+                // Above everything (also the full player), so confirmations such as
+                // "Added to <playlist>" are always visible; clear of the bottom dock.
+                SnackbarHost(
+                    snackbar,
+                    Modifier.align(Alignment.BottomCenter).navigationBarsPadding()
+                        .padding(bottom = if (playerOpen) 24.dp else if (playback.current != null) 150.dp else 90.dp),
+                )
             }
         }
     }
