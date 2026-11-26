@@ -1,0 +1,146 @@
+/* Zakładki */
+"tab.home" = "Start";
+"tab.search" = "Szukaj";
+"tab.library" = "Biblioteka";
+
+/* Akcje */
+"action.add_to_playlist" = "Dodaj do playlisty";
+"action.add_to_queue" = "Dodaj do kolejki";
+"action.play_next" = "Odtwórz jako następny";
+"action.cancel" = "Anuluj";
+"action.clear" = "Wyczyść";
+"action.create" = "Utwórz";
+"action.done" = "Gotowe";
+"action.like" = "Polub";
+"action.unlike" = "Usuń z polubionych";
+"action.more" = "Więcej";
+"action.play_all" = "Odtwórz";
+"action.shuffle" = "Losowo";
+"action.remove_from_playlist" = "Usuń z playlisty";
+"action.retry" = "Spróbuj ponownie";
+"action.save" = "Zapisz";
+"action.share" = "Udostępnij";
+
+/* Potwierdzenia */
+"toast.play_next" = "„%@” zagra jako następny";
+"toast.queued" = "Dodano „%@” do kolejki";
+"toast.added_to" = "Dodano do „%@”";
+"toast.already_in" = "Już jest w „%@”";
+"toast.liked" = "Dodano do polubionych";
+"toast.unliked" = "Usunięto z polubionych";
+"toast.playlist_created" = "Utworzono playlistę „%@”";
+
+"badge.live" = "NA ŻYWO";
+"badge.live_long" = "Na żywo";
+
+/* Błędy */
+"error.offline" = "Brak połączenia z internetem.";
+"error.network" = "Błąd sieci (%@).";
+"error.rate_limited" = "Usługa jest przeciążona. Spróbuj za chwilę.";
+"error.unavailable" = "Ten element jest niedostępny.";
+"error.unavailable_detail" = "Niedostępne: %@";
+"error.restricted" = "YouTube ograniczył dostęp do tego elementu. %@";
+"error.parsing" = "Usługa zmieniła format odpowiedzi (%@). Potrzebna jest aktualizacja MusicFlow.";
+"error.no_match" = "MusicBrainz nie ma dźwięku, a w YouTube Music nie znaleziono tego samego nagrania „%@”.";
+"error.unknown_source" = "Nieznane źródło.";
+"radio.not_listed" = "Tej stacji nie ma już w katalogu Radio Browser.";
+"radio.http_only" = "Ta stacja nadaje tylko przez nieszyfrowane HTTP. Możesz na to zezwolić w Ustawieniach → Radio.";
+"mb.not_found" = "Nie znaleziono w MusicBrainz.";
+
+/* Start */
+"home.greeting_morning" = "Dzień dobry";
+"home.greeting_afternoon" = "Miłego popołudnia";
+"home.greeting_evening" = "Dobry wieczór";
+"home.recent" = "Ostatnio odtwarzane";
+"home.liked" = "Polubione utwory";
+"home.radio" = "Popularne radio";
+"home.radio_region" = "Najczęściej słuchane: %@ · Radio Browser";
+"home.radio_error" = "Nie udało się wczytać stacji";
+"home.radio_empty" = "Nie znaleziono stacji";
+"home.welcome_title" = "Witaj w MusicFlow";
+"home.welcome_text" = "Szukaj w YouTube Music, radiu i katalogu MusicBrainz. To, czego słuchasz i co polubisz, pojawi się tutaj.";
+"home.welcome_action" = "Zacznij szukać";
+
+"genre.pop" = "Pop";
+"genre.rock" = "Rock";
+"genre.dance" = "Dance";
+"genre.jazz" = "Jazz";
+"genre.classical" = "Klasyczna";
+"genre.hiphop" = "Hip-hop";
+"genre.electronic" = "Elektronika";
+"genre.news" = "Informacje";
+
+/* Szukaj */
+"search.placeholder_music" = "Utwory, wykonawcy, albumy";
+"search.placeholder_radio" = "Nazwa stacji, miasto lub gatunek";
+"search.placeholder_mb" = "Tytuł i wykonawca";
+"search.idle_title" = "Czego chcesz posłuchać?";
+"search.idle_music" = "Szukaj utworów i teledysków w YouTube Music.";
+"search.idle_radio" = "Szukaj wśród tysięcy stacji, np. „Radio Fama Kielce” albo „jazz”.";
+"search.idle_mb" = "Szukaj w katalogu MusicBrainz. Utwór zagra z YouTube Music, jeśli znajdzie się dokładnie to samo nagranie.";
+"search.empty" = "Nic nie znaleziono";
+"search.empty_detail" = "Spróbuj innych słów albo innego źródła.";
+"search.error" = "Wyszukiwanie nie powiodło się";
+"search.mb_note" = "MusicBrainz nie ma dźwięku: utwór zagra tylko wtedy, gdy YouTube Music ma to samo nagranie (tytuł, wykonawca i długość).";
+"source.radio" = "Radio";
+"source.musicbrainz_via_youtube" = "MusicBrainz przez YouTube Music";
+
+/* Odtwarzacz */
+"player.now_playing" = "Teraz odtwarzane";
+"player.nothing" = "Nic nie jest odtwarzane";
+"player.close" = "Zamknij odtwarzacz";
+"player.play" = "Odtwórz";
+"player.pause" = "Pauza";
+"player.next" = "Następny";
+"player.previous" = "Poprzedni";
+"player.position" = "Pozycja odtwarzania";
+"player.queue" = "Kolejka";
+"player.queue_empty" = "Kolejka jest pusta";
+"player.shuffle" = "Losowo";
+"player.repeat_off" = "Powtarzanie wyłączone";
+"player.repeat_all" = "Powtarzaj wszystko";
+"player.repeat_one" = "Powtarzaj jeden";
+"player.skipped" = "Pominięto „%@”: %@";
+"player.failed" = "Nie można odtworzyć „%@”: %@";
+
+/* Biblioteka */
+"library.liked" = "Polubione utwory";
+"library.liked_empty" = "Nie masz jeszcze polubionych utworów";
+"library.liked_empty_detail" = "Stuknij ♥ w odtwarzaczu, żeby zapisać utwór tutaj.";
+"library.history" = "Historia";
+"library.history_empty" = "Jeszcze nic nie odtwarzano";
+"library.clear_history" = "Wyczyść historię";
+"library.clear_history_confirm" = "Wyczyścić historię słuchania?";
+"library.playlists" = "Playlisty";
+"library.new_playlist" = "Nowa playlista";
+"library.new_playlist_default" = "Moja playlista";
+"library.playlist_name" = "Nazwa";
+"library.no_playlists" = "Nie masz jeszcze playlist";
+"library.no_playlists_detail" = "Utwórz playlistę, a potem dodawaj utwory przez ⋯ → Dodaj do playlisty.";
+"library.playlist_empty" = "Ta playlista jest pusta";
+"library.playlist_empty_detail" = "Dodawaj utwory przez ⋯ → Dodaj do playlisty.";
+"library.rename" = "Zmień nazwę";
+"library.delete" = "Usuń playlistę";
+"library.delete_confirm" = "Usunąć „%@”?";
+
+/* Ustawienia */
+"settings.title" = "Ustawienia";
+"settings.sources" = "Źródła";
+"settings.youtube_detail" = "Utwory i teledyski (dostęp nieoficjalny).";
+"settings.radio" = "Radio";
+"settings.radio_detail" = "Stacje z otwartego katalogu Radio Browser.";
+"settings.radio_http" = "Nieszyfrowane strumienie radia";
+"settings.radio_http_detail" = "Wiele małych stacji nadaje tylko przez HTTP. Dotyczy wyłącznie strumieni audio.";
+"settings.mb_detail" = "Otwarty katalog muzyki; gra przez dokładne dopasowanie w YouTube Music.";
+"settings.audio" = "Dźwięk";
+"settings.quality" = "Jakość strumienia";
+"settings.quality_detail" = "YouTube Music: AAC 128 kb/s albo 48 kb/s. Obie są stratne.";
+"settings.quality_high" = "Wysoka (AAC 128 kb/s)";
+"settings.quality_saver" = "Oszczędzanie danych (AAC 48 kb/s)";
+"settings.local_only" = "Biblioteka, polubienia i historia są zapisane tylko na tym iPhonie.";
+"settings.about" = "O aplikacji";
+"settings.version" = "Wersja";
+"settings.source_code" = "Kod źródłowy na GitHubie";
+"settings.licence" = "MusicFlow to wolne oprogramowanie na licencji GNU GPL v3 lub nowszej.";
+"settings.privacy" = "Bez reklam, analityki i śledzenia. Zapytania trafiają tylko do usług, z których korzystasz: YouTube, Radio Browser, MusicBrainz i Cover Art Archive.";
+"settings.data_sources" = "Dane: Radio Browser (katalog społeczności), MusicBrainz (CC0) i Cover Art Archive. YouTube Music działa nieoficjalnie i może przestać działać po zmianach po stronie YouTube.";

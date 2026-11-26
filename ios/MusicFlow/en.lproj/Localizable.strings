@@ -1,0 +1,146 @@
+/* Tabs */
+"tab.home" = "Home";
+"tab.search" = "Search";
+"tab.library" = "Library";
+
+/* Actions */
+"action.add_to_playlist" = "Add to playlist";
+"action.add_to_queue" = "Add to queue";
+"action.play_next" = "Play next";
+"action.cancel" = "Cancel";
+"action.clear" = "Clear";
+"action.create" = "Create";
+"action.done" = "Done";
+"action.like" = "Like";
+"action.unlike" = "Remove from liked";
+"action.more" = "More";
+"action.play_all" = "Play";
+"action.shuffle" = "Shuffle";
+"action.remove_from_playlist" = "Remove from playlist";
+"action.retry" = "Try again";
+"action.save" = "Save";
+"action.share" = "Share";
+
+/* Confirmations */
+"toast.play_next" = "“%@” plays next";
+"toast.queued" = "“%@” added to the queue";
+"toast.added_to" = "Added to “%@”";
+"toast.already_in" = "Already in “%@”";
+"toast.liked" = "Added to Liked songs";
+"toast.unliked" = "Removed from Liked songs";
+"toast.playlist_created" = "Playlist “%@” created";
+
+"badge.live" = "LIVE";
+"badge.live_long" = "Live";
+
+/* Errors (only what actually happened) */
+"error.offline" = "No internet connection.";
+"error.network" = "Network error (%@).";
+"error.rate_limited" = "The service is busy. Try again in a moment.";
+"error.unavailable" = "This item is unavailable.";
+"error.unavailable_detail" = "Unavailable: %@";
+"error.restricted" = "YouTube restricted this item. %@";
+"error.parsing" = "The service changed its response format (%@). An update of MusicFlow is needed.";
+"error.no_match" = "MusicBrainz has no audio, and no matching recording of “%@” was found on YouTube Music.";
+"error.unknown_source" = "Unknown source.";
+"radio.not_listed" = "This station is no longer listed in Radio Browser.";
+"radio.http_only" = "This station only streams over unencrypted HTTP. You can allow it in Settings → Radio.";
+"mb.not_found" = "Not found in MusicBrainz.";
+
+/* Home */
+"home.greeting_morning" = "Good morning";
+"home.greeting_afternoon" = "Good afternoon";
+"home.greeting_evening" = "Good evening";
+"home.recent" = "Recently played";
+"home.liked" = "Liked songs";
+"home.radio" = "Popular radio";
+"home.radio_region" = "Most listened in %@ · Radio Browser";
+"home.radio_error" = "Couldn't load stations";
+"home.radio_empty" = "No stations found";
+"home.welcome_title" = "Welcome to MusicFlow";
+"home.welcome_text" = "Search YouTube Music, radio stations and the MusicBrainz catalogue. What you play and like appears here.";
+"home.welcome_action" = "Start searching";
+
+"genre.pop" = "Pop";
+"genre.rock" = "Rock";
+"genre.dance" = "Dance";
+"genre.jazz" = "Jazz";
+"genre.classical" = "Classical";
+"genre.hiphop" = "Hip-hop";
+"genre.electronic" = "Electronic";
+"genre.news" = "News";
+
+/* Search */
+"search.placeholder_music" = "Songs, artists, albums";
+"search.placeholder_radio" = "Station name, city or genre";
+"search.placeholder_mb" = "Song title and artist";
+"search.idle_title" = "What would you like to hear?";
+"search.idle_music" = "Search songs and music videos on YouTube Music.";
+"search.idle_radio" = "Search thousands of stations, e.g. “Radio Fama Kielce” or “jazz”.";
+"search.idle_mb" = "Search the MusicBrainz catalogue. Songs play from YouTube Music when an exact match is found.";
+"search.empty" = "Nothing found";
+"search.empty_detail" = "Try different words or another source.";
+"search.error" = "Search failed";
+"search.mb_note" = "MusicBrainz has no audio: a song plays only when YouTube Music has the same recording (title, artist and length).";
+"source.radio" = "Radio";
+"source.musicbrainz_via_youtube" = "MusicBrainz via YouTube Music";
+
+/* Player */
+"player.now_playing" = "Now playing";
+"player.nothing" = "Nothing is playing";
+"player.close" = "Close player";
+"player.play" = "Play";
+"player.pause" = "Pause";
+"player.next" = "Next";
+"player.previous" = "Previous";
+"player.position" = "Playback position";
+"player.queue" = "Queue";
+"player.queue_empty" = "The queue is empty";
+"player.shuffle" = "Shuffle";
+"player.repeat_off" = "Repeat off";
+"player.repeat_all" = "Repeat all";
+"player.repeat_one" = "Repeat one";
+"player.skipped" = "Skipped “%@”: %@";
+"player.failed" = "Can't play “%@”: %@";
+
+/* Library */
+"library.liked" = "Liked songs";
+"library.liked_empty" = "No liked songs yet";
+"library.liked_empty_detail" = "Tap ♥ in the player to save a song here.";
+"library.history" = "History";
+"library.history_empty" = "Nothing played yet";
+"library.clear_history" = "Clear history";
+"library.clear_history_confirm" = "Clear listening history?";
+"library.playlists" = "Playlists";
+"library.new_playlist" = "New playlist";
+"library.new_playlist_default" = "My playlist";
+"library.playlist_name" = "Name";
+"library.no_playlists" = "No playlists yet";
+"library.no_playlists_detail" = "Create one, then add songs with ⋯ → Add to playlist.";
+"library.playlist_empty" = "This playlist is empty";
+"library.playlist_empty_detail" = "Add songs with ⋯ → Add to playlist.";
+"library.rename" = "Rename";
+"library.delete" = "Delete playlist";
+"library.delete_confirm" = "Delete “%@”?";
+
+/* Settings */
+"settings.title" = "Settings";
+"settings.sources" = "Sources";
+"settings.youtube_detail" = "Songs and music videos (unofficial access).";
+"settings.radio" = "Radio";
+"settings.radio_detail" = "Stations from the open Radio Browser directory.";
+"settings.radio_http" = "Unencrypted radio streams";
+"settings.radio_http_detail" = "Many small stations only stream over HTTP. Only audio streams are allowed.";
+"settings.mb_detail" = "Open music catalogue; plays through an exact YouTube Music match.";
+"settings.audio" = "Audio";
+"settings.quality" = "Streaming quality";
+"settings.quality_detail" = "YouTube Music: AAC 128 kbps or 48 kbps. Both are lossy.";
+"settings.quality_high" = "High (AAC 128 kbps)";
+"settings.quality_saver" = "Data saver (AAC 48 kbps)";
+"settings.local_only" = "Your library, likes and history are stored only on this iPhone.";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.source_code" = "Source code on GitHub";
+"settings.licence" = "MusicFlow is free software under the GNU GPL v3 or later.";
+"settings.privacy" = "No ads, no analytics, no tracking. Requests go only to the services you use: YouTube, Radio Browser, MusicBrainz and Cover Art Archive.";
+"settings.data_sources" = "Data: Radio Browser (community directory), MusicBrainz (CC0) and Cover Art Archive. YouTube Music is accessed unofficially and may stop working when YouTube changes.";

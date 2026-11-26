@@ -1,0 +1,6 @@
+MusicFlow.xcodeproj/
+build/
+DerivedData/
+*.xcresult
+*.ipa
+Payload/

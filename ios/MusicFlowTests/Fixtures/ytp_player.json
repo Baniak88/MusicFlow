@@ -1,0 +1,99 @@
+{
+ "playabilityStatus": {
+  "status": "OK",
+  "playableInEmbed": true
+ },
+ "videoDetails": {
+  "videoId": "oCZugu1ea18",
+  "title": "Dawid Podsiadło, Daria Zawiałow, Vito Bambino - I Ciebie też bardzo (Chorzów, 23.06.2024)",
+  "lengthSeconds": "291",
+  "author": "Dawid Podsiadło",
+  "channelId": "UCPGjLde9JT7jPF0OizNESRQ",
+  "thumbnail": {
+   "thumbnails": [
+    {
+     "url": "https://i.ytimg.com/vi/oCZugu1ea18/mqdefault.jpg",
+     "width": 320,
+     "height": 180
+    },
+    {
+     "url": "https://i.ytimg.com/vi/oCZugu1ea18/hq720.jpg",
+     "width": 1280,
+     "height": 720
+    }
+   ]
+  }
+ },
+ "streamingData": {
+  "expiresInSeconds": "21540",
+  "hlsManifestUrl": "https://manifest.googlevideo.com/api/manifest/hls_variant/x/index.m3u8",
+  "adaptiveFormats": [
+   {
+    "itag": 139,
+    "url": "https://rr1---sn-test.googlevideo.com/videoplayback?itag=139&expire=1795719966",
+    "mimeType": "audio/mp4; codecs=\"mp4a.40.5\"",
+    "bitrate": 50113,
+    "averageBitrate": 48816,
+    "contentLength": "1774235",
+    "approxDurationMs": "290760",
+    "audioSampleRate": "22050",
+    "audioChannels": 2,
+    "loudnessDb": -3.040001
+   },
+   {
+    "itag": 140,
+    "url": "https://rr1---sn-test.googlevideo.com/videoplayback?itag=140&expire=1795719966",
+    "mimeType": "audio/mp4; codecs=\"mp4a.40.2\"",
+    "bitrate": 130651,
+    "averageBitrate": 129503,
+    "contentLength": "4705682",
+    "approxDurationMs": "290690",
+    "audioSampleRate": "44100",
+    "audioChannels": 2,
+    "loudnessDb": -3.040001
+   },
+   {
+    "itag": 249,
+    "url": "https://rr1---sn-test.googlevideo.com/videoplayback?itag=249&expire=1795719966",
+    "mimeType": "audio/webm; codecs=\"opus\"",
+    "bitrate": 51566,
+    "averageBitrate": 48139,
+    "contentLength": "1749029",
+    "approxDurationMs": "290661",
+    "audioSampleRate": "48000",
+    "audioChannels": 2,
+    "loudnessDb": -3.0499992
+   },
+   {
+    "itag": 250,
+    "url": "https://rr1---sn-test.googlevideo.com/videoplayback?itag=250&expire=1795719966",
+    "mimeType": "audio/webm; codecs=\"opus\"",
+    "bitrate": 67823,
+    "averageBitrate": 63461,
+    "contentLength": "2305721",
+    "approxDurationMs": "290661",
+    "audioSampleRate": "48000",
+    "audioChannels": 2,
+    "loudnessDb": -3.0499992
+   },
+   {
+    "itag": 251,
+    "url": "https://rr1---sn-test.googlevideo.com/videoplayback?itag=251&expire=1795719966",
+    "mimeType": "audio/webm; codecs=\"opus\"",
+    "bitrate": 131906,
+    "averageBitrate": 125191,
+    "contentLength": "4548518",
+    "approxDurationMs": "290661",
+    "audioSampleRate": "48000",
+    "audioChannels": 2,
+    "loudnessDb": -3.0499992
+   },
+   {
+    "itag": 137,
+    "url": "https://example.invalid/video",
+    "mimeType": "video/mp4; codecs=\"avc1\"",
+    "bitrate": 4000000
+   }
+  ]
+ }
+}

@@ -1,0 +1,24 @@
+{"contents":{"tabbedSearchResultsRenderer":{"tabs":[{"tabRenderer":{"content":{"sectionListRenderer":{"contents":[
+{"musicShelfRenderer":{"title":{"runs":[{"text":"Songs"}]},"contents":[
+{"musicResponsiveListItemRenderer":{
+ "thumbnail":{"musicThumbnailRenderer":{"thumbnail":{"thumbnails":[{"url":"https://lh3.googleusercontent.com/abc=w60-h60-l90-rj","width":60,"height":60},{"url":"https://lh3.googleusercontent.com/abc=w120-h120-l90-rj","width":120,"height":120}]}}},
+ "flexColumns":[
+  {"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Małomiasteczkowy","navigationEndpoint":{"watchEndpoint":{"videoId":"song00001A"}}}]}}},
+  {"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[
+    {"text":"Dawid Podsiadło","navigationEndpoint":{"browseEndpoint":{"browseId":"UChnm9qgzNbPXxzRQYU5P3Dg","browseEndpointContextSupportedConfigs":{"browseEndpointContextMusicConfig":{"pageType":"MUSIC_PAGE_TYPE_ARTIST"}}}}},
+    {"text":" • "},
+    {"text":"Małomiasteczkowy","navigationEndpoint":{"browseEndpoint":{"browseId":"MPREb_album01","browseEndpointContextSupportedConfigs":{"browseEndpointContextMusicConfig":{"pageType":"MUSIC_PAGE_TYPE_ALBUM"}}}}},
+    {"text":" • "},
+    {"text":"3:45"}]}}}],
+ "playlistItemData":{"videoId":"song00001A"}}},
+{"musicResponsiveListItemRenderer":{
+ "thumbnail":{"musicThumbnailRenderer":{"thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/song00002B/hqdefault.jpg","width":400,"height":225}]}}},
+ "flexColumns":[
+  {"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Nieznany wykonawca song"}]}}},
+  {"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Utwór"},{"text":" • "},{"text":"Jan Kowalski"},{"text":" • "},{"text":"1:02:03"}]}}}],
+ "overlay":{"musicItemThumbnailOverlayRenderer":{"content":{"musicPlayButtonRenderer":{"playNavigationEndpoint":{"watchEndpoint":{"videoId":"song00002B"}}}}}}}},
+{"musicResponsiveListItemRenderer":{
+ "flexColumns":[
+  {"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Duplicate"}]}}}],
+ "playlistItemData":{"videoId":"song00001A"}}}
+]}}]}}}}]}}}

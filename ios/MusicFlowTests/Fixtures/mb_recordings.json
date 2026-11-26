@@ -1,0 +1,13 @@
+{"created":"2026-11-26T00:00:00.000Z","count":3,"offset":0,"recordings":[
+ {"id":"rec-cover","score":100,"title":"Karma Police","length":250000,"video":false,
+  "artist-credit":[{"name":"Some Cover Band","artist":{"id":"a-cover","name":"Some Cover Band"}}],
+  "releases":[{"id":"rel-c","title":"Covers","status":"Official","date":"2010","release-group":{"id":"rg-c","title":"Covers","primary-type":"Album","secondary-types":["Compilation"]}}]},
+ {"id":"rec-orig","score":95,"title":"Karma Police","length":264066,"video":false,
+  "artist-credit":[{"name":"Radiohead","joinphrase":"","artist":{"id":"a-rh","name":"Radiohead"}}],
+  "releases":[
+   {"id":"rel-2","title":"OK Computer","status":"Official","date":"1997-06-16","release-group":{"id":"rg-okc","title":"OK Computer","primary-type":"Album","secondary-types":[]}},
+   {"id":"rel-3","title":"Karma Police","status":"Official","date":"1997-08-25","release-group":{"id":"rg-kp","title":"Karma Police","primary-type":"Single","secondary-types":[]}},
+   {"id":"rel-1","title":"OK Computer","status":"Bootleg","date":"1997-05-01","release-group":{"id":"rg-okc","title":"OK Computer","primary-type":"Album","secondary-types":[]}}]},
+ {"id":"rec-video","score":99,"title":"Karma Police","length":260000,"video":true,
+  "artist-credit":[{"name":"Radiohead","artist":{"id":"a-rh","name":"Radiohead"}}],"releases":[]}
+]}

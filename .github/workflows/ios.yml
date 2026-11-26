@@ -1,0 +1,189 @@
+name: iOS
+
+on:
+  push:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Publish a pre-release, e.g. ios-v0.1.0-beta.1 (empty = build and test only)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-${{ github.ref }}-${{ github.event.inputs.version }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, test, package
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tools
+        run: |
+          brew install xcodegen
+          xcodebuild -version
+          cd ios && xcodegen generate
+
+      - name: Pick a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)["devices"]
+          ios = sorted((k for k in d if "iOS" in k), key=lambda k: [int(x) for x in k.split("iOS-")[-1].split("-")], reverse=True)
+          for k in ios:
+              for dev in d[k]:
+                  if dev["name"].startswith("iPhone") and "Pro" in dev["name"]:
+                      print(dev["udid"]); sys.exit()
+          for k in ios:
+              for dev in d[k]:
+                  if dev["name"].startswith("iPhone"):
+                      print(dev["udid"]); sys.exit()
+          ')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl list devices | grep "$UDID"
+
+      - name: Unit tests
+        working-directory: ios
+        run: |
+          if ! xcodebuild test -project MusicFlow.xcodeproj -scheme MusicFlow \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:MusicFlowTests -resultBundlePath unit.xcresult \
+            CODE_SIGNING_ALLOWED=NO > unit.log 2>&1; then
+            grep -E "error:|warning: unre|failed|XCTAssert" unit.log | head -n 150
+            tail -n 40 unit.log
+            exit 1
+          fi
+          grep -E "Test Case .* (passed|failed|skipped)|Executed" unit.log | tail -n 80
+
+      - name: Version
+        id: v
+        run: |
+          TAG="${{ github.event.inputs.version }}"
+          if [ -n "$TAG" ]; then
+            if ! [[ "$TAG" =~ ^ios-v([0-9]+\.[0-9]+\.[0-9]+)(-beta\.[0-9]+)?$ ]]; then
+              echo "::error::Tag must look like ios-v0.1.0-beta.1"; exit 1
+            fi
+            echo "marketing=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "name=${TAG#ios-v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "marketing=0.1.0" >> "$GITHUB_OUTPUT"
+            echo "name=0.1.0-dev.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Unsigned: AltStore / SideStore / Sideloadly sign it with the tester's own Apple ID.
+      - name: Build unsigned IPA
+        working-directory: ios
+        run: |
+          if ! xcodebuild build -project MusicFlow.xcodeproj -scheme MusicFlow -configuration Release \
+            -sdk iphoneos -destination "generic/platform=iOS" -derivedDataPath build \
+            MARKETING_VERSION=${{ steps.v.outputs.marketing }} CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" > build.log 2>&1; then
+            grep -E "error:" build.log | head -n 100; tail -n 30 build.log; exit 1
+          fi
+          grep -cE "warning:" build.log || true
+          rm -rf Payload && mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/MusicFlow.app Payload/
+          IPA="MusicFlow-iOS-${{ steps.v.outputs.name }}.ipa"
+          zip -qry "$IPA" Payload
+          shasum -a 256 "$IPA" > SHA256SUMS-iOS.txt
+          cat SHA256SUMS-iOS.txt
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Payload/MusicFlow.app/Info.plist
+          echo "IPA=$IPA" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MusicFlow-iOS-${{ steps.v.outputs.name }}
+          path: |
+            ios/${{ env.IPA }}
+            ios/SHA256SUMS-iOS.txt
+
+      - name: Publish pre-release
+        if: github.event.inputs.version != ''
+        working-directory: ios
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.version }}
+        run: |
+          cat > notes.md <<EOF
+          **MusicFlow for iPhone — test build ${TAG#ios-v}** (iOS 17 or later).
+
+          Unsigned IPA: install it with AltStore, SideStore or Sideloadly using your own Apple ID.
+          Step-by-step guide (Polish): docs/IPHONE.md in the repository.
+
+          Built from ${GITHUB_SHA::7}. SHA-256 in SHA256SUMS-iOS.txt.
+          EOF
+          gh release create "$TAG" --repo "${{ github.repository }}" --target "$GITHUB_SHA" \
+            --title "MusicFlow iOS ${TAG#ios-v}" --notes-file notes.md --prerelease \
+            "$IPA" SHA256SUMS-iOS.txt
+
+  screenshots:
+    name: UI test + screenshots (live network)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    # Real network (YouTube, Radio Browser, MusicBrainz): reported, but does not block the build.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          brew install xcodegen
+          cd ios && xcodegen generate
+      - name: Pick a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)["devices"]
+          ios = sorted((k for k in d if "iOS" in k), key=lambda k: [int(x) for x in k.split("iOS-")[-1].split("-")], reverse=True)
+          for k in ios:
+              for dev in d[k]:
+                  if dev["name"].startswith("iPhone") and "Pro" in dev["name"]:
+                      print(dev["udid"]); sys.exit()
+          ')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+      - name: Live provider tests
+        continue-on-error: true
+        working-directory: ios
+        env:
+          TEST_RUNNER_LIVE_TESTS: "1"
+        run: |
+          rc=0
+          xcodebuild test -project MusicFlow.xcodeproj -scheme MusicFlow \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:MusicFlowTests/LiveTests CODE_SIGNING_ALLOWED=NO > live.log 2>&1 || rc=$?
+          grep -E "LIVE|Test Case|error:|XCTAssert" live.log | tail -n 80
+          exit $rc
+      - name: UI test
+        working-directory: ios
+        run: |
+          rc=0
+          xcodebuild test -project MusicFlow.xcodeproj -scheme MusicFlow \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:MusicFlowUITests -resultBundlePath ui.xcresult \
+            CODE_SIGNING_ALLOWED=NO > ui.log 2>&1 || rc=$?
+          grep -E "Test Case|error:|XCTAssert|failed" ui.log | tail -n 60
+          exit $rc
+      - name: Export screenshots
+        if: always()
+        working-directory: ios
+        run: |
+          mkdir -p shots
+          if [ -d ui.xcresult ]; then
+            xcrun xcresulttool export attachments --path ui.xcresult --output-path shots || true
+          fi
+          ls -la shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshots
+          path: ios/shots

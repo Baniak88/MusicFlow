@@ -1,0 +1,7 @@
+[
+ {"stationuuid":"u-fama-128","name":"Radio FAMA","url":"http://stream.fama.pl/fama128.mp3","url_resolved":"https://stream.fama.pl/fama128.mp3","favicon":"https://fama.pl/icon.png","tags":"pop,local","country":"Poland","state":"Kielce","countrycode":"PL","codec":"MP3","bitrate":128,"hls":0,"lastcheckok":1,"clickcount":40},
+ {"stationuuid":"u-fama-320","name":"Radio Fama","url":"https://stream.fama.pl/fama320.mp3","url_resolved":"https://stream.fama.pl/fama320.mp3","favicon":"http://fama.pl/icon.png","tags":"pop","country":"Poland","state":"Kielce","countrycode":"PL","codec":"MP3","bitrate":"320","hls":"0","lastcheckok":1,"clickcount":10},
+ {"stationuuid":"u-dance","name":"Danceradio","url":"https://icecast.danceradio.cz/aac","url_resolved":"","favicon":"","tags":"dance,electronic","country":"Czechia","state":"","countrycode":"CZ","codec":"AAC+","bitrate":64,"hls":0,"lastcheckok":1,"clickcount":5},
+ {"stationuuid":"u-http","name":"Old Radio","url":"http://old.example/stream","url_resolved":"http://old.example/stream","tags":"","country":"Poland","countrycode":"PL","codec":"UNKNOWN","bitrate":0,"hls":0,"lastcheckok":0,"clickcount":900},
+ {"stationuuid":"u-noname","name":"  ","url":"https://x.example/s","url_resolved":"https://x.example/s"}
+]
