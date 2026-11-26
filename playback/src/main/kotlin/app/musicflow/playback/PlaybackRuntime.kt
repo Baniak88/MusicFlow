@@ -42,6 +42,9 @@ data class EngineStatus(
  */
 @Singleton
 class PlaybackRuntime @Inject constructor() {
+    /** Set by the playback service: resolves (and caches) a track's stream ahead of playback. */
+    @Volatile var prefetcher: (suspend (app.musicflow.core.model.Track) -> Unit)? = null
+
     private val _status = MutableStateFlow(EngineStatus())
     val status: StateFlow<EngineStatus> = _status.asStateFlow()
 

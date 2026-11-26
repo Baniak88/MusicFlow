@@ -41,6 +41,7 @@ class MediaControllerEngine @Inject constructor(
     @ApplicationContext private val context: Context,
     @ApplicationScope private val scope: CoroutineScope,
     private val library: LibraryRepository,
+    private val runtime: app.musicflow.playback.PlaybackRuntime,
 ) : PlaybackEngine {
 
     private val _state = MutableStateFlow(PlaybackState())
@@ -154,6 +155,16 @@ class MediaControllerEngine @Inject constructor(
         c.addMediaItem(c.currentMediaItemIndex + 1, MediaItems.toMediaItem(track))
     }
 
+    override fun prefetch(tracks: List<Track>) {
+        val todo = tracks.asSequence().filter { it.id.providerId !in NO_PREFETCH }.distinctBy { it.id }.take(PREFETCH_MAX).toList()
+        if (todo.isEmpty()) return
+        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val resolve = runtime.prefetcher ?: return@launch // service not running yet: nothing to warm
+            // One at a time: gentle on the providers, and the first result is ready soonest.
+            todo.forEach { t -> runCatching { resolve(t) } }
+        }
+    }
+
     override fun addToQueue(tracks: List<Track>) = withController { c ->
         val wasEmpty = c.mediaItemCount == 0
         c.addMediaItems(items(tracks))
@@ -193,4 +204,9 @@ class MediaControllerEngine @Inject constructor(
     companion object {
         fun repeatLabel(r: RepeatMode) = r.name
     }
+
 }
+
+/** Local files need no resolution; live radio and direct links must not be opened early. */
+private val NO_PREFETCH = setOf("local", "radio", "url")
+private const val PREFETCH_MAX = 3

@@ -3,6 +3,26 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.15] - 2026-11-26
+
+### Changed
+- **New "glass" look** (tester's reference design): dark backdrop with soft ember / magenta / violet /
+  ocean glows; round glass buttons; Home with menu and search buttons and rows with gradient play
+  buttons; mini player with round artwork, like and gradient play button; full player with round
+  artwork in a glass ring, audio-style (decorative) progress bar, gradient play button, previous/next
+  glass buttons, add-to-playlist and like next to the artist, and a curved **Lyrics** tab that opens
+  a full-screen lyrics panel over the blurred artwork (current line highlighted, tap a line to seek).
+- **New app icon** matching the design (glass ring with a violet→magenta play button over the glows);
+  themed (monochrome) icon included.
+- **Faster start of playback**: the first songs of search results, opened albums/playlists and Home
+  quick picks are resolved in the background (max. 3, never radio or local files), so tapping them
+  starts almost instantly; playback now starts after 1 s of buffer (was 1.5 s).
+
+### Fixed
+- **"Adding to a playlist / to the queue doesn't work"**: it worked, but the confirmation was hidden
+  under the open player, and *Play next* / *Add to queue* showed none. Confirmations now appear above
+  everything, also for the queue. Covered by UI tests.
+
 ## [1.0.0-beta.14] - 2026-11-26
 
 ### Fixed

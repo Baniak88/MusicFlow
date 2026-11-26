@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 /** MusicFlow brand palette. Default experience is the AMOLED-friendly dark theme. */
 object MfColors {
     // Plum night palette: deep purple surfaces, vivid orchid accent.
-    val Background = Color(0xFF15101B)
+    val Background = Color(0xFF0D0B12)
     val BackgroundSecondary = Color(0xFF1D1625)
     val SurfaceElevated = Color(0xFF281F33)
     val SurfaceHighest = Color(0xFF342942)
@@ -19,7 +19,7 @@ object MfColors {
     /** Top of the app background gradient. */
     val BackgroundGlow = Color(0xFF2E2140)
     /** Bottom dock (mini player + navigation). */
-    val Dock = Color(0xFF1A1420)
+    val Dock = Color(0xF214111B)
     val Error = Color(0xFFFF6B6B)
     val Success = Color(0xFF34D399)
     val Warning = Color(0xFFFBBF24)

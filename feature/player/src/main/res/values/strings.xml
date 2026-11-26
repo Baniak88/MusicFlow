@@ -5,7 +5,7 @@
     <string name="player_next">Next track</string>
     <string name="player_previous">Previous track</string>
     <string name="player_collapse">Minimise player</string>
-    <string name="player_now_playing">NOW PLAYING</string>
+    <string name="player_now_playing">Now playing</string>
     <string name="player_more">More options</string>
     <string name="player_shuffle">Shuffle</string>
     <string name="player_repeat_off">Repeat off</string>

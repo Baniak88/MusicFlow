@@ -89,7 +89,8 @@ fun GlassBackdrop(modifier: Modifier = Modifier, artworkUrl: String? = null, dim
             )
         }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = dim * 0.6f), Color.Black.copy(alpha = dim)))))
-        content()
+        // Always dark glass: text and icons default to white, whatever the app theme.
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Color.White) { content() }
     }
 }
 

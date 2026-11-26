@@ -36,6 +36,12 @@ interface PlaybackEngine {
     val progress: Flow<Progress>
 
     fun play(tracks: List<Track>, startIndex: Int = 0, shuffle: Boolean = false, source: String? = null)
+
+    /**
+     * Prepares the streams of tracks the user is likely to play next (top search results, first
+     * songs of a list) in the background, so tapping them starts almost instantly.
+     */
+    fun prefetch(tracks: List<Track>) {}
     fun playNext(track: Track)
     fun addToQueue(tracks: List<Track>)
     fun togglePlayPause()

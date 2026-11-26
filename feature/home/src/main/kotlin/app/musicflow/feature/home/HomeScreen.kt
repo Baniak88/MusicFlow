@@ -1,5 +1,6 @@
 package app.musicflow.feature.home
 
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SystemUpdate
@@ -104,7 +105,7 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
 
     PullToRefreshBox(isRefreshing = refreshing, onRefresh = vm::refresh, modifier = Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize(), contentPadding = contentPadding) {
-            item(key = "header") { Header(vm.greeting, onSettings = nav::openSettings) }
+            item(key = "header") { Header(vm.greeting, onSettings = nav::openSettings, onSearch = { nav.openSearch() }) }
             item(key = "chips") {
                 LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(HomeFilter.entries) { f -> PillChip(stringResource(f.label), filter == f, { filter = f }) }
@@ -255,7 +256,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.onlineSections(
 }
 
 @Composable
-private fun Header(greeting: Greeting, onSettings: () -> Unit) {
+private fun Header(greeting: Greeting, onSettings: () -> Unit, onSearch: () -> Unit) {
     val text = stringResource(
         when (greeting) {
             Greeting.MORNING -> R.string.home_good_morning
@@ -264,17 +265,14 @@ private fun Header(greeting: Greeting, onSettings: () -> Unit) {
             Greeting.NIGHT -> R.string.home_good_night
         },
     )
-    Row(
-        Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 16.dp, top = 22.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        Box(
-            Modifier.size(44.dp).clip(androidx.compose.foundation.shape.CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .clickable(onClickLabel = stringResource(R.string.home_settings), onClick = onSettings),
-            contentAlignment = Alignment.Center,
-        ) { Icon(Icons.Rounded.Person, stringResource(R.string.home_settings), tint = MaterialTheme.colorScheme.onSurface) }
+    // Glass buttons: menu (settings) on the left, search on the right; greeting below.
+    Column(Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 4.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            app.musicflow.core.designsystem.component.GlassIconButton(Icons.Rounded.GridView, stringResource(R.string.home_settings), onSettings)
+            Spacer(Modifier.weight(1f))
+            app.musicflow.core.designsystem.component.GlassIconButton(Icons.Rounded.Search, stringResource(R.string.home_search), onSearch)
+        }
+        Text(text, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 18.dp))
     }
 }
 
@@ -355,17 +353,18 @@ private fun TrackRowsPager(tracks: List<Track>, currentId: app.musicflow.core.mo
                     Modifier.fillMaxWidth().clickable { onPlay(p * 3 + j) }.padding(horizontal = 16.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Artwork(t.artworkUrl, Modifier.size(72.dp), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                    Artwork(t.artworkUrl, Modifier.size(60.dp), shape = androidx.compose.foundation.shape.CircleShape)
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text(t.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                             color = if (t.id == currentId) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                         Text(t.artistLine, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
+                    IconButton(onClick = { onMore(t) }) { Icon(Icons.Rounded.MoreHoriz, stringResource(R.string.home_more), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                     if (t.id == currentId) {
-                        EqualizerBars(isPlaying, Modifier.padding(horizontal = 10.dp))
+                        Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) { EqualizerBars(isPlaying) }
                     } else {
-                        IconButton(onClick = { onMore(t) }) { Icon(Icons.Rounded.MoreHoriz, stringResource(R.string.home_more), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        app.musicflow.core.designsystem.component.GradientPlayButton(Icons.Rounded.PlayArrow, stringResource(R.string.home_play), { onPlay(p * 3 + j) }, size = 40.dp, ring = false)
                     }
                 }
             }

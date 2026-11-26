@@ -1,5 +1,18 @@
 ## MusicFlow — wersja testowa / test build
 
+**Nowości w beta.15:**
+- **Nowy wygląd „szkło”** jak na przesłanym projekcie: ciemne tło z kolorowymi poświatami,
+  szklane okrągłe przyciski, odtwarzacz z okrągłą okładką w szklanym pierścieniu, pasek postępu
+  w formie fali, fioletowy przycisk odtwarzania, zakładka „Tekst” na dole otwierająca tekst
+  piosenki na całym ekranie (aktualna linia wyróżniona, stuknięcie linii przewija utwór).
+- **Nowa ikona aplikacji** pasująca do wyglądu.
+- **Szybsze ładowanie utworów:** pierwsze utwory z wyników wyszukiwania, otwartych albumów i
+  playlist oraz „Szybkie propozycje” są przygotowywane w tle, więc po stuknięciu startują niemal
+  od razu.
+- **Dodawanie do playlisty i kolejki:** działało, ale potwierdzenie było schowane pod otwartym
+  odtwarzaczem, a „Dodaj do kolejki” nie pokazywało żadnego — teraz zawsze widać komunikat.
+  W odtwarzaczu obok wykonawcy jest też przycisk „Dodaj do playlisty”.
+
 **Poprawki w beta.14:**
 - Wyszukiwanie: zniknął błąd „Wystąpił nieoczekiwany błąd (… was cancelled)” przy wpisywaniu
   kolejnego zapytania.

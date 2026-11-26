@@ -131,7 +131,7 @@ private fun BottomDock(showMini: Boolean, mini: @Composable () -> Unit, selected
         color = app.musicflow.core.designsystem.theme.LocalMfExtras.current.dock,
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        shadowElevation = 12.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, app.musicflow.core.designsystem.component.Glass.Stroke),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.navigationBarsPadding()) {
@@ -324,7 +324,7 @@ fun MusicFlowShell(events: Flow<ShellEvent>) {
                 Box(
                     Modifier.fillMaxWidth()
                         .windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars)
-                        .background(app.musicflow.core.designsystem.theme.LocalMfExtras.current.gradientTop.copy(alpha = 0.94f))
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.82f))
                         .testTag("status_bar_scrim"),
                 )
                 AnimatedVisibility(

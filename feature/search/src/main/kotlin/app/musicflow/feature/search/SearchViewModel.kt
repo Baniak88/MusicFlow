@@ -75,6 +75,7 @@ class SearchViewModel @Inject constructor(
             repo.recordQuery(q)
             val result = app.musicflow.core.common.runCatchingCancellable { repo.search(q, filter, sourceId = source) }
             coroutineContext.ensureActive() // a newer search replaced this one: never show stale results
+            result.getOrNull()?.items?.filterIsInstance<MediaItemSummary.TrackItem>()?.map { it.track }?.let(playback::prefetch)
             _results.value = result.fold(
                 onSuccess = { ResultsState(q, filter, SearchRepository.dedupe(emptyList(), it.items), nextPageToken = it.nextPageToken, correctedQuery = it.correctedQuery, source = source) },
                 onFailure = { ResultsState(q, filter, error = it, source = source) },

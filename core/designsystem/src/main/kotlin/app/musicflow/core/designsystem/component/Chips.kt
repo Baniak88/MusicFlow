@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -47,10 +48,23 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
     }
 }
 
-/** App background: a soft plum glow at the top fading into the base colour. */
+/**
+ * App background. Dark: the "glass" backdrop — near-black with soft ember, magenta, violet and
+ * ocean glows. Light: a soft tint at the top fading into the base colour.
+ */
 @Composable
 fun Modifier.appBackground(): Modifier {
-    val top = LocalMfExtras.current.gradientTop
+    val extras = LocalMfExtras.current
     val base = MaterialTheme.colorScheme.background
-    return this.background(Brush.verticalGradient(0f to top, 0.45f to base, 1f to base))
+    if (!extras.isDark) return this.background(Brush.verticalGradient(0f to extras.gradientTop, 0.45f to base, 1f to base))
+    return this.background(base).drawBehind {
+        fun glow(color: androidx.compose.ui.graphics.Color, cx: Float, cy: Float, r: Float, a: Float) {
+            val c = androidx.compose.ui.geometry.Offset(size.width * cx, size.height * cy)
+            drawCircle(Brush.radialGradient(listOf(color.copy(alpha = a), androidx.compose.ui.graphics.Color.Transparent), center = c, radius = size.maxDimension * r), radius = size.maxDimension * r, center = c)
+        }
+        glow(Glass.Ember, 0.0f, 0.12f, 0.38f, 0.32f)
+        glow(Glass.Magenta, 1.0f, 0.06f, 0.36f, 0.30f)
+        glow(Glass.Violet, 0.75f, 0.55f, 0.50f, 0.26f)
+        glow(Glass.Ocean, 0.05f, 0.85f, 0.42f, 0.28f)
+    }
 }

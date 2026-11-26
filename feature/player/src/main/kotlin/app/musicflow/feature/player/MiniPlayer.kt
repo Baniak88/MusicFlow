@@ -1,5 +1,7 @@
 package app.musicflow.feature.player
 
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -70,7 +72,7 @@ fun MiniPlayer(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier = M
             .padding(start = 16.dp, end = 8.dp, top = 4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Artwork(track.artworkUrl, Modifier.size(46.dp), shape = RoundedCornerShape(10.dp))
+            Artwork(track.artworkUrl, Modifier.size(48.dp), shape = androidx.compose.foundation.shape.CircleShape)
             Spacer(Modifier.width(12.dp))
             AnimatedContent(track, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "mini", modifier = Modifier.weight(1f)) { t ->
                 Column {
@@ -81,15 +83,21 @@ fun MiniPlayer(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier = M
             outputIcon(output.kind)?.let { icon ->
                 Icon(icon, outputLabel(output), Modifier.padding(horizontal = 6.dp).size(22.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            val fav by vm.isFavorite.collectAsStateWithLifecycle()
+            IconButton(onClick = { vm.toggleFavorite() }) {
+                Icon(
+                    if (fav) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                    stringResource(if (fav) R.string.player_unlike else R.string.player_like),
+                    Modifier.size(22.dp), tint = if (fav) app.musicflow.core.designsystem.component.Glass.Orchid else MaterialTheme.colorScheme.onSurface,
+                )
+            }
             Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                if (state.isBuffering && state.playWhenReady) CircularProgressIndicator(Modifier.size(34.dp), strokeWidth = 2.dp)
-                IconButton(onClick = vm::togglePlay) {
-                    Icon(
-                        if (state.playWhenReady) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        stringResource(if (state.playWhenReady) R.string.player_pause else R.string.player_play),
-                        Modifier.size(30.dp),
-                    )
-                }
+                app.musicflow.core.designsystem.component.GradientPlayButton(
+                    if (state.playWhenReady) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    stringResource(if (state.playWhenReady) R.string.player_pause else R.string.player_play),
+                    vm::togglePlay, size = 44.dp, ring = false,
+                )
+                if (state.isBuffering && state.playWhenReady) CircularProgressIndicator(Modifier.size(46.dp), strokeWidth = 2.dp, color = androidx.compose.ui.graphics.Color.White)
             }
             IconButton(onClick = vm::next, enabled = state.hasNext) {
                 Icon(Icons.Rounded.SkipNext, stringResource(R.string.player_next), Modifier.size(26.dp))

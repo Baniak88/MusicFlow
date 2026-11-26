@@ -44,4 +44,5 @@
     <string name="home_update_installing">Installing…</string>
     <string name="home_update_failed">Not installed: %1$s</string>
     <string name="home_update_browser">Browser</string>
+    <string name="home_play">Play</string>
 </resources>

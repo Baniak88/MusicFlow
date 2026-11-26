@@ -128,6 +128,7 @@ class MusicService : MediaLibraryService() {
             diagnostics = diagnostics,
             alternative = ::localAlternative,
         )
+        runtime.prefetcher = { t -> streams.resolve(t.id, t) }
 
         player = buildPlayer(settings)
         player.addListener(playerListener)
@@ -228,7 +229,7 @@ class MusicService : MediaLibraryService() {
         val errorPolicy = StreamErrorPolicy(streams, diagnostics) { connectivity.current().isConnected }
         mediaSourceFactory = DefaultMediaSourceFactory(dataSources).setLoadErrorHandlingPolicy(errorPolicy)
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(s.bufferProfile.minBufferMs, s.bufferProfile.maxBufferMs, 1_500, 3_000)
+            .setBufferDurationsMs(s.bufferProfile.minBufferMs, s.bufferProfile.maxBufferMs, 1_000, 2_500)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
         val renderers = DefaultRenderersFactory(this).setEnableAudioFloatOutput(false)
@@ -584,6 +585,7 @@ class MusicService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        runtime.prefetcher = null
         finishListening(userSkipped = false, now = System.currentTimeMillis())
         persistPosition()
         crossfadeJob?.cancel()

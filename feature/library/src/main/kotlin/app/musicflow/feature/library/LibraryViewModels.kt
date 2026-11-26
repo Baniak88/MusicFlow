@@ -201,6 +201,7 @@ class CollectionViewModel @Inject constructor(
     fun load() = viewModelScope.launch {
         _state.value = LoadState.Loading
         _state.value = app.musicflow.core.common.runCatchingCancellable { catalog.collection(id) }.fold({ LoadState.Loaded(it) }, { LoadState.Failed(it) })
+        (_state.value as? LoadState.Loaded)?.value?.tracks?.let(playback::prefetch) // first songs start instantly
     }
 
     fun loadMore() {
