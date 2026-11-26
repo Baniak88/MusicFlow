@@ -90,10 +90,12 @@ fun SearchScreen(contentPadding: PaddingValues, initialQuery: String? = null, vm
             trailingIcon = { if (input.isNotEmpty()) IconButton(onClick = vm::clear) { Icon(Icons.Rounded.Close, stringResource(R.string.search_clear)) } },
             singleLine = true,
             shape = CircleShape,
+            // Frosted glass field: translucent fill, hairline border, accent border when focused.
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                unfocusedContainerColor = app.musicflow.core.designsystem.component.Glass.FillStrong,
+                focusedContainerColor = app.musicflow.core.designsystem.component.Glass.FillStrong,
+                unfocusedBorderColor = app.musicflow.core.designsystem.component.Glass.Stroke,
+                focusedBorderColor = app.musicflow.core.designsystem.component.Glass.Orchid,
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); vm.submit() }),

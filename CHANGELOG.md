@@ -3,6 +3,17 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.16] - 2026-11-26
+
+### Changed
+- Player: the *Lyrics* tab at the bottom is gone (lyrics are in the ⋯ menu); the bottom row keeps
+  shuffle and repeat.
+- Explore and Library in the glass style: frosted category tiles with a coloured glow and icon;
+  Library shortcuts as glass tiles with gradient icons; glass header buttons.
+- Consistent accent everywhere: chips are a violet→magenta gradient when selected and glass
+  otherwise; the dark theme always uses the violet glass palette (wallpaper colours now apply to the
+  light theme only); glass search field; violet tonal buttons; a more opaque bottom dock.
+
 ## [1.0.0-beta.15] - 2026-11-26
 
 ### Changed

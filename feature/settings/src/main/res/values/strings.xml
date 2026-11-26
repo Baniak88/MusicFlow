@@ -13,7 +13,7 @@
     <string name="set_amoled">Pure black (AMOLED)</string>
     <string name="set_amoled_desc">Uses true black backgrounds to save power on OLED screens</string>
     <string name="set_dynamic">Dynamic colours</string>
-    <string name="set_dynamic_desc">Use colours from your wallpaper (Android 12+)</string>
+    <string name="set_dynamic_desc">Use colours from your wallpaper (Android 12+) (light theme)</string>
     <string name="set_artwork_colors">Artwork colours</string>
     <string name="set_artwork_colors_desc">Tint the player with colours from the album artwork</string>
     <string name="set_language">Language</string>

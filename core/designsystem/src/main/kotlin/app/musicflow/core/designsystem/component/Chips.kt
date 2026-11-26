@@ -31,8 +31,11 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
             .heightIn(min = 40.dp)
             .clip(shape)
             .then(
-                if (selected) Modifier.background(MaterialTheme.colorScheme.primary)
-                else Modifier.border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape),
+                if (!LocalMfExtras.current.isDark) {
+                    if (selected) Modifier.background(MaterialTheme.colorScheme.primary)
+                    else Modifier.border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape)
+                } else if (selected) Modifier.background(Glass.PlayBrush)
+                else Modifier.glass(shape),
             )
             .semantics { this.selected = selected }
             .clickable(role = Role.Tab, onClick = onClick)
@@ -43,7 +46,7 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
             label,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
-            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            color = if (selected) (if (LocalMfExtras.current.isDark) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onPrimary) else MaterialTheme.colorScheme.onSurface,
         )
     }
 }

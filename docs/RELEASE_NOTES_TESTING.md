@@ -1,5 +1,13 @@
 ## MusicFlow — wersja testowa / test build
 
+**Poprawki w beta.16:**
+- Usunięta zakładka „Tekst” z dołu odtwarzacza (tekst piosenki jest w menu „⋯”).
+- Odkrywaj i Biblioteka w stylu „szkła”: przezroczyste kafelki z kolorową poświatą i ikoną,
+  skróty Biblioteki jako szklane kafelki.
+- Jednolite kolory: przyciski wyboru (Wszystko, Gatunki, Playlisty…) mają fioletowo-różowy
+  gradient zamiast niebieskiego — ciemny motyw zawsze używa fioletowej palety (kolory z tapety
+  działają tylko w motywie jasnym). Szklane pole wyszukiwania, mniej prześwitujący dolny pasek.
+
 **Nowości w beta.15:**
 - **Nowy wygląd „szkło”** jak na przesłanym projekcie: ciemne tło z kolorowymi poświatami,
   szklane okrągłe przyciski, odtwarzacz z okrągłą okładką w szklanym pierścieniu, pasek postępu

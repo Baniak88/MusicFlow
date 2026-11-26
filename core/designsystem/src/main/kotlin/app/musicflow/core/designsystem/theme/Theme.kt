@@ -25,8 +25,8 @@ fun mfDarkScheme(amoled: Boolean): ColorScheme = darkColorScheme(
     onPrimaryContainer = MfColors.OnAccentContainer,
     secondary = MfColors.AccentSecondary,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFF23264F),
-    onSecondaryContainer = Color(0xFFDADCFF),
+    secondaryContainer = Color(0xFF3A2352), // violet glass tint (tonal buttons, selected tab)
+    onSecondaryContainer = Color(0xFFF3DDFF),
     tertiary = Color(0xFF22D3EE),
     background = if (amoled) MfColors.PureBlack else MfColors.Background,
     onBackground = MfColors.TextPrimary,
@@ -95,9 +95,9 @@ fun MusicFlowTheme(
     }
     val context = LocalContext.current
     val scheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= 31 && dark -> dynamicDarkColorScheme(context).let {
-            if (amoled) it.copy(background = Color.Black, surface = Color.Black, surfaceContainerLowest = Color.Black) else it
-        }
+        // The dark theme is the "glass" design with its own violet accent; wallpaper colours would
+        // clash with it, so Material You colours apply to the light theme only.
+        dark -> mfDarkScheme(amoled)
         dynamicColor && Build.VERSION.SDK_INT >= 31 -> dynamicLightColorScheme(context)
         dark -> mfDarkScheme(amoled)
         else -> mfLightScheme()

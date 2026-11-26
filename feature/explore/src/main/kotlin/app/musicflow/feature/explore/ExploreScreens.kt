@@ -1,5 +1,12 @@
 package app.musicflow.feature.explore
 
+import androidx.compose.material.icons.rounded.Radio
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Mood
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.foundation.layout.size
+import app.musicflow.core.designsystem.component.glass
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -126,9 +133,7 @@ fun ExploreScreen(contentPadding: PaddingValues, vm: ExploreViewModel = hiltView
             Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(top = 20.dp, bottom = 4.dp)) {
                 androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-                    androidx.compose.material3.IconButton(onClick = { nav.openSettings() }) {
-                        androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Settings, stringResource(R.string.explore_settings))
-                    }
+                    app.musicflow.core.designsystem.component.GlassIconButton(androidx.compose.material.icons.Icons.Rounded.Settings, stringResource(R.string.explore_settings), { nav.openSettings() })
                 }
                 Spacer(Modifier.height(12.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -140,23 +145,37 @@ fun ExploreScreen(contentPadding: PaddingValues, vm: ExploreViewModel = hiltView
             }
         }
         items(vm.categories(group), key = { it.name }) { c ->
-            CategoryTile(categoryLabel(c), Color(c.color)) { nav.openCategory(c.name) }
+            CategoryTile(categoryLabel(c), Color(c.color), groupIcon(c.group)) { nav.openCategory(c.name) }
         }
     }
 }
 
+private fun groupIcon(g: CategoryGroup) = when (g) {
+    CategoryGroup.GENRE -> androidx.compose.material.icons.Icons.Rounded.MusicNote
+    CategoryGroup.MOOD -> androidx.compose.material.icons.Icons.Rounded.Mood
+    CategoryGroup.DECADE -> androidx.compose.material.icons.Icons.Rounded.History
+    CategoryGroup.CHARTS -> androidx.compose.material.icons.Icons.AutoMirrored.Rounded.TrendingUp
+    CategoryGroup.RADIO -> androidx.compose.material.icons.Icons.Rounded.Radio
+}
+
+/** Glass tile: frosted panel with the category's colour glowing from one corner, icon and title. */
 @Composable
-private fun CategoryTile(label: String, color: Color, onClick: () -> Unit) {
+private fun CategoryTile(label: String, color: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
     Box(
         Modifier
             .fillMaxWidth()
-            .aspectRatio(1.7f)
-            .clip(MaterialTheme.shapes.medium)
-            .background(Brush.linearGradient(listOf(color, color.copy(alpha = 0.55f), MaterialTheme.colorScheme.surfaceContainerHigh)))
+            .aspectRatio(1.55f)
+            .then(Modifier.glass(shape))
+            .background(Brush.radialGradient(listOf(color.copy(alpha = 0.75f), color.copy(alpha = 0.18f), Color.Transparent), center = androidx.compose.ui.geometry.Offset.Zero, radius = 520f), shape)
             .clickable(onClick = onClick)
             .padding(14.dp),
     ) {
-        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.align(Alignment.BottomStart))
+        Box(
+            Modifier.size(38.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Color.White.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, null, Modifier.size(20.dp), tint = Color.White) }
+        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2, modifier = Modifier.align(Alignment.BottomStart))
     }
 }
 

@@ -155,6 +155,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                     app.musicflow.core.designsystem.component.GlassIconButton(Icons.Rounded.MoreHoriz, stringResource(R.string.player_more), { more = true })
                     DropdownMenu(more, { more = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.player_queue)) }, leadingIcon = { Icon(Icons.AutoMirrored.Rounded.QueueMusic, null) }, onClick = { more = false; sheet = PlayerSheet.QUEUE })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.player_lyrics)) }, leadingIcon = { Icon(Icons.Rounded.Lyrics, null) }, onClick = { more = false; showLyrics = true })
                         track?.let { t -> DropdownMenuItem(text = { Text(stringResource(R.string.player_track_options)) }, leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) }, onClick = { more = false; menu.open(t) }) }
                         DropdownMenuItem(text = { Text(stringResource(R.string.player_quality)) }, leadingIcon = { Icon(Icons.Rounded.HighQuality, null) }, onClick = { more = false; sheet = PlayerSheet.QUALITY })
                         DropdownMenuItem(text = { Text(stringResource(R.string.player_sleep_timer)) }, leadingIcon = { Icon(Icons.Rounded.Bedtime, null) }, onClick = { more = false; sheet = PlayerSheet.SLEEP })
@@ -242,15 +243,13 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                     modifier = Modifier.padding(bottom = 4.dp).clickable { vm.dismissError() })
             }
 
-            // Bottom: shuffle · "Lyrics" tab · repeat
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+            // Bottom: shuffle · repeat (lyrics are in the ⋯ menu)
+            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = vm::toggleShuffle) {
                     Icon(Icons.Rounded.Shuffle, stringResource(R.string.player_shuffle), tint = if (state.shuffle) app.musicflow.core.designsystem.component.Glass.Orchid else muted)
                 }
                 Spacer(Modifier.weight(1f))
-                LyricsTab(stringResource(R.string.player_lyrics), up = true) { showLyrics = true }
-                Spacer(Modifier.weight(1f))
-                if (sleep != SleepTimerState.Off) Icon(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), Modifier.padding(bottom = 14.dp).size(18.dp), tint = app.musicflow.core.designsystem.component.Glass.Orchid)
+                if (sleep != SleepTimerState.Off) Icon(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), Modifier.padding(end = 4.dp).size(18.dp), tint = app.musicflow.core.designsystem.component.Glass.Orchid)
                 IconButton(onClick = vm::cycleRepeat) {
                     Icon(
                         if (state.repeat == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,

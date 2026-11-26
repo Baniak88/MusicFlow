@@ -1,5 +1,8 @@
 package app.musicflow.feature.library
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import app.musicflow.core.designsystem.component.glass
 import androidx.compose.material.icons.rounded.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -83,9 +86,10 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
         item {
             Row(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 8.dp, top = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.lib_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-                IconButton(onClick = nav::openSettings) { Icon(Icons.Rounded.Settings, stringResource(R.string.lib_settings)) }
+                app.musicflow.core.designsystem.component.GlassIconButton(Icons.Rounded.Settings, stringResource(R.string.lib_settings), nav::openSettings)
+                Spacer(Modifier.width(10.dp))
                 Box {
-                    IconButton(onClick = { addMenu = true }) { Icon(Icons.Rounded.Add, stringResource(R.string.lib_add)) }
+                    app.musicflow.core.designsystem.component.GlassIconButton(Icons.Rounded.Add, stringResource(R.string.lib_add), { addMenu = true })
                     DropdownMenu(expanded = addMenu, onDismissRequest = { addMenu = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.lib_new_playlist)) }, leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) }, onClick = { addMenu = false; showCreate = true })
                         DropdownMenuItem(text = { Text(stringResource(R.string.lib_import_url)) }, leadingIcon = { Icon(Icons.Rounded.Link, null) }, onClick = { addMenu = false; showImportUrl = true })
@@ -96,12 +100,17 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp))
         }
         item {
-            Column(Modifier.padding(vertical = 8.dp)) {
-                Shortcut(Icons.Rounded.Favorite, stringResource(R.string.lib_favorites), trackCount(favorites.size)) { nav.openLibrarySection(LibrarySection.FAVORITES) }
-                Shortcut(Icons.Rounded.Schedule, stringResource(R.string.lib_recent), null) { nav.openLibrarySection(LibrarySection.RECENT) }
-                Shortcut(Icons.Rounded.TrendingUp, stringResource(R.string.lib_most_played), null) { nav.openLibrarySection(LibrarySection.MOST_PLAYED) }
-                Shortcut(Icons.Rounded.History, stringResource(R.string.lib_history), null) { nav.openLibrarySection(LibrarySection.HISTORY) }
-                Shortcut(Icons.Rounded.PhoneAndroid, stringResource(R.string.lib_local), null) { nav.openLibrarySection(LibrarySection.LOCAL) }
+            // Glass tiles, two per row; "Liked songs" spans the full width.
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Shortcut(Icons.Rounded.Favorite, stringResource(R.string.lib_favorites), trackCount(favorites.size), Modifier.fillMaxWidth()) { nav.openLibrarySection(LibrarySection.FAVORITES) }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Shortcut(Icons.Rounded.Schedule, stringResource(R.string.lib_recent), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.RECENT) }
+                    Shortcut(Icons.Rounded.TrendingUp, stringResource(R.string.lib_most_played), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.MOST_PLAYED) }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Shortcut(Icons.Rounded.History, stringResource(R.string.lib_history), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.HISTORY) }
+                    Shortcut(Icons.Rounded.PhoneAndroid, stringResource(R.string.lib_local), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.LOCAL) }
+                }
             }
         }
         item {
@@ -128,19 +137,28 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
 }
 
 @Composable
-private fun Shortcut(icon: ImageVector, title: String, subtitle: String?, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(onClick = onClick).padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.width(18.dp))
-        Text(title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-        subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+private fun Shortcut(icon: ImageVector, title: String, subtitle: String?, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
+    Row(
+        modifier.heightIn(min = 68.dp).then(Modifier.glass(shape)).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(app.musicflow.core.designsystem.component.Glass.PlayBrush),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, null, Modifier.size(20.dp), tint = androidx.compose.ui.graphics.Color.White) }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
     }
 }
 
 @Composable
 fun EntityRow(title: String, subtitle: String?, artwork: String?, circle: Boolean = false, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 68.dp).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Artwork(artwork, Modifier.size(56.dp), shape = if (circle) androidx.compose.foundation.shape.CircleShape else MaterialTheme.shapes.small)
+        Artwork(artwork, Modifier.size(56.dp), shape = if (circle) androidx.compose.foundation.shape.CircleShape else androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)

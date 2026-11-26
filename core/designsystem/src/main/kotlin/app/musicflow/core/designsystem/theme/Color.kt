@@ -19,7 +19,7 @@ object MfColors {
     /** Top of the app background gradient. */
     val BackgroundGlow = Color(0xFF2E2140)
     /** Bottom dock (mini player + navigation). */
-    val Dock = Color(0xF214111B)
+    val Dock = Color(0xFC14111B)
     val Error = Color(0xFFFF6B6B)
     val Success = Color(0xFF34D399)
     val Warning = Color(0xFFFBBF24)

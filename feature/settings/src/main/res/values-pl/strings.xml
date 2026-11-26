@@ -13,7 +13,7 @@
     <string name="set_amoled">Czysta czerń (AMOLED)</string>
     <string name="set_amoled_desc">Prawdziwie czarne tło oszczędza energię na ekranach OLED</string>
     <string name="set_dynamic">Kolory dynamiczne</string>
-    <string name="set_dynamic_desc">Kolory z tapety (Android 12+)</string>
+    <string name="set_dynamic_desc">Kolory z tapety (Android 12+) (motyw jasny)</string>
     <string name="set_artwork_colors">Kolory okładki</string>
     <string name="set_artwork_colors_desc">Zabarwiaj odtwarzacz kolorami okładki albumu</string>
     <string name="set_language">Język</string>
