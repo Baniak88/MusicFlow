@@ -3,6 +3,15 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.26] - 2026-11-27
+
+### Changed
+- **YouTube with a VPN.** YouTube refuses anonymous playback from many VPN and data-centre
+  addresses ("confirm you're not a bot"). MusicFlow cannot avoid that. It now says so
+  explicitly, and suggests turning the VPN off for YouTube Music, excluding MusicFlow in the
+  VPN app (split tunnelling), or another VPN server. Before, this showed a generic "rate
+  limited" message.
+
 ## [1.0.0-beta.25] - 2026-11-27
 
 ### Added

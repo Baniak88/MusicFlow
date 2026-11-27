@@ -14,7 +14,12 @@ sealed class ProviderError(message: String, cause: Throwable? = null) : Exceptio
     }
 
     /** HTTP 429 or bot-detection challenges. Retried, but with long backoff. */
-    class RateLimited(message: String = "Rate limited by provider", cause: Throwable? = null) : ProviderError(message, cause) {
+    class RateLimited(
+        message: String = "Rate limited by provider",
+        cause: Throwable? = null,
+        /** The service asks to confirm "not a bot": it distrusts this IP (often a VPN or data-centre address). */
+        val botCheck: Boolean = false,
+    ) : ProviderError(message, cause) {
         override val isTransient = true
     }
 

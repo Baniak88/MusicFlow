@@ -17,4 +17,5 @@
     <string name="mf_error_unknown">Wystąpił nieoczekiwany błąd.</string>
     <string name="mf_provider_disabled">Muzyka online jest wyłączona. Włącz YouTube Music w Ustawienia → Dostawcy.</string>
     <string name="mf_error_restricted_drm">Ten utwór SoundCloud jest chroniony DRM i nie da się go tu odtworzyć (brak identycznego nagrania w YouTube Music). Pomijam.</string>
+    <string name="mf_error_bot_check">YouTube odmawia odtwarzania z tego połączenia (prosi o potwierdzenie, że nie jesteś botem). Zwykle dzieje się tak przez VPN: wyłącz VPN na czas słuchania YouTube Music, wyklucz MusicFlow w aplikacji VPN (tunelowanie dzielone) albo wybierz inny serwer VPN.</string>
 </resources>

@@ -62,6 +62,10 @@ class YouTubeHelpersTest {
 
     @Test fun classifiesExtractorErrors() {
         assertThat(YouTubeErrors.classify(ReCaptchaException("x", "u"))).isInstanceOf(ProviderError.RateLimited::class.java)
+        // "Sign in to confirm you're not a bot" (VPN / data-centre IPs) gets its own message.
+        val bot = YouTubeErrors.classify(org.schabi.newpipe.extractor.exceptions.SignInConfirmNotBotException("not a bot")) as ProviderError.RateLimited
+        assertThat(bot.botCheck).isTrue()
+        assertThat((YouTubeErrors.classify(ReCaptchaException("x", "u")) as ProviderError.RateLimited).botCheck).isFalse()
         assertThat(YouTubeErrors.classify(AgeRestrictedContentException("x"))).isInstanceOf(ProviderError.Restricted::class.java)
         assertThat((YouTubeErrors.classify(GeographicRestrictionException("x")) as ProviderError.Restricted).reason)
             .isEqualTo(ProviderError.Restricted.Reason.GEOGRAPHIC)

@@ -10,7 +10,7 @@ import app.musicflow.core.model.ProviderError
 @StringRes
 fun ProviderError.messageRes(): Int = when (this) {
     is ProviderError.Network -> R.string.mf_error_network
-    is ProviderError.RateLimited -> R.string.mf_error_rate_limited
+    is ProviderError.RateLimited -> if (botCheck) R.string.mf_error_bot_check else R.string.mf_error_rate_limited
     is ProviderError.StreamExpired -> R.string.mf_error_expired
     is ProviderError.Authentication -> R.string.mf_error_auth
     is ProviderError.Unavailable -> R.string.mf_error_unavailable

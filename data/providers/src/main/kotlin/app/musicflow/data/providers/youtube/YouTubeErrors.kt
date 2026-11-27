@@ -21,7 +21,7 @@ object YouTubeErrors {
     fun classify(t: Throwable): ProviderError = when (t) {
         is ProviderError -> t
         is ReCaptchaException -> ProviderError.RateLimited("YouTube asked for a CAPTCHA / rate limited this network", t)
-        is SignInConfirmNotBotException -> ProviderError.RateLimited("YouTube temporarily blocked anonymous access from this IP", t)
+        is SignInConfirmNotBotException -> ProviderError.RateLimited("YouTube temporarily blocked anonymous access from this IP", t, botCheck = true)
         is AgeRestrictedContentException -> ProviderError.Restricted(Reason.AGE, "Age-restricted content requires sign-in", t)
         is GeographicRestrictionException -> ProviderError.Restricted(Reason.GEOGRAPHIC, "Not available in your country", t)
         is org.schabi.newpipe.extractor.exceptions.SoundCloudGoPlusContentException ->
