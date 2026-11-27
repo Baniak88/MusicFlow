@@ -242,7 +242,8 @@ class MusicService : MediaLibraryService() {
         val updated = item.buildUpon().setMediaMetadata(
             m.buildUpon().setTitle(title).setDisplayTitle(title).setArtist(artist).setSubtitle(artist).setArtworkUri(art).build(),
         ).build()
-        reloadingIndex = player.currentMediaItemIndex
+        // Same stream: Media3 updates the metadata in place without a media-item transition
+        // (NowPlayingUpdateTest), so this is not counted as a new listen.
         player.replaceMediaItem(player.currentMediaItemIndex, updated)
         diagnostics.d("radio", "Now playing: $title — ${artist.orEmpty()}")
     }

@@ -72,18 +72,18 @@ fun MiniPlayer(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier = M
             .padding(start = 16.dp, end = 8.dp, top = 4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Artwork(track.artworkUrl, Modifier.size(48.dp), shape = androidx.compose.foundation.shape.CircleShape)
+            Artwork(state.onAir?.artworkUrl ?: track.artworkUrl, Modifier.size(48.dp), shape = androidx.compose.foundation.shape.CircleShape)
             Spacer(Modifier.width(12.dp))
             AnimatedContent(track, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "mini", modifier = Modifier.weight(1f)) { t ->
                 Column {
-                    Text(t.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(state.onAir?.title ?: t.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     // The output device (e.g. Bluetooth headphones) as a small icon in the subtitle
                     // line, so the title keeps the room.
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         outputIcon(output.kind)?.let { icon ->
                             Icon(icon, outputLabel(output), Modifier.padding(end = 4.dp).size(14.dp), tint = MaterialTheme.colorScheme.primary)
                         }
-                        Text(t.artistLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(state.onAir?.let { listOfNotNull(it.artist, t.title).joinToString(" · ") } ?: t.artistLine, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }

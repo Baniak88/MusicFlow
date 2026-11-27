@@ -79,20 +79,6 @@ object PlaybackDataSources {
         return host.endsWith("sndcdn.com") || host.endsWith("media-streaming.soundcloud.cloud")
     }
 
-    /**
-     * Streams that are only served to their own web player: every request (playlist, chunk
-     * lists, segments) carries the headers that player sends. Open FM's CDN refuses others.
-     */
-    private val SITE_HEADERS = mapOf(
-        "open.fm" to mapOf("Origin" to "https://open.fm", "Referer" to "https://open.fm/"),
-    )
-
-    fun withSiteHeaders(spec: DataSpec): DataSpec {
-        val host = spec.uri.host?.lowercase() ?: return spec
-        val extra = SITE_HEADERS.entries.firstOrNull { (site, _) -> host == site || host.endsWith(".$site") }?.value ?: return spec
-        return spec.buildUpon().setHttpRequestHeaders(extra + spec.httpRequestHeaders).build()
-    }
-
     internal fun resolve(spec: DataSpec, streams: StreamRepository): DataSpec {
         val id = MediaItems.mediaIdFromUri(spec.uri) ?: return spec
         val stream = try {
@@ -126,8 +112,7 @@ private class LocalOrRemoteDataSource(
     override fun addTransferListener(transferListener: TransferListener) {
         local.addTransferListener(transferListener); remote.addTransferListener(transferListener); live.addTransferListener(transferListener)
     }
-    override fun open(spec: DataSpec): Long {
-        val dataSpec = PlaybackDataSources.withSiteHeaders(spec)
+    override fun open(dataSpec: DataSpec): Long {
         val scheme = dataSpec.uri.scheme?.lowercase()
         if (dataSpec.httpRequestHeaders[TRANSPORT_HEADER] == TRANSPORT_LIVE) {
             active = live

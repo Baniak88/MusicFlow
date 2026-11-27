@@ -248,8 +248,7 @@ class RadioBrowserProvider(
             sampleRateHz = null,
             expiresAtMillis = null,
             isLossless = false,
-            // Open FM's CDN serves only its web player: same browser identity as the site.
-            requestHeaders = if (s.network == RadioNetwork.OPEN_FM) mapOf("User-Agent" to RadioNetworks.BROWSER_UA) else mapOf("User-Agent" to userAgent),
+            requestHeaders = mapOf("User-Agent" to userAgent),
             cacheKey = "radio:${s.network.key}:${s.id}",
             isHls = s.isHls,
             isLive = true,

@@ -3,6 +3,21 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.19] - 2026-11-27
+
+### Fixed
+- **Radio "RDS" in the app.** The song playing now (title, artist and cover from RMF ON and
+  ESKA, or the title sent in the stream) now also shows in the player and the mini player.
+  Before, it appeared only in the notification and Android Auto.
+- After a station announced a new song, the next station change could be ignored: it was not
+  added to history and got no now-playing updates. A test covers the metadata update.
+
+### Removed
+- **Open FM.** Its streams play only through Wirtualna Polska's own player: it encrypts the
+  stream address to defeat ad blockers, and the server refuses any other request (HTTP 403).
+  MusicFlow does not circumvent that protection, so the Open FM channels are gone instead of
+  failing. RMF ON and ESKA stay, because their streams are public.
+
 ## [1.0.0-beta.18] - 2026-11-27
 
 ### Added

@@ -124,6 +124,13 @@ class MediaControllerEngine @Inject constructor(
             hasPrevious = p.hasPreviousMediaItem() || p.currentPosition > 3_000,
             errorMessage = p.playerError?.message,
             queueTitle = p.playlistMetadata.title?.toString(),
+            onAir = current?.takeIf { it.id.providerId == "radio" }?.let { station ->
+                val md = p.currentMediaItem?.mediaMetadata
+                val title = md?.title?.toString()?.takeIf { it.isNotBlank() && it != station.title }
+                // The service writes "artist · station" (or just the station for ICY titles); keep only the artist.
+                val artist = md?.artist?.toString()?.removeSuffix(" · ${station.title}")?.takeIf { it.isNotBlank() && it != station.title }
+                title?.let { OnAir(it, artist, md?.artworkUri?.toString()?.takeIf { a -> a != station.artworkUrl }) }
+            },
         )
     }
 

@@ -120,6 +120,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
     BackHandler(onBack = { if (showLyrics) showLyrics = false else onCollapse() })
 
     val track = state.current
+    val onAir = state.onAir // live radio: the song on air now (title, artist · station, cover)
     val muted = Color.White.copy(alpha = 0.7f)
     val duration = progress.durationMs ?: state.durationMs ?: 0L
     val fraction = if (duration > 0) (progress.positionMs.toFloat() / duration).coerceIn(0f, 1f) else 0f
@@ -134,7 +135,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                     onVerticalDrag = { _, d -> dragY += d },
                 )
             },
-        artworkUrl = track?.artworkUrl,
+        artworkUrl = onAir?.artworkUrl ?: track?.artworkUrl,
     ) {
         Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             // Top bar: collapse · "Now playing" (tap: queue) · more
@@ -186,14 +187,14 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                         },
                 ) {
                     AnimatedContent(track, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "art") { t ->
-                        Artwork(t?.artworkUrl, Modifier.fillMaxSize(), shape = CircleShape, contentDescription = t?.title, iconSize = 96.dp)
+                        Artwork(onAir?.artworkUrl ?: t?.artworkUrl, Modifier.fillMaxSize(), shape = CircleShape, contentDescription = t?.title, iconSize = 96.dp)
                     }
                 }
             }
 
             // Title · artist with add-to-playlist and like
             Text(
-                track?.title.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White,
+                onAir?.title ?: track?.title.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
             )
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -201,7 +202,7 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                     Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, stringResource(R.string.player_add_to_playlist), tint = Color.White)
                 }
                 Text(
-                    track?.artistLine.orEmpty(), style = MaterialTheme.typography.bodyLarge, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+                    (if (onAir != null) listOfNotNull(onAir.artist, track?.title).joinToString(" · ") else track?.artistLine.orEmpty()), style = MaterialTheme.typography.bodyLarge, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f).clickable(enabled = track?.artists?.firstOrNull()?.id != null) {
                         MediaId.parseOrNull(track?.artists?.firstOrNull()?.id)?.let { onCollapse(); nav.openArtist(it) }
                     },

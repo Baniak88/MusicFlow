@@ -5,7 +5,6 @@ import app.musicflow.playback.R
 
 /** Explore category names for Android Auto (same texts as the Explore screen). */
 internal fun autoCategoryLabel(c: ExploreCategory): Int = when (c) {
-    ExploreCategory.RADIO_OPEN_FM -> R.string.auto_cat_radio_open_fm
     ExploreCategory.RADIO_RMF_ON -> R.string.auto_cat_radio_rmf_on
     ExploreCategory.RADIO_ESKA -> R.string.auto_cat_radio_eska
     ExploreCategory.RADIO_LOCAL -> R.string.auto_cat_radio_local

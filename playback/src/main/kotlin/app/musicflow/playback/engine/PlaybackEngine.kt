@@ -24,7 +24,12 @@ data class PlaybackState(
     val errorMessage: String? = null,
     /** Where the queue came from ("Playing from …"), e.g. an album or playlist name. */
     val queueTitle: String? = null,
+    /** Live radio: the song the station announces now (RDS-like / ICY); null when unknown. */
+    val onAir: OnAir? = null,
 )
+
+/** What a radio station is playing now; [current] stays the station itself (likes, history). */
+data class OnAir(val title: String, val artist: String?, val artworkUrl: String?)
 
 data class Progress(val positionMs: Long, val bufferedMs: Long, val durationMs: Long?)
 
