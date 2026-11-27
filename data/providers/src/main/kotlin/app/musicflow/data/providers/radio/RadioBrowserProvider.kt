@@ -69,6 +69,8 @@ class RadioBrowserProvider(
     /** Directory mirrors (base URLs), tried in order: the API's `*.api.radio-browser.info` servers. */
     servers: List<String> = DEFAULT_SERVERS,
     private val countryCode: () -> String? = { java.util.Locale.getDefault().country.takeIf { it.length == 2 } },
+    /** Open FM, RMF ON and ESKA channels from their own websites (see [RadioNetworks]). */
+    private val networks: RadioNetworks? = null,
 ) : MusicProvider, SearchProvider, MetadataProvider, StreamResolver {
 
     override val id = RadioIds.STATION
@@ -131,9 +133,19 @@ class RadioBrowserProvider(
         val offset = pageToken?.toIntOrNull() ?: 0
         val q = query.trim()
         val spaced = RadioSearch.unglue(q) // "danceradio" → "dance radio", "openfm" → "open fm"
-        val byName = stations("json/stations/search", common(PAGE, offset) + ("name" to q)) +
+        val first = try {
+            stations("json/stations/search", common(PAGE, offset) + ("name" to q))
+        } catch (e: ProviderError) {
+            // Directory unreachable: the networks' own channels are still worth showing.
+            val own = if (offset == 0) networks?.let { n -> runCatching { n.search(spaced) }.getOrDefault(emptyList()) }.orEmpty() else emptyList()
+            if (own.isEmpty()) throw e
+            return SearchPage(query, filter, own.take(40).map { MediaItemSummary.TrackItem(RadioNetworks.toTrack(it)) }, null)
+        }
+        val byName = first +
             (if (spaced != q && offset == 0) runCatching { stations("json/stations/search", common(PAGE) + ("name" to spaced)) }.getOrDefault(emptyList()) else emptyList())
         if (offset > 0) return SearchPage(query, filter, byName.map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }, if (byName.size >= PAGE) (offset + PAGE).toString() else null)
+        // Channels of Open FM / RMF ON / ESKA first: they come from the broadcasters themselves.
+        val fromNetworks = networks?.let { n -> runCatching { n.search(spaced) }.getOrDefault(emptyList()) }.orEmpty().take(40)
         // "radio fama kielce": the station is "Radio FAMA" with region "Kielce". Search each
         // distinctive word in names and regions, plus the whole query as a genre tag, then rank
         // stations matching the most words first.
@@ -150,7 +162,10 @@ class RadioBrowserProvider(
         }
         val ranked = RadioSearch.rank(spaced, RadioSearch.bestVersions((byName + extra).distinctBy { it.uuid }))
         val next = if (byName.size >= PAGE) PAGE.toString() else null
-        return SearchPage(query, filter, ranked.take(60).map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }, next)
+        val networkNames = fromNetworks.map { app.musicflow.core.common.TextMatching.normalize(it.name) }.toSet()
+        val items = fromNetworks.map { MediaItemSummary.TrackItem(RadioNetworks.toTrack(it)) } +
+            ranked.filter { app.musicflow.core.common.TextMatching.normalize(it.name) !in networkNames }.take(60).map { MediaItemSummary.TrackItem(RadioIds.toTrack(it)) }
+        return SearchPage(query, filter, items, next)
     }
 
     override suspend fun suggestions(query: String): List<String> = emptyList()
@@ -158,6 +173,10 @@ class RadioBrowserProvider(
     /** Most popular stations in [country] (ISO code), or worldwide when null. */
     suspend fun top(country: String? = countryCode(), limit: Int = 40): List<Track> =
         RadioSearch.bestVersions(stations("json/stations/search", common(limit) + (country?.let { mapOf("countrycode" to it) } ?: emptyMap()))).map(RadioIds::toTrack)
+
+    /** All channels of one network (Open FM, RMF ON, ESKA), in the site's order. */
+    suspend fun network(network: RadioNetwork): List<Track> =
+        (networks ?: throw ProviderError.NotSupported("Radio networks are not available")).stations(network).map(RadioNetworks::toTrack)
 
     /** Most popular stations for a genre tag (e.g. "rock", "jazz"). */
     suspend fun byTag(tag: String, limit: Int = 40): List<Track> =
@@ -169,7 +188,12 @@ class RadioBrowserProvider(
         parse(get("json/stations/byuuid/${RadioIds.uuid(id)}")).firstOrNull()
             ?: throw ProviderError.Unavailable("This station is no longer listed in Radio Browser")
 
-    override suspend fun track(id: MediaId): Track = RadioIds.toTrack(station(id))
+    override suspend fun track(id: MediaId): Track {
+        RadioNetworks.parse(id)?.let { (n, key) -> return RadioNetworks.toTrack(requireNetworks().station(n, key)) }
+        return RadioIds.toTrack(station(id))
+    }
+
+    private fun requireNetworks() = networks ?: throw ProviderError.NotSupported("Radio networks are not available")
     override suspend fun album(id: MediaId, pageToken: String?): CollectionPage = throw ProviderError.NotSupported("Stations have no albums")
     override suspend fun artist(id: MediaId): ArtistPage = throw ProviderError.NotSupported("Stations have no artists")
 
@@ -178,6 +202,7 @@ class RadioBrowserProvider(
     override fun canResolve(id: MediaId) = id.providerId == RadioIds.STATION
 
     override suspend fun resolve(id: MediaId, quality: AudioQuality): ResolvedStream {
+        RadioNetworks.parse(id)?.let { (n, key) -> return resolveNetwork(id, requireNetworks().station(n, key)) }
         val s = station(id)
         if (s.lastCheckOk == 0) diagnostics.w("radio", "Station ${s.name} failed Radio Browser's last check; trying anyway")
         // Counts the click (station id only) and returns the current stream URL.
@@ -202,6 +227,25 @@ class RadioBrowserProvider(
             isHls = s.hls == 1,
             isLive = true,
             allowCleartext = url.startsWith("http://", ignoreCase = true),
+        )
+    }
+
+    private suspend fun resolveNetwork(id: MediaId, s: NetworkStation): ResolvedStream {
+        val url = requireNetworks().streamUrls(s).first()
+        return ResolvedStream(
+            mediaId = id,
+            url = url,
+            mimeType = if (s.isHls) "application/x-mpegURL" else null,
+            codec = null, // not stated by the site; the player shows what the stream reports
+            bitrateKbps = null,
+            sampleRateHz = null,
+            expiresAtMillis = null,
+            isLossless = false,
+            requestHeaders = mapOf("User-Agent" to userAgent),
+            cacheKey = "radio:${s.network.key}:${s.id}",
+            isHls = s.isHls,
+            isLive = true,
+            allowCleartext = false,
         )
     }
 

@@ -59,6 +59,8 @@ class CatalogRepository @Inject constructor(
         return registry.call(radio, "stations") { p ->
             val r = p as app.musicflow.data.providers.radio.RadioBrowserProvider
             when {
+                tag != null && tag.startsWith("@net:") ->
+                    r.network(app.musicflow.data.providers.radio.RadioNetwork.of(tag.removePrefix("@net:")) ?: throw ProviderError.NotSupported("Unknown radio network"))
                 tag != null -> r.byTag(tag)
                 worldwide -> r.top(country = null)
                 else -> r.top(country = country ?: java.util.Locale.getDefault().country.takeIf { it.length == 2 })

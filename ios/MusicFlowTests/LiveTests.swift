@@ -77,4 +77,19 @@ final class LiveTests: XCTestCase {
         let bytes = try await firstBytes(stream)
         XCTAssertGreaterThan(bytes, 1000)
     }
+
+    func testRadioNetworks() async throws {
+        let networks = RadioNetworks()
+        for n in RadioNetwork.allCases {
+            do {
+                let list = try await networks.stations(n)
+                print("LIVE \(n.displayName): \(list.count) channels, e.g. \(list.prefix(3).map(\.name))")
+                XCTAssertFalse(list.isEmpty)
+            } catch {
+                XCTFail("\(n.displayName): \(error)")
+            }
+        }
+        let rmf = try await networks.resolve(key: "net/rmf/5")
+        print("LIVE RMF FM stream:", rmf.url)
+    }
 }

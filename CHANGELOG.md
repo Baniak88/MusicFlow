@@ -3,6 +3,21 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.17] / [iOS 0.1.0-beta.2] - 2026-11-27
+
+### Added
+- **Open FM, RMF ON and ESKA** channels, read from the broadcasters' own websites
+  (unofficial):
+  - about 200 Open FM channels, 154 RMF ON stations and 15 ESKA channels;
+  - shown first in Radio search;
+  - Android: Explore tiles *Open FM channels*, *RMF ON stations* and *Radio ESKA channels*;
+  - iPhone: Open FM / RMF ON / ESKA tiles on Home;
+  - RMF ON plays MP3 128 kbps, with AAC as a fallback.
+
+### Known limitation
+- Open FM refused its streams (HTTP 403) from servers outside Poland, so playback could not be
+  verified here.
+
 ## [iOS 0.1.0-beta.1] - 2026-11-26
 
 ### Added

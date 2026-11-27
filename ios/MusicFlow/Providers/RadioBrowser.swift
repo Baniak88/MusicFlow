@@ -57,8 +57,11 @@ final class RadioBrowser: @unchecked Sendable {
     private let userAgent: String
     private let lock = NSLock()
     private var preferred = 0
+    /// Open FM, RMF ON and ESKA channels from their own websites.
+    let networks: RadioNetworks?
 
-    init(http: HTTP = .shared, userAgent: String = AppInfo.userAgent, allowHTTP: @escaping () -> Bool = { true }) {
+    init(http: HTTP = .shared, userAgent: String = AppInfo.userAgent, allowHTTP: @escaping () -> Bool = { true }, networks: RadioNetworks? = nil) {
+        self.networks = networks
         self.http = http
         self.userAgent = userAgent
         self.allowHTTP = allowHTTP
@@ -107,7 +110,18 @@ final class RadioBrowser: @unchecked Sendable {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { return [] }
         let spaced = RadioSearch.unglue(q)
-        var byName = try await stations(common().merging(["name": q]) { $1 })
+        // Channels of Open FM / RMF ON / ESKA first: they come from the broadcasters themselves.
+        let fromNetworks = Array((await networks?.search(spaced) ?? []).prefix(40))
+        var byName: [RadioStation]
+        do {
+            byName = try await stations(common().merging(["name": q]) { $1 })
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            // Directory unreachable: the networks' own channels are still worth showing.
+            if fromNetworks.isEmpty { throw error }
+            return fromNetworks.map(\.track)
+        }
         if spaced != q { byName += (try? await stations(common().merging(["name": spaced]) { $1 })) ?? [] }
         let words = RadioSearch.words(spaced)
         var queries: [[String: String]] = [common().merging(["tag": q.lowercased()]) { $1 }]
@@ -125,7 +139,10 @@ final class RadioBrowser: @unchecked Sendable {
         }
         var seen = Set<String>()
         let unique = (byName + extra).filter { seen.insert($0.uuid).inserted }
-        return RadioSearch.rank(spaced, RadioSearch.bestVersions(unique)).prefix(60).map(RadioSearch.track)
+        let networkNames = Set(fromNetworks.map { TextMatching.normalize($0.name) })
+        let directory = RadioSearch.rank(spaced, RadioSearch.bestVersions(unique))
+            .filter { !networkNames.contains(TextMatching.normalize($0.name)) }
+        return fromNetworks.map(\.track) + directory.prefix(60).map(RadioSearch.track)
     }
 
     /// Most popular stations in a country (ISO code), or worldwide when nil.
@@ -142,6 +159,10 @@ final class RadioBrowser: @unchecked Sendable {
     private struct Click: Decodable { var url: String? }
 
     func resolve(uuid: String) async throws -> ResolvedStream {
+        if uuid.hasPrefix(RadioNetworks.prefix) {
+            guard let networks else { throw ProviderError.unavailable("") }
+            return try await networks.resolve(key: uuid)
+        }
         let data = try await get("json/stations/byuuid/\(uuid)")
         guard let s = (try? JSONDecoder().decode([RadioStation].self, from: data))?.first else {
             throw ProviderError.unavailable(L.t("radio.not_listed"))

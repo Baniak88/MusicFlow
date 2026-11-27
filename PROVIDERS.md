@@ -146,6 +146,25 @@ Community directory of internet radio (public API, no key, open data). `RadioBro
   crossfade (no duration). HLS stations are queued as `radio:hls/<uuid>`. ICY `StreamTitle`
   updates the now-playing title (notification, lock screen, Android Auto) without interrupting.
 
+### Open FM, RMF ON and ESKA (inside Radio)
+
+Polish networks whose channels are not (or only partly) in Radio Browser. MusicFlow reads their
+public websites (`RadioNetworks` on Android and iOS). This is unofficial: there is no documented
+API, so a site redesign can break it. The parsers are unit-tested with saved copies of the pages.
+
+* **Open FM:** the channel list embedded in `https://open.fm/` (`__NEXT_DATA__` →
+  `fallback.stations`), with HLS streams `stream-cdn-1.open.fm/OFM<id>/…/playlist.m3u8`.
+  Premium channels are skipped. Streams were refused (HTTP 403) from servers outside Poland,
+  apparently a geographic restriction.
+* **RMF ON:** `https://www.rmfon.pl/json/stations.txt` (id, name), then at play time
+  `stacje/flash_aac_<id>.xml.txt` for the server list: MP3 servers first (128 kbps), AAC as
+  fallback.
+* **ESKA:** the channel tiles of `https://player.eska.pl/` (`data-stream-url`, HLS on
+  `liveradio.timesa.pl`).
+* Lists are cached for 6 h; a stale list is used while a site is unreachable. They appear in
+  Radio search (first, before Radio Browser), as Explore tiles on Android, and as Home tiles
+  on iPhone. Track ids: `radio:net/<network>/<id>` (Android adds `hls/` for HLS).
+
 ## MusicBrainz
 
 The open music encyclopedia (core data CC0). `MusicBrainzProvider`:

@@ -69,6 +69,7 @@ struct HomeView: View {
             .background(AppBackground())
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: RadioGenre.self) { RadioGenreView(genre: $0) }
+            .navigationDestination(for: RadioNetwork.self) { RadioNetworkView(network: $0) }
             .refreshable { await radio.load(country: country, force: true) }
         }
         .task(id: settings.radioEnabled) {
@@ -138,6 +139,13 @@ struct HomeView: View {
     private var radioSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: L.t("home.radio"), subtitle: country.flatMap { Locale.current.localizedString(forRegionCode: $0) }.map { L.f("home.radio_region", $0) })
+            HStack(spacing: 10) {
+                ForEach(RadioNetwork.allCases) { n in
+                    NavigationLink(value: n) { NetworkTile(network: n) }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("home.network.\(n.rawValue)")
+                }
+            }
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(RadioGenre.all) { g in
@@ -210,6 +218,83 @@ struct RadioGenreView: View {
     private func load() async {
         state = .loading
         do { state = .loaded(try await Services.radio.byTag(genre.tag)) } catch is CancellationError { state = .idle } catch {
+            state = .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        }
+    }
+}
+
+/// Big glass tile for a radio network (Open FM, RMF ON, ESKA).
+struct NetworkTile: View {
+    let network: RadioNetwork
+
+    private var tint: Color {
+        switch network {
+        case .openFM: return Theme.ember
+        case .rmfOn: return Color(hex: 0xE11D48)
+        case .eska: return Color(hex: 0x2563EB)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Image(systemName: "dot.radiowaves.left.and.right")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(tint))
+            Text(network.displayName).font(.subheadline.weight(.bold)).foregroundStyle(.white).lineLimit(1)
+            Text(L.t("home.network_channels")).font(.caption2).foregroundStyle(Theme.secondary).lineLimit(1)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            ZStack {
+                GlassBackground(shape: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                RadialGradient(colors: [tint.opacity(0.35), .clear], center: .topLeading, startRadius: 0, endRadius: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+        }
+    }
+}
+
+/// All channels of one network, in the site's order.
+struct RadioNetworkView: View {
+    let network: RadioNetwork
+    @EnvironmentObject private var player: PlayerModel
+    @State private var state: LoadState<[Track]> = .idle
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 2) {
+                switch state {
+                case .idle, .loading:
+                    ProgressView().tint(.white).padding(.top, 60)
+                case .failed(let m):
+                    MessageView(systemImage: "wifi.exclamationmark", title: L.t("home.radio_error"), detail: m,
+                                actionTitle: L.t("action.retry")) { Task { await load() } }
+                case .loaded(let stations):
+                    Text(L.f("home.network_note", network.displayName)).font(.footnote).foregroundStyle(Theme.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 6)
+                    ForEach(Array(stations.enumerated()), id: \.element.id) { i, t in
+                        TrackRow(track: t) { player.play(stations, startAt: i) }
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+        .background(AppBackground())
+        .navigationTitle(network.displayName)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .task { if state.value == nil { await load() } }
+    }
+
+    private func load() async {
+        state = .loading
+        do {
+            state = .loaded(try await Services.networks.stations(network).map(\.track))
+        } catch is CancellationError {
+            state = .idle
+        } catch {
             state = .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
     }

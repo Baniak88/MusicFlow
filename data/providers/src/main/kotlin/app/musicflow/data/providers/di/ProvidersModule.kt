@@ -36,7 +36,7 @@ object ProvidersModule {
     fun bindSoundCloud(p: SoundCloudProvider): MusicProvider = p
 
     @Provides @Singleton
-    fun radio(client: OkHttpClient, diagnostics: DiagnosticsLog, appInfo: AppInfo) = RadioBrowserProvider(client, diagnostics, userAgent(appInfo))
+    fun radio(client: OkHttpClient, diagnostics: DiagnosticsLog, appInfo: AppInfo) = RadioBrowserProvider(client, diagnostics, userAgent(appInfo), networks = app.musicflow.data.providers.radio.RadioNetworks(client, diagnostics))
 
     @Provides @IntoSet
     fun bindRadio(p: RadioBrowserProvider): MusicProvider = p

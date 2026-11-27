@@ -35,7 +35,8 @@ dependency version baseline follows OuterTune's build configuration.
 
 Services: LRCLIB (lrclib.net) lyrics; YouTube / YouTube Music content is © its respective owners
 and is not distributed with MusicFlow. SoundCloud content is © its owners; "SoundCloud" is a
-trademark of SoundCloud Global Limited & Co. KG. Station directory data: Radio Browser
+trademark of SoundCloud Global Limited & Co. KG. Open FM (Grupa WP), RMF ON (Grupa RMF) and ESKA (Grupa ZPR Media) channel lists, logos and
+streams belong to their broadcasters; MusicFlow only links to them. Station directory data: Radio Browser
 (radio-browser.info, community-maintained, public domain); streams belong to their broadcasters.
 Music metadata: MusicBrainz (musicbrainz.org) core data, CC0 1.0, by the MetaBrainz Foundation and
 contributors; cover images: Cover Art Archive (coverartarchive.org), © their respective owners. "YouTube" is a trademark of Google LLC; MusicFlow is not

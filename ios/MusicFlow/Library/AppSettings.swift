@@ -40,7 +40,8 @@ enum AppInfo {
 /// Shared providers.
 enum Services {
     static let youtube = YouTubeMusic(quality: { AppSettings.currentQuality() })
-    static let radio = RadioBrowser(allowHTTP: { AppSettings.current("radioAllowHTTP") })
+    static let networks = RadioNetworks()
+    static let radio = RadioBrowser(allowHTTP: { AppSettings.current("radioAllowHTTP") }, networks: networks)
     static let musicbrainz = MusicBrainz()
     static let resolver = StreamResolver(youtube: youtube, radio: radio, musicbrainz: musicbrainz)
 }

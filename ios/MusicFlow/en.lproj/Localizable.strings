@@ -57,6 +57,9 @@
 "home.radio_region" = "Most listened in %@ · Radio Browser";
 "home.radio_error" = "Couldn't load stations";
 "home.radio_empty" = "No stations found";
+"home.network_channels" = "Channels";
+"home.network_note" = "Channels listed on the %@ website (unofficial access: it may stop working when the site changes).";
+"radio.network_gone" = "%@ no longer lists this station.";
 "home.welcome_title" = "Welcome to MusicFlow";
 "home.welcome_text" = "Search YouTube Music, radio stations and the MusicBrainz catalogue. What you play and like appears here.";
 "home.welcome_action" = "Start searching";
