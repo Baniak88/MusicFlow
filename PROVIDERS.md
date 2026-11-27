@@ -146,21 +146,30 @@ Community directory of internet radio (public API, no key, open data). `RadioBro
   crossfade (no duration). HLS stations are queued as `radio:hls/<uuid>`. ICY `StreamTitle`
   updates the now-playing title (notification, lock screen, Android Auto) without interrupting.
 
-### RMF ON and ESKA (inside Radio)
+### Open FM, RMF ON and ESKA (inside Radio)
 
 Polish networks whose channels are not (or only partly) in Radio Browser. MusicFlow reads their
 public websites (`RadioNetworks` on Android and iOS). This is unofficial: there is no documented
 API, so a site redesign can break it. The parsers are unit-tested with saved copies of the pages.
 
-* **Open FM: not supported.** Its HLS streams (`stream-cdn-1.open.fm`) are refused (HTTP 403)
-  to anything but Wirtualna Polska's own web player. That player rewrites the stream address
-  with an anti-ad-blocking obfuscation (`crux.mess`), and MusicFlow does not circumvent it.
+* **Open FM:**
+  * channel list: `https://open.fm/` (`__NEXT_DATA__` → `fallback.stations`), premium channels
+    skipped;
+  * now playing: `open.fm/api/radio/playlist`.
+  * Playback:
+    * the HLS URLs (`stream-cdn-1.open.fm/OFM<id>/…/playlist.m3u8`) are refused (HTTP 403)
+      without a token;
+    * like the official web player, MusicFlow asks `https://open.fm/api/user/token?fp=<stream
+      URL>` (public, no account) and plays the signed URL it returns (`?t=…`, AAC 192 kbps);
+    * only a signed URL of the same stream is accepted;
+    * the token is renewed after ~2 min or on HTTP 401/403.
 * **RMF ON:** `https://www.rmfon.pl/json/stations.txt` (id, name), then at play time
   `stacje/flash_aac_<id>.xml.txt` for the server list: MP3 servers first (128 kbps), AAC as
   fallback.
 * **ESKA:** the channel tiles of `https://player.eska.pl/` (`data-stream-url`, HLS on
   `liveradio.timesa.pl`).
 * Now playing ("RDS"):
+  * Open FM: `open.fm/api/radio/playlist` (`currentSong`);
   * RMF ON: `www.rmfon.pl/stacje/ajax_playing_main.txt` (`radio<id>`: artist, title, cover);
   * ESKA: `front-api.grupazprmedia.pl/music/v2/now_playing/<id>/` (`current`).
 

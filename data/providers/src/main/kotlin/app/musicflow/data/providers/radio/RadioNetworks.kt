@@ -21,16 +21,14 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Polish radio networks whose channels are listed on their own websites.
- * Open FM is deliberately not included: its streams are served only through Wirtualna Polska's
- * own player, which encrypts the stream address (anti-ad-blocking); direct requests are refused.
- */
+/** Polish radio networks whose channels are listed on their own websites. */
 enum class RadioNetwork(val key: String, val displayName: String) {
+    OPEN_FM("openfm", "Open FM"),
     RMF_ON("rmf", "RMF ON"),
     ESKA("eska", "ESKA");
 
@@ -55,7 +53,7 @@ data class NetworkStation(
 data class NowPlaying(val title: String, val artist: String?, val artworkUrl: String?)
 
 /**
- * Channel lists of RMF ON and ESKA, read from their public websites (unofficial: no
+ * Channel lists of Open FM, RMF ON and ESKA, read from their public websites (unofficial: no
  * documented API, may break when a site changes). Lists are cached for 6 hours; a stale list is
  * used when a site is unreachable.
  *
@@ -89,6 +87,7 @@ class RadioNetworks(
         cache[network]?.let { (at, list) -> if (clock() - at < TTL_MS) return list }
         return try {
             val list = when (network) {
+                RadioNetwork.OPEN_FM -> NetworkParsers.openFm(fetch("https://open.fm/"))
                 RadioNetwork.RMF_ON -> NetworkParsers.rmfOn(fetch("https://www.rmfon.pl/json/stations.txt"))
                 RadioNetwork.ESKA -> NetworkParsers.eska(fetch("https://player.eska.pl/"))
             }
@@ -117,7 +116,7 @@ class RadioNetworks(
 
     private val nowCache = ConcurrentHashMap<String, Pair<Long, String>>()
 
-    /** One shared document per network (RMF ON) or station (ESKA), fetched at most every 15 s. */
+    /** One shared document per network (Open FM, RMF ON) or station (ESKA), fetched at most every 15 s. */
     private suspend fun nowDocument(url: String): String {
         nowCache[url]?.let { (at, text) -> if (clock() - at < NOW_TTL_MS) return text }
         return fetch(url).also { nowCache[url] = clock() to it }
@@ -125,12 +124,22 @@ class RadioNetworks(
 
     /** What the station is playing now, from the broadcaster's own now-playing data; null when unknown. */
     suspend fun nowPlaying(s: NetworkStation): NowPlaying? = when (s.network) {
+        RadioNetwork.OPEN_FM -> NetworkParsers.openFmNowPlaying(nowDocument("https://open.fm/api/radio/playlist"), s.id)
         RadioNetwork.RMF_ON -> NetworkParsers.rmfNowPlaying(nowDocument("https://www.rmfon.pl/stacje/ajax_playing_main.txt"), s.id)
         RadioNetwork.ESKA -> NetworkParsers.eskaNowPlaying(nowDocument("https://front-api.grupazprmedia.pl/music/v2/now_playing/${s.id.substringBefore('-')}/"))
     }
 
     /** Playable URL candidates, best first (RMF ON: MP3 128 kbps servers, then AAC). */
     suspend fun streamUrls(s: NetworkStation): List<String> = when {
+        // Open FM serves its streams only with a playback token, which its web player gets
+        // from this public endpoint (no account). The token is valid for a while; an expired
+        // stream is resolved again, which fetches a new one.
+        s.network == RadioNetwork.OPEN_FM && s.streamUrl != null -> listOf(
+            NetworkParsers.openFmSigned(
+                fetch("https://open.fm/api/user/token?fp=" + java.net.URLEncoder.encode(s.streamUrl, "UTF-8")),
+                s.streamUrl,
+            ),
+        )
         s.streamUrl != null -> listOf(s.streamUrl)
         s.network == RadioNetwork.RMF_ON -> NetworkParsers.rmfStreams(fetch("https://www.rmfon.pl/stacje/flash_aac_${s.id}.xml.txt"))
             .ifEmpty { throw ProviderError.Unavailable("RMF ON lists no stream for ${s.name}") }
@@ -170,6 +179,43 @@ class RadioNetworks(
 object NetworkParsers {
     private val json = Json { ignoreUnknownKeys = true }
 
+    /** Open FM: the station list embedded in the home page (`__NEXT_DATA__`). Premium channels are skipped. */
+    fun openFm(html: String): List<NetworkStation> {
+        val data = Regex("""<script id="__NEXT_DATA__"[^>]*>(.*?)</script>""", RegexOption.DOT_MATCHES_ALL).find(html)?.groupValues?.get(1)
+            ?: throw ProviderError.Parsing("Open FM page format changed (no station data)")
+        val fallback = try {
+            json.parseToJsonElement(data).jsonObject["props"]!!.jsonObject["pageProps"]!!.jsonObject["fallback"]!!.jsonObject
+        } catch (e: Exception) {
+            throw ProviderError.Parsing("Open FM page format changed: ${e.message}", e)
+        }
+        val stations = (fallback["stations"] as? JsonObject).orEmpty().values.mapNotNull { it as? JsonObject }
+        val categories = (fallback["categories"] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }
+        val categoryOf = HashMap<Int, String>()
+        val order = LinkedHashSet<Int>()
+        for (c in categories) {
+            val name = c["name"]?.jsonPrimitive?.contentOrNull?.let(::cleanCategory)
+            for (id in (c["stations"] as? JsonArray).orEmpty().mapNotNull { it.jsonPrimitive.intOrNull }) {
+                order += id
+                if (name != null) categoryOf.putIfAbsent(id, name)
+            }
+        }
+        val byId = stations.mapNotNull { s ->
+            val id = s["id"]?.jsonPrimitive?.intOrNull ?: return@mapNotNull null
+            if (s["premium"]?.jsonPrimitive?.booleanOrNull == true) return@mapNotNull null
+            val name = s["name"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
+            val url = s["streamUrl"]?.jsonPrimitive?.contentOrNull.orEmpty()
+            if (name.isEmpty() || !url.startsWith("https://", true)) return@mapNotNull null
+            id to NetworkStation(
+                RadioNetwork.OPEN_FM, id.toString(), name, url,
+                s["logoUrl"]?.jsonPrimitive?.contentOrNull, isHls = url.contains(".m3u8"), category = categoryOf[id],
+            )
+        }.toMap()
+        // Site order: the categories (Top 10 first), then everything else by id.
+        return (order.filter { it in byId } + byId.keys.sorted().filter { it !in order }).map { byId.getValue(it) }
+    }
+
+    private fun cleanCategory(name: String) = name.dropWhile { !it.isLetterOrDigit() }.trim().ifEmpty { null }
+
     @kotlinx.serialization.Serializable
     private data class RmfStation(val id: String = "", val name: String = "", val slug: String = "")
 
@@ -206,6 +252,28 @@ object NetworkParsers {
     private fun obj(text: String): JsonObject? = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull()
     private fun JsonObject.str(key: String) = (this[key] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
 
+    /**
+     * Open FM `api/user/token?fp=<stream>` → `{"url": "<stream>?t=<token>"}`. Only a signed URL
+     * of the same Open FM stream is accepted.
+     */
+    fun openFmSigned(text: String, original: String): String {
+        val url = obj(text)?.str("url") ?: throw ProviderError.Parsing("Open FM token response format changed")
+        val signed = url.toHttpUrlOrNull()
+        val base = original.toHttpUrlOrNull()
+        if (signed == null || base == null || signed.scheme != "https" || !Regex("""stream-cdn-\d+\.open\.fm""").matches(signed.host) ||
+            signed.encodedPath != base.encodedPath) {
+            throw ProviderError.Parsing("Open FM returned an unexpected stream address")
+        }
+        return url
+    }
+
+    /** Open FM `api/radio/playlist`: `{"<id>": {"currentSong": {"artist", "title"}}}`. */
+    fun openFmNowPlaying(text: String, id: String): NowPlaying? {
+        val song = (obj(text)?.get(id) as? JsonObject)?.get("currentSong") as? JsonObject ?: return null
+        val title = song.str("title") ?: return null
+        return NowPlaying(title, song.str("artist"), null)
+    }
+
     /** RMF ON `stacje/ajax_playing_main.txt`: `{"radio<id>": {"name": artist, "utwor": title, "coverBigUrl"}}`. */
     fun rmfNowPlaying(text: String, id: String): NowPlaying? {
         val e = obj(text)?.get("radio$id") as? JsonObject ?: return null
@@ -226,7 +294,7 @@ object NetworkParsers {
 
     /**
      * Stations whose name (or network name + name) matches the query words. "rmf" lists all of
-     * RMF ON, "eska rap" finds ESKA Rap20.
+     * RMF ON, "open fm 357" finds Radio 357 on Open FM, "eska rap" finds ESKA Rap20.
      */
     fun match(query: String, stations: List<NetworkStation>): List<NetworkStation> {
         // "radio" and "on" are too generic: "radio eska" should still find "ESKA LOVE".

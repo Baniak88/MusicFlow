@@ -3,6 +3,18 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.20] - 2026-11-27
+
+### Fixed
+- **Open FM is back and plays.** A tester's decoder plugin pointed to the missing step:
+  - Open FM's web player first asks its public token endpoint (`open.fm/api/user/token`, no
+    account) for a signed stream address, and MusicFlow now does the same;
+  - with the token the CDN serves the stream (AAC 192 kbps HLS);
+  - an expired token is renewed automatically.
+
+  The beta.19 note was wrong: the 403 came from the missing token, not only from the player's
+  anti-ad-block layer.
+
 ## [1.0.0-beta.19] - 2026-11-27
 
 ### Fixed

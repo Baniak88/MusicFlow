@@ -37,6 +37,7 @@ enum class ExploreCategory(val group: CategoryGroup, val query: String, val colo
     UK_CHARTS(CategoryGroup.CHARTS, "uk top 40 official chart", 0xFF1D4ED8),
     GLOBAL_CHARTS(CategoryGroup.CHARTS, "global top 50 {year}", 0xFF7C3AED),
     /** Internet radio (Radio Browser): stations, not songs. Queries: "@local", "@world" or a genre tag. */
+    RADIO_OPEN_FM(CategoryGroup.RADIO, "@net:openfm", 0xFFF97316),
     RADIO_RMF_ON(CategoryGroup.RADIO, "@net:rmf", 0xFFE11D48),
     RADIO_ESKA(CategoryGroup.RADIO, "@net:eska", 0xFF2563EB),
     RADIO_LOCAL(CategoryGroup.RADIO, "@local", 0xFFC45BF6),

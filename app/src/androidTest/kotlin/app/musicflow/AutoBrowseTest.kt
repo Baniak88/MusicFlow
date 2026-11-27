@@ -42,7 +42,7 @@ class AutoBrowseTest {
             assertEquals(listOf("continue", "recent", "most_played", "trending"), children("home").map { it.mediaId })
             assertEquals(listOf("favorites", "playlists", "albums", "artists", "local_music"), children("library").map { it.mediaId })
             val radio = children("radio_tab").map { it.mediaId }
-            assertTrue(radio.toString(), radio.take(2) == listOf("category|RADIO_RMF_ON", "category|RADIO_ESKA"))
+            assertTrue(radio.toString(), radio.take(3) == listOf("category|RADIO_OPEN_FM", "category|RADIO_RMF_ON", "category|RADIO_ESKA"))
             val explore = children("explore").map { it.mediaId }
             assertEquals(4, explore.size)
             val genres = children(explore.first()).map { it.mediaId }

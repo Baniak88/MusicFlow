@@ -19,6 +19,7 @@
     <string name="auto_moods">Nastroje</string>
     <string name="auto_decades">Dekady</string>
     <string name="auto_charts">Listy i nowości</string>
+    <string name="auto_cat_radio_open_fm">Kanały Open FM</string>
     <string name="auto_cat_radio_rmf_on">Stacje RMF ON</string>
     <string name="auto_cat_radio_eska">Kanały Radia ESKA</string>
     <string name="auto_cat_radio_local">Popularne radia w Twoim kraju</string>

@@ -21,9 +21,25 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 
-/** RMF ON / ESKA, parsed from copies of their pages saved on 2026-11-27. */
+/** Open FM / RMF ON / ESKA, parsed from copies of their pages saved on 2026-11-27. */
 class RadioNetworksTest {
     private fun res(name: String) = javaClass.getResource("/radio/$name")!!.readText()
+
+    @Test fun openFmSkipsPremiumAndKeepsSiteOrder() {
+        val list = NetworkParsers.openFm(res("openfm_home.html"))
+        assertThat(list.map { it.name }).containsExactly("Tylko Polskie Przeboje", "Po Polsku", "Ballady Wszech Czasów", "Radio 357").inOrder()
+        val first = list.first()
+        assertThat(first.id).isEqualTo("3")
+        assertThat(first.streamUrl).isEqualTo("https://stream-cdn-1.open.fm/OFM3/ngrp:standard/playlist.m3u8")
+        assertThat(first.isHls).isTrue()
+        assertThat(first.category).isEqualTo("Top 10")
+        assertThat(first.logoUrl).startsWith("https://openfm-upload-api.wphcdn.cloud/")
+    }
+
+    @Test fun openFmWithoutDataIsAParsingError() {
+        val e = runCatching { NetworkParsers.openFm("<html>changed</html>") }.exceptionOrNull()
+        assertThat(e).isInstanceOf(ProviderError.Parsing::class.java)
+    }
 
     @Test fun rmfOnListAndServers() {
         val list = NetworkParsers.rmfOn(res("rmfon_stations.json"))
@@ -45,12 +61,22 @@ class RadioNetworksTest {
     }
 
     @Test fun matching() {
-        val all = NetworkParsers.rmfOn(res("rmfon_stations.json")) + NetworkParsers.eska(res("eska_player.html"))
+        val all = NetworkParsers.openFm(res("openfm_home.html")) + NetworkParsers.rmfOn(res("rmfon_stations.json")) + NetworkParsers.eska(res("eska_player.html"))
         assertThat(NetworkParsers.match("rmf", all).map { it.network }.toSet()).containsExactly(RadioNetwork.RMF_ON)
         assertThat(NetworkParsers.match("RMF FM", all).first().name).isEqualTo("RMF FM")
+        assertThat(NetworkParsers.match("openfm", all)).hasSize(4) // the network key itself
+        assertThat(NetworkParsers.match("open fm", all)).hasSize(4)
         assertThat(NetworkParsers.match("radio eska", all).map { it.name }).contains("ESKA GORĄCA 20")
         assertThat(NetworkParsers.match("eska gorąca", all).map { it.name }).containsExactly("ESKA GORĄCA 20")
         assertThat(NetworkParsers.match("radio fama kielce", all)).isEmpty()
+    }
+
+    @Test fun openFmTokenOnlyForTheSameStream() {
+        val base = "https://stream-cdn-1.open.fm/OFM14/ngrp:standard/playlist.m3u8"
+        assertThat(NetworkParsers.openFmSigned("""{"url":"$base?t=xyz"}""", base)).isEqualTo("$base?t=xyz")
+        for (bad in listOf("""{"url":"https://evil.example/OFM14/ngrp:standard/playlist.m3u8?t=1"}""", """{"url":"https://stream-cdn-1.open.fm/OFM15/ngrp:standard/playlist.m3u8?t=1"}""", """{"oops":1}""")) {
+            assertThat(runCatching { NetworkParsers.openFmSigned(bad, base) }.exceptionOrNull()).isInstanceOf(ProviderError.Parsing::class.java)
+        }
     }
 
     @Test fun mediaIdsRoundTrip() {
@@ -67,6 +93,8 @@ class RadioNetworksTest {
     private val client = OkHttpClient.Builder().addInterceptor(Interceptor { chain ->
         val url = chain.request().url
         val body = when {
+            url.encodedPath == "/api/user/token" -> """{"url":"https://stream-cdn-1.open.fm/OFM3/ngrp:standard/playlist.m3u8?t=abc123"}"""
+            url.host == "open.fm" -> res("openfm_home.html")
             url.host == "player.eska.pl" -> res("eska_player.html")
             url.encodedPath == "/json/stations.txt" -> res("rmfon_stations.json")
             url.encodedPath.startsWith("/stacje/flash_aac_") -> res("rmfon_streams_9.xml")
@@ -87,6 +115,10 @@ class RadioNetworksTest {
         assertThat(stream.isLive).isTrue()
         assertThat(stream.isLossless).isFalse()
 
+        // Open FM: played through a signed address from its token endpoint.
+        val openFm = provider.network(RadioNetwork.OPEN_FM).first()
+        assertThat(provider.resolve(openFm.id, AudioQuality.HIGH).url).isEqualTo("https://stream-cdn-1.open.fm/OFM3/ngrp:standard/playlist.m3u8?t=abc123")
+
         val eska = provider.network(RadioNetwork.ESKA)
         assertThat(eska).hasSize(4)
         val hls = provider.resolve(eska.first().id, AudioQuality.HIGH)
@@ -97,6 +129,13 @@ class RadioNetworksTest {
 
 class RadioNowPlayingTest {
     private fun res(name: String) = javaClass.getResource("/radio/$name")!!.readText()
+
+    @Test fun openFm() {
+        val np = NetworkParsers.openFmNowPlaying(res("openfm_playlist.json"), "1")!!
+        assertThat(np.title).isNotEmpty()
+        assertThat(np.artist).isNotEmpty()
+        assertThat(NetworkParsers.openFmNowPlaying(res("openfm_playlist.json"), "999")).isNull()
+    }
 
     @Test fun rmfOnWithCover() {
         val np = NetworkParsers.rmfNowPlaying(res("rmfon_playing.json"), "5")!!

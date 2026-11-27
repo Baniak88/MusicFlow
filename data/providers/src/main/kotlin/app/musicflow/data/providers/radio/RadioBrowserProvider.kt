@@ -246,7 +246,8 @@ class RadioBrowserProvider(
             codec = null, // not stated by the site; the player shows what the stream reports
             bitrateKbps = null,
             sampleRateHz = null,
-            expiresAtMillis = null,
+            // Open FM tokens are short-lived: resolve again (new token) after a pause.
+            expiresAtMillis = if (s.network == RadioNetwork.OPEN_FM) System.currentTimeMillis() + 110_000 else null,
             isLossless = false,
             requestHeaders = mapOf("User-Agent" to userAgent),
             cacheKey = "radio:${s.network.key}:${s.id}",
