@@ -174,6 +174,13 @@ class RadioBrowserProvider(
     suspend fun top(country: String? = countryCode(), limit: Int = 40): List<Track> =
         RadioSearch.bestVersions(stations("json/stations/search", common(limit) + (country?.let { mapOf("countrycode" to it) } ?: emptyMap()))).map(RadioIds::toTrack)
 
+    /** Now-playing of a network station (Open FM, RMF ON, ESKA); null for directory stations (they use ICY). */
+    suspend fun nowPlaying(id: MediaId): NowPlaying? {
+        val (n, key) = RadioNetworks.parse(id) ?: return null
+        val networks = networks ?: return null
+        return networks.nowPlaying(networks.station(n, key))
+    }
+
     /** All channels of one network (Open FM, RMF ON, ESKA), in the site's order. */
     suspend fun network(network: RadioNetwork): List<Track> =
         (networks ?: throw ProviderError.NotSupported("Radio networks are not available")).stations(network).map(RadioNetworks::toTrack)

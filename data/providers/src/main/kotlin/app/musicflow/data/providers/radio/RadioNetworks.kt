@@ -48,6 +48,9 @@ data class NetworkStation(
     val category: String? = null,
 )
 
+/** The song a station announces as playing now (like RDS "radio text"); only what it reports. */
+data class NowPlaying(val title: String, val artist: String?, val artworkUrl: String?)
+
 /**
  * Channel lists of Open FM, RMF ON and ESKA, read from their public websites (unofficial: no
  * documented API, may break when a site changes). Lists are cached for 6 hours; a stale list is
@@ -110,6 +113,21 @@ class RadioNetworks(
     suspend fun station(network: RadioNetwork, id: String): NetworkStation =
         stations(network).firstOrNull { it.id == id } ?: throw ProviderError.Unavailable("${network.displayName} no longer lists this station")
 
+    private val nowCache = ConcurrentHashMap<String, Pair<Long, String>>()
+
+    /** One shared document per network (Open FM, RMF ON) or station (ESKA), fetched at most every 15 s. */
+    private suspend fun nowDocument(url: String): String {
+        nowCache[url]?.let { (at, text) -> if (clock() - at < NOW_TTL_MS) return text }
+        return fetch(url).also { nowCache[url] = clock() to it }
+    }
+
+    /** What the station is playing now, from the broadcaster's own now-playing data; null when unknown. */
+    suspend fun nowPlaying(s: NetworkStation): NowPlaying? = when (s.network) {
+        RadioNetwork.OPEN_FM -> NetworkParsers.openFmNowPlaying(nowDocument("https://open.fm/api/radio/playlist"), s.id)
+        RadioNetwork.RMF_ON -> NetworkParsers.rmfNowPlaying(nowDocument("https://www.rmfon.pl/stacje/ajax_playing_main.txt"), s.id)
+        RadioNetwork.ESKA -> NetworkParsers.eskaNowPlaying(nowDocument("https://front-api.grupazprmedia.pl/music/v2/now_playing/${s.id.substringBefore('-')}/"))
+    }
+
     /** Playable URL candidates, best first (RMF ON: MP3 128 kbps servers, then AAC). */
     suspend fun streamUrls(s: NetworkStation): List<String> = when {
         s.streamUrl != null -> listOf(s.streamUrl)
@@ -120,6 +138,7 @@ class RadioNetworks(
 
     companion object {
         const val TTL_MS = 6 * 60 * 60 * 1000L
+        const val NOW_TTL_MS = 15_000L
         const val PREFIX = "net/"
         const val BROWSER_UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36"
 
@@ -219,6 +238,31 @@ object NetworkParsers {
             if (name.isNullOrEmpty() || id == null || !url.startsWith("https://", true)) null
             else NetworkStation(RadioNetwork.ESKA, id, name, url, logo, isHls = url.contains(".m3u8"))
         }.distinctBy { it.id }.toList()
+
+    private fun obj(text: String): JsonObject? = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull()
+    private fun JsonObject.str(key: String) = (this[key] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull?.trim()?.takeIf { it.isNotEmpty() }
+
+    /** Open FM `api/radio/playlist`: `{"<id>": {"currentSong": {"artist", "title"}}}`. */
+    fun openFmNowPlaying(text: String, id: String): NowPlaying? {
+        val song = (obj(text)?.get(id) as? JsonObject)?.get("currentSong") as? JsonObject ?: return null
+        val title = song.str("title") ?: return null
+        return NowPlaying(title, song.str("artist"), null)
+    }
+
+    /** RMF ON `stacje/ajax_playing_main.txt`: `{"radio<id>": {"name": artist, "utwor": title, "coverBigUrl"}}`. */
+    fun rmfNowPlaying(text: String, id: String): NowPlaying? {
+        val e = obj(text)?.get("radio$id") as? JsonObject ?: return null
+        val title = e.str("utwor") ?: return null
+        return NowPlaying(title, e.str("name"), e.str("coverBigUrl")?.takeIf { it.startsWith("https://") })
+    }
+
+    /** ESKA `music/v2/now_playing/<id>/`: `{"current": {"name", "artists": [..], "image"}}`; null between songs. */
+    fun eskaNowPlaying(text: String): NowPlaying? {
+        val cur = obj(text)?.get("current") as? JsonObject ?: return null
+        val title = cur.str("name") ?: return null
+        val artists = (cur["artists"] as? JsonArray).orEmpty().mapNotNull { it.jsonPrimitive.contentOrNull?.trim()?.takeIf(String::isNotEmpty) }
+        return NowPlaying(title, artists.joinToString(", ").ifEmpty { null }, cur.str("image")?.takeIf { it.startsWith("https://") })
+    }
 
     private fun unescape(s: String) = s.replace("&amp;", "&").replace("&quot;", "\"").replace("&#39;", "'").replace("&#039;", "'")
         .replace("&rsquo;", "’").replace("&lt;", "<").replace("&gt;", ">")

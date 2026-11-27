@@ -226,6 +226,54 @@ class MusicService : MediaLibraryService() {
         }
     }
 
+    // ---------------------------------------------------------------- radio "RDS": what is playing now
+
+    private var nowPlayingJob: Job? = null
+
+    /**
+     * Shows the station's current song as the item's title/artist/cover (player, notification,
+     * lock screen, Android Auto), like RDS radio text. Same stream: not a new listen.
+     */
+    private fun showNowPlaying(mediaId: String, title: String, artist: String?, artworkUrl: String?) {
+        val item = player.currentMediaItem?.takeIf { it.mediaId == mediaId } ?: return
+        val m = item.mediaMetadata
+        val art = artworkUrl?.let(android.net.Uri::parse) ?: MediaItems.toTrack(item)?.artworkUrl?.let(android.net.Uri::parse)
+        if (m.title?.toString() == title && m.artist?.toString() == artist && m.artworkUri == art) return
+        val updated = item.buildUpon().setMediaMetadata(
+            m.buildUpon().setTitle(title).setDisplayTitle(title).setArtist(artist).setSubtitle(artist).setArtworkUri(art).build(),
+        ).build()
+        reloadingIndex = player.currentMediaItemIndex
+        player.replaceMediaItem(player.currentMediaItemIndex, updated)
+        diagnostics.d("radio", "Now playing: $title — ${artist.orEmpty()}")
+    }
+
+    /** Open FM / RMF ON / ESKA publish what they play: poll it every 20 s while the station plays. */
+    private fun watchNowPlaying() {
+        val item = player.currentMediaItem
+        val id = item?.mediaId?.let(MediaId::parseOrNull)
+        if (id != null && nowPlayingJob?.isActive == true && watchedNowPlaying == id.value) return
+        nowPlayingJob?.cancel()
+        watchedNowPlaying = null
+        if (id == null || app.musicflow.data.providers.radio.RadioNetworks.parse(id) == null) return
+        val radio = registry.byId(app.musicflow.data.providers.radio.RadioIds.STATION) as? app.musicflow.data.providers.radio.RadioBrowserProvider ?: return
+        val station = MediaItems.toTrack(item)
+        watchedNowPlaying = id.value
+        nowPlayingJob = scope.launch {
+            while (true) {
+                if (player.playWhenReady) {
+                    val np = try { radio.nowPlaying(id) } catch (c: kotlinx.coroutines.CancellationException) { throw c } catch (e: Exception) { null }
+                    if (np != null) {
+                        val artist = listOfNotNull(np.artist, station?.title).joinToString(" · ")
+                        showNowPlaying(id.value, np.title, artist, np.artworkUrl)
+                    }
+                }
+                kotlinx.coroutines.delay(20_000)
+            }
+        }
+    }
+
+    private var watchedNowPlaying: String? = null
+
     // ---------------------------------------------------------------- player
 
     private fun buildPlayer(s: UserSettings): ExoPlayer {
@@ -289,6 +337,7 @@ class MusicService : MediaLibraryService() {
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) consecutiveAutoSkips = 0
             runtime.update { it.copy(stream = null, format = null, loudnessSource = null) }
             liveLoudness.live = mediaItem?.mediaId?.startsWith("radio:") == true
+            watchNowPlaying()
             refreshNormalizationFromStream()
             effects.ensureActive()
             runtime.clearError()
@@ -340,13 +389,7 @@ class MusicService : MediaLibraryService() {
                 .filterIsInstance<androidx.media3.extractor.metadata.icy.IcyInfo>()
                 .mapNotNull { it.title?.trim()?.takeIf { t -> t.isNotEmpty() && t != "-" } }.firstOrNull() ?: return
             val station = MediaItems.toTrack(item)?.title ?: item.mediaMetadata.title?.toString()
-            if (item.mediaMetadata.title?.toString() == title) return
-            val updated = item.buildUpon().setMediaMetadata(
-                item.mediaMetadata.buildUpon().setTitle(title).setDisplayTitle(title).setArtist(station).setSubtitle(station).build(),
-            ).build()
-            reloadingIndex = player.currentMediaItemIndex // same stream, new song title: not a new listen
-            player.replaceMediaItem(player.currentMediaItemIndex, updated)
-            diagnostics.d("radio", "Now playing on $station: $title")
+            showNowPlaying(item.mediaId, title, station, artworkUrl = null)
         }
 
         override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {

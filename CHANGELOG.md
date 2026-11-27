@@ -19,6 +19,12 @@ versioning: [SemVer](https://semver.org).
   - the gain changes slowly (−15…+9 dB), and boosts go through a soft limiter;
   - it follows the *Volume normalisation* setting (Off / Quiet / Normal / Loud).
 
+- **"RDS" for radio: the song playing now.**
+  - Open FM, RMF ON and ESKA publish what they play. MusicFlow reads it every 20 s while a
+    station plays and shows title, artist and, for RMF ON and ESKA, the album cover.
+  - Shown in the player, the notification, the lock screen and Android Auto.
+  - Other stations keep using the title sent in the stream (ICY).
+
 ### Fixed
 - Open FM: every stream request (also HLS chunk lists and segments) now carries the headers of
   Open FM's own web player (browser User-Agent, Origin and Referer). Not verifiable from here:

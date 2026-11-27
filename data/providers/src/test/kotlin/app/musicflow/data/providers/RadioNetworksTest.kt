@@ -113,3 +113,30 @@ class RadioNetworksTest {
         assertThat(provider.track(eska.first().id).title).isEqualTo("Radio ESKA")
     }
 }
+
+class RadioNowPlayingTest {
+    private fun res(name: String) = javaClass.getResource("/radio/$name")!!.readText()
+
+    @Test fun openFm() {
+        val np = NetworkParsers.openFmNowPlaying(res("openfm_playlist.json"), "1")!!
+        assertThat(np.title).isNotEmpty()
+        assertThat(np.artist).isNotEmpty()
+        assertThat(NetworkParsers.openFmNowPlaying(res("openfm_playlist.json"), "999")).isNull()
+    }
+
+    @Test fun rmfOnWithCover() {
+        val np = NetworkParsers.rmfNowPlaying(res("rmfon_playing.json"), "5")!!
+        assertThat(np.title).isEqualTo("Everlasting Love")
+        assertThat(np.artist).isEqualTo("Sandra")
+        assertThat(np.artworkUrl).isEqualTo("https://i.static.rmf.pl/82/512_512_plyta_5587.jpg")
+    }
+
+    @Test fun eskaCurrentOrNothing() {
+        val np = NetworkParsers.eskaNowPlaying(res("eska_now_2980.json"))!!
+        assertThat(np.title).isEqualTo("Daj Mi Znać")
+        assertThat(np.artist).isEqualTo("Sobel & Michał Szczygieł")
+        assertThat(np.artworkUrl).isNull() // empty image: keep the station logo
+        assertThat(NetworkParsers.eskaNowPlaying(res("eska_now_6130.json"))).isNull() // between songs
+        assertThat(NetworkParsers.eskaNowPlaying("not json")).isNull()
+    }
+}

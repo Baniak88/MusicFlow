@@ -163,6 +163,12 @@ API, so a site redesign can break it. The parsers are unit-tested with saved cop
   fallback.
 * **ESKA:** the channel tiles of `https://player.eska.pl/` (`data-stream-url`, HLS on
   `liveradio.timesa.pl`).
+* Now playing ("RDS"):
+  * Open FM: `open.fm/api/radio/playlist` (`currentSong`);
+  * RMF ON: `www.rmfon.pl/stacje/ajax_playing_main.txt` (`radio<id>`: artist, title, cover);
+  * ESKA: `front-api.grupazprmedia.pl/music/v2/now_playing/<id>/` (`current`).
+
+  These are polled every 20 s while the station plays (each document cached 15 s).
 * Lists are cached for 6 h; a stale list is used while a site is unreachable. They appear in
   Radio search (first, before Radio Browser), as Explore tiles on Android, and as Home tiles
   on iPhone. Track ids: `radio:net/<network>/<id>` (Android adds `hls/` for HLS).
