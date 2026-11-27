@@ -46,5 +46,4 @@
     <string name="home_update_installing">Instalowanie…</string>
     <string name="home_update_failed">Nie zainstalowano: %1$s</string>
     <string name="home_update_browser">Przeglądarka</string>
-    <string name="home_play">Odtwórz</string>
 </resources>

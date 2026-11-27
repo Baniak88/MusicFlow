@@ -85,6 +85,7 @@ class MusicService : MediaLibraryService() {
     @Inject lateinit var search: SearchRepository
     @Inject lateinit var playlists: PlaylistRepository
     @Inject lateinit var catalog: CatalogRepository
+    @Inject lateinit var explore: app.musicflow.data.repositories.ExploreRepository
     @Inject lateinit var connectivity: ConnectivityMonitor
     @Inject lateinit var diagnostics: DiagnosticsLog
     @Inject lateinit var runtime: PlaybackRuntime
@@ -141,7 +142,7 @@ class MusicService : MediaLibraryService() {
         val sessionActivity = packageManager.getLaunchIntentForPackage(packageName)?.let {
             PendingIntent.getActivity(this, 0, it.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         }
-        val callback = LibraryCallback(this, scope, library, playlists, search, ::onFavoriteCommand, ::restoreForResumption)
+        val callback = LibraryCallback(this, scope, library, playlists, search, catalog, explore, localProvider, ::onFavoriteCommand, ::restoreForResumption)
         session = MediaLibrarySession.Builder(this, player, callback)
             .apply { sessionActivity?.let(::setSessionActivity) }
             .build()

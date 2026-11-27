@@ -346,26 +346,26 @@ enum class HomeFilter(val label: Int) { ALL(R.string.home_filter_all), SONGS(R.s
 private fun TrackRowsPager(tracks: List<Track>, currentId: app.musicflow.core.model.MediaId?, isPlaying: Boolean, onPlay: (Int) -> Unit, onMore: (Track) -> Unit) {
     val pages = tracks.chunked(3)
     val pager = rememberPagerState { pages.size }
-    HorizontalPager(pager, pageSize = PageSize.Fixed(330.dp), contentPadding = PaddingValues(end = 40.dp)) { p ->
+    // A page fills the width (a sliver of the next page shows there is more), so titles have room.
+    HorizontalPager(pager, pageSize = PageSize.Fill, contentPadding = PaddingValues(end = if (pages.size > 1) 28.dp else 0.dp)) { p ->
         Column {
             pages[p].forEachIndexed { j, t ->
                 Row(
                     Modifier.fillMaxWidth().clickable { onPlay(p * 3 + j) }.padding(horizontal = 16.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Artwork(t.artworkUrl, Modifier.size(60.dp), shape = androidx.compose.foundation.shape.CircleShape)
+                    Artwork(t.artworkUrl, Modifier.size(56.dp), shape = androidx.compose.foundation.shape.CircleShape)
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text(t.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                             color = if (t.id == currentId) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                         Text(t.artistLine, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    IconButton(onClick = { onMore(t) }) { Icon(Icons.Rounded.MoreHoriz, stringResource(R.string.home_more), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    // Tapping the row plays it; only the playing track shows bars.
                     if (t.id == currentId) {
-                        Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) { EqualizerBars(isPlaying) }
-                    } else {
-                        app.musicflow.core.designsystem.component.GradientPlayButton(Icons.Rounded.PlayArrow, stringResource(R.string.home_play), { onPlay(p * 3 + j) }, size = 40.dp, ring = false)
+                        Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) { EqualizerBars(isPlaying) }
                     }
+                    IconButton(onClick = { onMore(t) }) { Icon(Icons.Rounded.MoreHoriz, stringResource(R.string.home_more), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
         }
@@ -377,9 +377,13 @@ private fun MixCard(mix: Mix, onPlay: () -> Unit) {
     Column(Modifier.width(168.dp).clip(MaterialTheme.shapes.medium).clickable(onClick = onPlay)) {
         Box {
             Artwork(mix.artworkUrl, Modifier.size(168.dp), shape = MaterialTheme.shapes.medium)
+            // Dark scrim at the bottom only: the cover stays visible and the title readable.
             Box(
                 Modifier.matchParentSize().clip(MaterialTheme.shapes.medium).background(
-                    Brush.verticalGradient(listOf(androidx.compose.ui.graphics.Color.Transparent, MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))),
+                    Brush.verticalGradient(
+                        0.45f to androidx.compose.ui.graphics.Color.Transparent,
+                        1f to androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.75f),
+                    ),
                 ),
             )
             Text(

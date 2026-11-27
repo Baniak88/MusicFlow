@@ -3,6 +3,27 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.18] - 2026-11-27
+
+### Added
+- **Android Auto: the whole app**, in four tabs:
+  - Home: continue listening, recently played, most played, trending;
+  - Library: liked songs, playlists, saved albums, favourite artists, on this device;
+  - Radio: Open FM, RMF ON, ESKA, popular here, worldwide, genres (stations as a grid);
+  - Explore: genres, moods, decades and charts.
+- Choosing a song or a station in Android Auto plays the rest of its list after it.
+- Voice/text search in Android Auto also finds radio stations ("RMF FM").
+
+### Changed
+- *Add to playlist* is a glass sheet with playlist covers instead of a plain dialog.
+- Home, *Continue listening*:
+  - the rows use the full width, so titles are no longer cut;
+  - the per-row play button is gone (tap the row);
+  - only the playing track shows bars.
+- Home, *For you* mixes: a dark scrim at the bottom instead of a violet overlay, so the cover
+  stays visible and the title is readable.
+- Mini player: the output-device icon (e.g. Bluetooth) moved into the subtitle line.
+
 ## [1.0.0-beta.17] - 2026-11-27
 
 ### Added

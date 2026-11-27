@@ -1,6 +1,15 @@
 package app.musicflow.feature.library
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import app.musicflow.core.designsystem.component.Glass
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -108,6 +117,7 @@ private fun Action(icon: ImageVector, label: String, onClick: () -> Unit) {
 }
 
 /** Lets the user pick a playlist; warns before adding a song that is already in it. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddToPlaylistDialog(track: Track, vm: TrackMenuViewModel, onDismiss: () -> Unit) {
     val playlists by vm.userPlaylists.collectAsStateWithLifecycle()
@@ -127,24 +137,55 @@ private fun AddToPlaylistDialog(track: Track, vm: TrackMenuViewModel, onDismiss:
         }
         return
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.lib_add_to_playlist)) },
-        text = {
-            LazyColumn {
-                item {
-                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { create = true }, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Add, null); Spacer(Modifier.width(16.dp)); Text(stringResource(R.string.lib_new_playlist))
-                    }
-                }
-                items(playlists, key = { it.id }) { p ->
-                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { repoCheck(p) }, verticalAlignment = Alignment.CenterVertically) {
-                        Text(p.name, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(trackCount(p.trackCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
+            // What is being added.
+            Row(Modifier.padding(horizontal = 20.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Artwork(track.artworkUrl, Modifier.size(52.dp), shape = RoundedCornerShape(14.dp))
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.lib_add_to_playlist), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(track.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.lib_cancel)) } },
-    )
+            Spacer(Modifier.height(12.dp))
+            LazyColumn(Modifier.heightIn(max = 460.dp)) {
+                item {
+                    PlaylistChoice(
+                        leading = {
+                            Box(Modifier.size(48.dp).clip(CircleShape).background(Glass.PlayBrush), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Rounded.Add, null, tint = Color.White)
+                            }
+                        },
+                        title = stringResource(R.string.lib_new_playlist),
+                        subtitle = null,
+                        onClick = { create = true },
+                    )
+                }
+                items(playlists, key = { it.id }) { p ->
+                    PlaylistChoice(
+                        leading = { Artwork(p.artworkUrl, Modifier.size(48.dp), shape = RoundedCornerShape(12.dp), iconSize = 22.dp) },
+                        title = p.name,
+                        subtitle = trackCount(p.trackCount),
+                        onClick = { repoCheck(p) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistChoice(leading: @Composable () -> Unit, title: String, subtitle: String?, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        leading()
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+    }
 }
