@@ -34,23 +34,6 @@ class RadioMusicBrainzLiveTest {
         Unit
     }
 
-    /** sunshine live channels from the directory, and whether each stream answers from this runner. */
-    @Test fun sunshineLiveChannels() = runBlocking {
-        val radio = RadioBrowserProvider(client, DiagnosticsLog(), ua)
-        val channels = radio.brand("sunshine live", listOf("sunshine-live.de", "streamabc.net/sunsl"))
-        println("sunshine live: ${channels.size} channels")
-        assertThat(channels).isNotEmpty()
-        for (t in channels.take(40)) {
-            val stream = runCatching { radio.resolve(t.id, app.musicflow.core.model.AudioQuality.HIGH) }.getOrNull()
-            val code = stream?.let { s ->
-                runCatching {
-                    client.newCall(okhttp3.Request.Builder().url(s.url).header("User-Agent", ua).header("Range", "bytes=0-4095").build()).execute().use { it.code }
-                }.getOrDefault(-1)
-            }
-            println("  ${t.title} | ${t.artistLine} | ${stream?.url?.take(70)} | HTTP $code")
-        }
-    }
-
     @Test fun radioSearchTopAndStream() = runBlocking {
         val radio = RadioBrowserProvider(client, DiagnosticsLog(), ua, countryCode = { "PL" })
         val found = radio.search("rmf", SearchFilter.ALL).items.tracks()

@@ -8,7 +8,6 @@ internal fun autoCategoryLabel(c: ExploreCategory): Int = when (c) {
     ExploreCategory.RADIO_OPEN_FM -> R.string.auto_cat_radio_open_fm
     ExploreCategory.RADIO_RMF_ON -> R.string.auto_cat_radio_rmf_on
     ExploreCategory.RADIO_ESKA -> R.string.auto_cat_radio_eska
-    ExploreCategory.RADIO_SUNSHINE_LIVE -> R.string.auto_cat_radio_sunshine_live
     ExploreCategory.RADIO_LOCAL -> R.string.auto_cat_radio_local
     ExploreCategory.RADIO_WORLD -> R.string.auto_cat_radio_world
     ExploreCategory.RADIO_POP -> R.string.auto_cat_radio_pop

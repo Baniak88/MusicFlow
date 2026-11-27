@@ -3,6 +3,15 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.22] - 2026-11-27
+
+### Removed
+- **sunshine live tile.** Its streams are geo-restricted to Germany. Outside it the server
+  still answers normally (HTTP 200) but plays an announcement that the service is unavailable
+  in this country. The beta.21 live test only checked the HTTP status and wrongly reported the
+  channels as working. MusicFlow does not circumvent geo-restrictions, so the tile is gone.
+  Search still finds the stations in the directory.
+
 ## [1.0.0-beta.21] - 2026-11-27
 
 ### Added
