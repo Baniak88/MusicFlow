@@ -22,6 +22,7 @@
     <string name="auto_cat_radio_open_fm">Kanały Open FM</string>
     <string name="auto_cat_radio_rmf_on">Stacje RMF ON</string>
     <string name="auto_cat_radio_eska">Kanały Radia ESKA</string>
+    <string name="auto_cat_radio_sunshine_live">sunshine live (tylko z niemieckim adresem)</string>
     <string name="auto_cat_radio_local">Popularne radia w Twoim kraju</string>
     <string name="auto_cat_radio_world">Najpopularniejsze radia na świecie</string>
     <string name="auto_cat_radio_pop">Radia pop</string>

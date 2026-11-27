@@ -155,6 +155,21 @@ class RadioNowPlayingTest {
 }
 
 class HttpsUpgradeTest {
+    @Test fun brandKeepsOnlyTheBroadcastersOwnStreams() = runBlocking {
+        val server = okhttp3.mockwebserver.MockWebServer()
+        server.enqueue(okhttp3.mockwebserver.MockResponse().setBody("""[
+          {"stationuuid":"a","name":"sunshine live - house","url":"https://stream.sunshine-live.de/house/mp3-192/stream.mp3","url_resolved":"https://sunsl.streamabc.net/sunsl-house-mp3-192-3326799","bitrate":192,"codec":"MP3","clickcount":50},
+          {"stationuuid":"b","name":"Sunshine Live - Classics","url":"https://stream.sunshine-live.de/classics/mp3-192/stream.mp3","url_resolved":"","bitrate":192,"codec":"MP3","clickcount":20},
+          {"stationuuid":"c","name":"sunshine live (fan relay)","url":"https://relay.example/sunshine.mp3","url_resolved":"https://relay.example/sunshine.mp3","clickcount":999}
+        ]"""))
+        server.start()
+        val provider = RadioBrowserProvider(OkHttpClient(), DiagnosticsLog(), "UA", listOf(server.url("/").toString()))
+        val channels = provider.brand("sunshine live", listOf("sunshine-live.de", "streamabc.net/sunsl"))
+        assertThat(channels.map { it.title }).containsExactly("sunshine live - house", "Sunshine Live - Classics")
+        assertThat(server.takeRequest().requestUrl!!.queryParameter("name")).isEqualTo("sunshine live")
+        server.shutdown()
+    }
+
     @Test fun knownHostsAreUpgradedToHttps() {
         assertThat(RadioBrowserProvider.upgradeToHttps("http://stream.sunshine-live.de/house/mp3-192/stream.sunshine-live.de/"))
             .isEqualTo("https://stream.sunshine-live.de/house/mp3-192/stream.sunshine-live.de/")

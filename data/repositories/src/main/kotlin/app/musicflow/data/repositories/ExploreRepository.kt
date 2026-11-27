@@ -40,6 +40,12 @@ enum class ExploreCategory(val group: CategoryGroup, val query: String, val colo
     RADIO_OPEN_FM(CategoryGroup.RADIO, "@net:openfm", 0xFFF97316),
     RADIO_RMF_ON(CategoryGroup.RADIO, "@net:rmf", 0xFFE11D48),
     RADIO_ESKA(CategoryGroup.RADIO, "@net:eska", 0xFF2563EB),
+    /**
+     * sunshine live (Germany), from the Radio Browser directory. Geo-restricted to Germany by the
+     * broadcaster: plays only with a German address (e.g. the user's own VPN); MusicFlow does not
+     * circumvent it. The label says so.
+     */
+    RADIO_SUNSHINE_LIVE(CategoryGroup.RADIO, "@brand:sunshine", 0xFFFACC15),
     RADIO_LOCAL(CategoryGroup.RADIO, "@local", 0xFFC45BF6),
     RADIO_WORLD(CategoryGroup.RADIO, "@world", 0xFF8B5CF6),
     RADIO_POP(CategoryGroup.RADIO, "pop", 0xFFF43F5E),

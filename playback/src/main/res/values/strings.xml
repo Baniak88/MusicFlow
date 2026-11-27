@@ -23,6 +23,7 @@
     <string name="auto_cat_radio_open_fm">Open FM channels</string>
     <string name="auto_cat_radio_rmf_on">RMF ON stations</string>
     <string name="auto_cat_radio_eska">Radio ESKA channels</string>
+    <string name="auto_cat_radio_sunshine_live">sunshine live (German address only)</string>
     <string name="auto_cat_radio_local">Popular radio near you</string>
     <string name="auto_cat_radio_world">Top radio worldwide</string>
     <string name="auto_cat_radio_pop">Pop radio</string>

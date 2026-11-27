@@ -3,6 +3,15 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.25] - 2026-11-27
+
+### Added
+- **sunshine live tile again, clearly labelled**:
+  - named *sunshine live (German address only)* in Explore and Android Auto;
+  - the channels are geo-restricted to Germany by the broadcaster, so they play only when the
+    phone has a German address, e.g. through the user's own VPN;
+  - MusicFlow itself does not route around the restriction (no proxy).
+
 ## [1.0.0-beta.24] - 2026-11-27
 
 ### Fixed (layout polish, from tester screenshots)

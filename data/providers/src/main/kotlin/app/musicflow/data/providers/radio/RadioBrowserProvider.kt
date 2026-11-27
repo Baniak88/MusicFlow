@@ -181,6 +181,17 @@ class RadioBrowserProvider(
         return networks.nowPlaying(networks.station(n, key))
     }
 
+    /**
+     * All channels of a broadcaster that has no channel list of its own we can read, from the
+     * Radio Browser directory: stations named [name] whose stream really is the broadcaster's
+     * (URL contains one of [streamHosts]); look-alike entries are left out.
+     */
+    suspend fun brand(name: String, streamHosts: List<String>): List<Track> {
+        val found = stations("json/stations/search", common(100) + ("name" to name))
+            .filter { s -> listOf(s.urlResolved, s.url).any { u -> streamHosts.any { h -> u.contains(h, ignoreCase = true) } } }
+        return RadioSearch.bestVersions(found).map(RadioIds::toTrack)
+    }
+
     /** All channels of one network (Open FM, RMF ON, ESKA), in the site's order. */
     suspend fun network(network: RadioNetwork): List<Track> =
         (networks ?: throw ProviderError.NotSupported("Radio networks are not available")).stations(network).map(RadioNetworks::toTrack)
