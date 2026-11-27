@@ -47,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Modifier
@@ -141,12 +142,18 @@ fun ExploreScreen(contentPadding: PaddingValues, vm: ExploreViewModel = hiltView
                     app.musicflow.core.designsystem.component.GlassIconButton(androidx.compose.material.icons.Icons.Rounded.Settings, stringResource(R.string.explore_settings), { nav.openSettings() })
                 }
                 Spacer(Modifier.height(12.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item { PillChip(stringResource(R.string.group_all), group == null, { vm.group.value = null }) }
-                    items(CategoryGroup.entries) { g ->
-                        PillChip(groupLabel(g), group == g, { vm.group.value = g })
-                    }
-                }
+                // Full-bleed (out of the grid's 16 dp margin) so chips scroll from the screen edge
+                // instead of being clipped at the margin.
+                val groups = listOf<CategoryGroup?>(null) + CategoryGroup.entries
+                app.musicflow.core.designsystem.component.ChipRow(
+                    groups.map { g -> if (g == null) stringResource(R.string.group_all) else groupLabel(g) },
+                    groups.indexOf(group), { vm.group.value = groups[it] },
+                    Modifier.layout { m, c ->
+                        val bleed = 16.dp.roundToPx()
+                        val p = m.measure(c.copy(minWidth = c.maxWidth + 2 * bleed, maxWidth = c.maxWidth + 2 * bleed))
+                        layout(c.maxWidth, p.height) { p.place(-bleed, 0) }
+                    },
+                )
             }
         }
         items(vm.categories(group), key = { it.name }) { c ->

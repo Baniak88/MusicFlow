@@ -3,6 +3,18 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.24] - 2026-11-27
+
+### Fixed (layout polish, from tester screenshots)
+- **Filter chips:**
+  - Home, Library and Search now fit in one line, equal width, with nothing cut off at the
+    screen edges (`ChipRow`);
+  - Explore's six groups scroll from the screen edge, keeping the margin.
+- **Home, *Continue listening*:** whole pages with page dots, instead of half-visible artwork
+  peeking from the next page.
+- Screenshot test (opt-in, `MF_SCREENSHOTS=<dir>`) renders the main screens to PNG for review
+  without a device.
+
 ## [1.0.0-beta.23] - 2026-11-27
 
 ### Changed

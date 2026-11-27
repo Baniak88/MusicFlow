@@ -20,11 +20,12 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.fillMaxWidth
 import app.musicflow.core.designsystem.theme.LocalMfExtras
 
 /** Pill filter chip: filled accent when selected, outlined otherwise. */
 @Composable
-fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, compact: Boolean = false) {
     val shape = CircleShape
     androidx.compose.foundation.layout.Box(
         modifier
@@ -39,7 +40,7 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
             )
             .semantics { this.selected = selected }
             .clickable(role = Role.Tab, onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(horizontal = if (compact) 6.dp else 18.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -47,6 +48,9 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            softWrap = false,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
         )
     }
 }
@@ -61,4 +65,29 @@ fun Modifier.appBackground(): Modifier {
     val base = MaterialTheme.colorScheme.background
     if (!extras.isDark) return this.background(Brush.verticalGradient(0f to extras.gradientTop, 0.45f to base, 1f to base))
     return this.background(base) // flat near-black (no glows)
+}
+
+
+/**
+ * A row of filter chips that always looks tidy: up to four share the screen width equally in one
+ * line (nothing cut off at the edges); more than four scroll, inset by the screen margin.
+ */
+@Composable
+fun ChipRow(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+    if (labels.size <= 4) {
+        androidx.compose.foundation.layout.Row(
+            modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+        ) {
+            labels.forEachIndexed { i, l -> PillChip(l, i == selected, { onSelect(i) }, Modifier.weight(1f), compact = true) }
+        }
+    } else {
+        androidx.compose.foundation.lazy.LazyRow(
+            modifier.fillMaxWidth(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+        ) {
+            items(labels.size) { i -> PillChip(labels[i], i == selected, { onSelect(i) }) }
+        }
+    }
 }

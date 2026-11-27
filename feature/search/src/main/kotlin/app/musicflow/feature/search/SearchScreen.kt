@@ -183,9 +183,9 @@ private fun Results(state: ResultsState, padding: PaddingValues, vm: SearchViewM
             }
         }
         item {
-            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(SearchFilter.entries) { f -> PillChip(filterLabel(f), state.filter == f, { vm.setFilter(f) }) }
-            }
+            app.musicflow.core.designsystem.component.ChipRow(
+                SearchFilter.entries.map { filterLabel(it) }, SearchFilter.entries.indexOf(state.filter), { vm.setFilter(SearchFilter.entries[it]) },
+            )
         }
         state.correctedQuery?.let { c ->
             item {

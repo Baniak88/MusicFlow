@@ -107,9 +107,10 @@ fun HomeScreen(contentPadding: PaddingValues, vm: HomeViewModel = hiltViewModel(
         LazyColumn(Modifier.fillMaxSize(), contentPadding = contentPadding) {
             item(key = "header") { Header(vm.greeting, onSettings = nav::openSettings, onSearch = { nav.openSearch() }) }
             item(key = "chips") {
-                LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(HomeFilter.entries) { f -> PillChip(stringResource(f.label), filter == f, { filter = f }) }
-                }
+                app.musicflow.core.designsystem.component.ChipRow(
+                    HomeFilter.entries.map { stringResource(it.label) }, HomeFilter.entries.indexOf(filter), { filter = HomeFilter.entries[it] },
+                    Modifier.padding(vertical = 10.dp),
+                )
             }
             update?.takeIf { !updateDismissed }?.let { u ->
                 item(key = "update") {
@@ -346,8 +347,9 @@ enum class HomeFilter(val label: Int) { ALL(R.string.home_filter_all), SONGS(R.s
 private fun TrackRowsPager(tracks: List<Track>, currentId: app.musicflow.core.model.MediaId?, isPlaying: Boolean, onPlay: (Int) -> Unit, onMore: (Track) -> Unit) {
     val pages = tracks.chunked(3)
     val pager = rememberPagerState { pages.size }
-    // A page fills the width (a sliver of the next page shows there is more), so titles have room.
-    HorizontalPager(pager, pageSize = PageSize.Fill, contentPadding = PaddingValues(end = if (pages.size > 1) 28.dp else 0.dp)) { p ->
+    Column {
+    // Whole pages (no half-visible artwork at the edge); dots below show there is more.
+    HorizontalPager(pager, pageSize = PageSize.Fill, pageSpacing = 16.dp) { p ->
         Column {
             pages[p].forEachIndexed { j, t ->
                 Row(
@@ -370,6 +372,18 @@ private fun TrackRowsPager(tracks: List<Track>, currentId: app.musicflow.core.mo
             }
         }
     }
+    if (pages.size > 1) {
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center) {
+            repeat(pages.size) { i ->
+                val active = i == pager.currentPage
+                Box(
+                    Modifier.padding(horizontal = 3.dp).size(width = if (active) 18.dp else 6.dp, height = 6.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline),
+                )
+            }
+        }
+    }    }
 }
 
 @Composable

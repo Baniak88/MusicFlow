@@ -115,11 +115,11 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
             }
         }
         item {
-            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(LibTab.entries) { t ->
-                    PillChip(stringResource(when (t) { LibTab.PLAYLISTS -> R.string.lib_playlists; LibTab.SONGS -> R.string.lib_songs; LibTab.ALBUMS -> R.string.lib_albums; LibTab.ARTISTS -> R.string.lib_artists }), tab == t, { tab = t })
-                }
-            }
+            app.musicflow.core.designsystem.component.ChipRow(
+                LibTab.entries.map { t -> stringResource(when (t) { LibTab.PLAYLISTS -> R.string.lib_playlists; LibTab.SONGS -> R.string.lib_songs; LibTab.ALBUMS -> R.string.lib_albums; LibTab.ARTISTS -> R.string.lib_artists }) },
+                LibTab.entries.indexOf(tab), { tab = LibTab.entries[it] },
+                Modifier.padding(top = 4.dp, bottom = 8.dp),
+            )
         }
         when (tab) {
             LibTab.PLAYLISTS -> if (playlists.isEmpty()) item { MessageState(stringResource(R.string.lib_no_playlists), body = stringResource(R.string.lib_no_playlists_body), actionLabel = stringResource(R.string.lib_new_playlist), onAction = { showCreate = true }) }
