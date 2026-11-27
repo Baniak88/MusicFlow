@@ -121,7 +121,7 @@ class RadioNetworks(
     companion object {
         const val TTL_MS = 6 * 60 * 60 * 1000L
         const val PREFIX = "net/"
-        private const val BROWSER_UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36"
+        const val BROWSER_UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36"
 
         fun mediaId(s: NetworkStation) = MediaId.of(RadioIds.STATION, (if (s.isHls) "hls/" else "") + "$PREFIX${s.network.key}/${s.id}")
 

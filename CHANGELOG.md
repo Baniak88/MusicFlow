@@ -13,6 +13,16 @@ versioning: [SemVer](https://semver.org).
   - Explore: genres, moods, decades and charts.
 - Choosing a song or a station in Android Auto plays the rest of its list after it.
 - Voice/text search in Android Auto also finds radio stations ("RMF FM").
+- **Loudness normalisation for radio.** Stations carry no loudness data, so MusicFlow now
+  measures each stream while it plays and steers it to the same target as songs:
+  - measurement follows EBU R128 / BS.1770 (K-weighting, gated 400 ms blocks);
+  - the gain changes slowly (−15…+9 dB), and boosts go through a soft limiter;
+  - it follows the *Volume normalisation* setting (Off / Quiet / Normal / Loud).
+
+### Fixed
+- Open FM: every stream request (also HLS chunk lists and segments) now carries the headers of
+  Open FM's own web player (browser User-Agent, Origin and Referer). Not verifiable from here:
+  the CDN refuses servers outside Poland.
 
 ### Changed
 - *Add to playlist* is a glass sheet with playlist covers instead of a plain dialog.

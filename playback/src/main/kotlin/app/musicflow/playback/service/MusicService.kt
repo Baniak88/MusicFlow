@@ -105,6 +105,9 @@ class MusicService : MediaLibraryService() {
     private lateinit var prefs: SharedPreferences
 
     @Volatile private var settings = UserSettings()
+
+    /** Measures and levels live radio (stations carry no loudness data). */
+    private val liveLoudness = app.musicflow.playback.effects.LiveLoudnessProcessor()
     private var listening: ListeningSession? = null
     private var consecutiveAutoSkips = 0
     private var continuationJob: Job? = null
@@ -233,7 +236,15 @@ class MusicService : MediaLibraryService() {
             .setBufferDurationsMs(s.bufferProfile.minBufferMs, s.bufferProfile.maxBufferMs, 1_000, 2_500)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
-        val renderers = DefaultRenderersFactory(this).setEnableAudioFloatOutput(false)
+        liveLoudness.targetLufs = s.normalization.targetLufs
+        val renderers = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(context: android.content.Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): androidx.media3.exoplayer.audio.AudioSink =
+                androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                    .setAudioProcessors(arrayOf(liveLoudness))
+                    .build()
+        }.setEnableAudioFloatOutput(false)
         return ExoPlayer.Builder(this, renderers)
             .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
@@ -277,6 +288,7 @@ class MusicService : MediaLibraryService() {
             }
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) consecutiveAutoSkips = 0
             runtime.update { it.copy(stream = null, format = null, loudnessSource = null) }
+            liveLoudness.live = mediaItem?.mediaId?.startsWith("radio:") == true
             refreshNormalizationFromStream()
             effects.ensureActive()
             runtime.clearError()
@@ -445,6 +457,7 @@ class MusicService : MediaLibraryService() {
                     if (changedNow) reloadCurrentForQuality()
                 }
                 effects.setLeveling(s.volumeLeveling)
+                liveLoudness.targetLufs = s.normalization.targetLufs
                 if (old.normalization != s.normalization) {
                     val st = runtime.status.value
                     applyNormalization(st.loudnessLufs, st.loudnessSource ?: app.musicflow.playback.LoudnessSource.PROVIDER)

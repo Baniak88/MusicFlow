@@ -154,8 +154,10 @@ API, so a site redesign can break it. The parsers are unit-tested with saved cop
 
 * **Open FM:** the channel list embedded in `https://open.fm/` (`__NEXT_DATA__` →
   `fallback.stations`), with HLS streams `stream-cdn-1.open.fm/OFM<id>/…/playlist.m3u8`.
-  Premium channels are skipped. Streams were refused (HTTP 403) from servers outside Poland,
-  apparently a geographic restriction.
+  Premium channels are skipped. Every stream request carries the web player's headers
+  (browser User-Agent, `Origin`/`Referer: https://open.fm`), also for HLS follow-up requests
+  (`PlaybackDataSources.withSiteHeaders`). The CDN answered HTTP 403 to servers outside Poland
+  even with those headers, so playback is verified only by testers in Poland.
 * **RMF ON:** `https://www.rmfon.pl/json/stations.txt` (id, name), then at play time
   `stacje/flash_aac_<id>.xml.txt` for the server list: MP3 servers first (128 kbps), AAC as
   fallback.
