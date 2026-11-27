@@ -171,4 +171,11 @@ class SunshineLiveTest {
         assertThat(request.requestUrl!!.queryParameter("hidebroken")).isEqualTo("true")
         server.shutdown()
     }
+
+    @Test fun knownHostsAreUpgradedToHttps() {
+        assertThat(RadioBrowserProvider.upgradeToHttps("http://stream.sunshine-live.de/house/mp3-192/stream.sunshine-live.de/"))
+            .isEqualTo("https://stream.sunshine-live.de/house/mp3-192/stream.sunshine-live.de/")
+        assertThat(RadioBrowserProvider.upgradeToHttps("http://other.example/live")).isEqualTo("http://other.example/live")
+        assertThat(RadioBrowserProvider.upgradeToHttps("https://stream.sunshine-live.de/x")).isEqualTo("https://stream.sunshine-live.de/x")
+    }
 }

@@ -227,7 +227,7 @@ class RadioBrowserProvider(
         val counted = runCatching {
             json.decodeFromString(ClickResult.serializer(), get("json/url/${s.uuid}")).url.takeIf { it.isNotBlank() }
         }.getOrNull()
-        val candidates = listOf(counted, s.urlResolved, s.url).filterNotNull().filter { it.isNotBlank() }
+        val candidates = listOf(counted, s.urlResolved, s.url).filterNotNull().filter { it.isNotBlank() }.map(::upgradeToHttps)
         val url = candidates.firstOrNull { it.startsWith("https://", ignoreCase = true) }
             ?: candidates.firstOrNull { allowHttp && it.startsWith("http://", ignoreCase = true) }
             ?: throw ProviderError.NotSupported("This station only streams over unencrypted HTTP; allow it in Settings → Providers → Radio")
@@ -272,6 +272,15 @@ class RadioBrowserProvider(
 
     companion object {
         const val PAGE = 40
+
+        /** Stream hosts known to serve the same streams over HTTPS: plain-HTTP entries are upgraded. */
+        private val HTTPS_HOSTS = setOf("stream.sunshine-live.de", "sunsl.streamabc.net")
+
+        fun upgradeToHttps(url: String): String {
+            if (!url.startsWith("http://", ignoreCase = true)) return url
+            val host = url.substring(7).substringBefore('/').substringBefore('?').substringBefore(':').lowercase()
+            return if (host in HTTPS_HOSTS) "https://" + url.substring(7) else url
+        }
         val DEFAULT_SERVERS = listOf("de1", "fi1", "de2", "nl1").map { "https://$it.api.radio-browser.info/" }
 
         /** A named station with an HTTPS stream (or HTTP, when the user allows unencrypted radio). */

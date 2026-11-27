@@ -3,6 +3,17 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.21] - 2026-11-27
+
+### Added
+- **sunshine live channels** (Germany): about 58 channels, e.g. House, Trance, Techno, Die 90er,
+  Classics, EDM, Hardstyle, Eurodance and Lounge.
+  - Shown as a tile in Explore and in Android Auto (Radio).
+  - The list comes from the Radio Browser directory, and only entries whose stream really is
+    sunshine live's own server are kept.
+  - Not geo-restricted: 40 of the channels answered from a server outside Germany (live test).
+  - Plain-HTTP directory entries for their servers are played over HTTPS.
+
 ## [1.0.0-beta.20] - 2026-11-27
 
 ### Fixed
