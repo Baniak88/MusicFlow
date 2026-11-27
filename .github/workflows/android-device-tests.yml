@@ -2,6 +2,7 @@ name: Device tests (emulator)
 
 # Instrumented smoke tests on real Android system images. Runs on demand and weekly,
 # because emulator jobs are slow; see TESTING.md for the manual device test plan.
+# Includes AutoBrowseTest (the Android Auto library tree).
 on:
   workflow_dispatch:
   schedule:
