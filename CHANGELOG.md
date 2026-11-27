@@ -3,6 +3,28 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.23] - 2026-11-27
+
+### Changed
+- **New look** (from the approved mockups):
+  - near-black, flat dark cards instead of glass and colour glows;
+  - bold accents;
+  - an accent-tinted mini player above a flat navigation bar, with the selected tab in the
+    accent colour.
+- **Accent colour of your choice** (Settings → Appearance → Accent colour): green (default),
+  violet, blue, orange, pink or red. Buttons, selection, progress and the like heart follow it;
+  text on the accent switches between black and white for contrast.
+- Library: compact shortcut cards (Liked songs on the accent) and bolder playlist rows.
+- Explore: solid colour category cards with a tilted tile.
+- Player: the artwork sits on a "vinyl record" with an accent ring.
+
+### Improved
+- **Sharper covers:**
+  - YouTube Music covers are requested at 1080 px (was 720);
+  - YouTube video frames use the 1280×720 image, without the black bars of the 4:3 one, and
+    fall back automatically when it does not exist;
+  - MusicBrainz covers come at 500 px (was 250).
+
 ## [1.0.0-beta.22] - 2026-11-27
 
 ### Removed

@@ -5,6 +5,13 @@ import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -103,6 +110,7 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
 
         item { Header(R.string.set_appearance) }
         item { Clickable(stringResource(R.string.set_theme), themeLabel(s.themeMode)) { dialog = "theme" } }
+        item { AccentPicker(s.accent, vm::setAccent) }
         item { Toggle(stringResource(R.string.set_amoled), stringResource(R.string.set_amoled_desc), s.amoledBlack, vm::setAmoled) }
         if (Build.VERSION.SDK_INT >= 31) item { Toggle(stringResource(R.string.set_dynamic), stringResource(R.string.set_dynamic_desc), s.dynamicColor, vm::setDynamic) }
         item { Toggle(stringResource(R.string.set_artwork_colors), stringResource(R.string.set_artwork_colors_desc), s.artworkColors, vm::setArtworkColors) }
@@ -226,6 +234,44 @@ fun SettingsScreen(contentPadding: PaddingValues, vm: SettingsViewModel = hiltVi
     app.musicflow.core.model.NormalizationLevel.NORMAL -> R.string.set_norm_normal
     app.musicflow.core.model.NormalizationLevel.LOUD -> R.string.set_norm_loud
 })
+/** Accent colour swatches (Settings → Appearance). */
+@Composable
+private fun AccentPicker(current: app.musicflow.core.model.AccentColor, onPick: (app.musicflow.core.model.AccentColor) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp)) {
+        Text(stringResource(R.string.set_accent), style = MaterialTheme.typography.bodyLarge)
+        androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 10.dp))
+        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
+            app.musicflow.core.model.AccentColor.entries.forEach { a ->
+                val color = androidx.compose.ui.graphics.Color(a.argb)
+                val selected = a == current
+                val label = accentLabel(a)
+                androidx.compose.foundation.layout.Box(
+                    Modifier.size(44.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(color)
+                        .then(if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onBackground, androidx.compose.foundation.shape.CircleShape) else Modifier)
+                        .clickable(onClickLabel = label) { onPick(a) }
+                        .semantics { contentDescription = label; this.selected = selected },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (selected) Icon(Icons.Rounded.Check, null, tint = if (a == app.musicflow.core.model.AccentColor.GREEN || a == app.musicflow.core.model.AccentColor.ORANGE) androidx.compose.ui.graphics.Color.Black else androidx.compose.ui.graphics.Color.White)
+                }
+            }
+        }
+    }
+}
+
+@Composable private fun accentLabel(a: app.musicflow.core.model.AccentColor) = stringResource(
+    when (a) {
+        app.musicflow.core.model.AccentColor.GREEN -> R.string.set_accent_green
+        app.musicflow.core.model.AccentColor.VIOLET -> R.string.set_accent_violet
+        app.musicflow.core.model.AccentColor.BLUE -> R.string.set_accent_blue
+        app.musicflow.core.model.AccentColor.ORANGE -> R.string.set_accent_orange
+        app.musicflow.core.model.AccentColor.PINK -> R.string.set_accent_pink
+        app.musicflow.core.model.AccentColor.RED -> R.string.set_accent_red
+    },
+)
+
 @Composable private fun themeLabel(t: ThemeMode) = stringResource(when (t) { ThemeMode.SYSTEM -> R.string.set_theme_system; ThemeMode.DARK -> R.string.set_theme_dark; ThemeMode.LIGHT -> R.string.set_theme_light })
 @Composable private fun languageLabel(tag: String) = when (tag) { "en" -> "English"; "pl" -> "Polski"; else -> stringResource(R.string.set_language_system) }
 @Composable private fun bufferLabel(b: BufferProfile) = stringResource(when (b) { BufferProfile.LOW -> R.string.set_buffer_low; BufferProfile.BALANCED -> R.string.set_buffer_balanced; BufferProfile.LARGE -> R.string.set_buffer_large })

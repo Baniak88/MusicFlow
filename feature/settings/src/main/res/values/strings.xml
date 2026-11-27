@@ -130,4 +130,11 @@
     <string name="set_extractor_value">%1$s · updated automatically with new app versions</string>
     <string name="set_radio_http">Radio: allow unencrypted stations (HTTP)</string>
     <string name="set_radio_http_desc">Many local stations only broadcast without encryption. Only their audio stream uses HTTP; everything else in MusicFlow stays HTTPS.</string>
+    <string name="set_accent">Accent colour</string>
+    <string name="set_accent_green">Green</string>
+    <string name="set_accent_violet">Violet</string>
+    <string name="set_accent_blue">Blue</string>
+    <string name="set_accent_orange">Orange</string>
+    <string name="set_accent_pink">Pink</string>
+    <string name="set_accent_red">Red</string>
 </resources>

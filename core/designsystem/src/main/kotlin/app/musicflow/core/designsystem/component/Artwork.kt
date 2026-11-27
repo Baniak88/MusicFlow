@@ -34,6 +34,9 @@ fun Artwork(
     iconSize: Dp = 24.dp,
 ) {
     var failed by remember(url) { mutableStateOf(url == null) }
+    // Sharper artwork where the host has it (YouTube video frames: 1280×720 without the black
+    // bars of the 4:3 "hqdefault"); falls back to the original URL if that size does not exist.
+    var src by remember(url) { mutableStateOf(ArtworkUrls.hd(url) ?: url) }
     Box(
         modifier
             .clip(shape)
@@ -47,14 +50,29 @@ fun Artwork(
         if (failed) {
             Icon(Icons.Rounded.MusicNote, null, Modifier.size(iconSize), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        if (url != null) {
+        if (src != null) {
             AsyncImage(
-                model = url,
+                model = src,
                 contentDescription = contentDescription,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                onState = { failed = it is AsyncImagePainter.State.Error },
+                onState = { st ->
+                    if (st is AsyncImagePainter.State.Error && src != url) src = url
+                    else failed = st is AsyncImagePainter.State.Error
+                },
             )
         }
+    }
+}
+
+/** Higher-resolution variants of artwork URLs (pure; unit-tested). */
+object ArtworkUrls {
+    private val ytFrame = Regex("""^https://i\d?\.ytimg\.com/vi(?:_webp)?/([A-Za-z0-9_-]{6,})/(?:hq|mq|sd)?default\.(?:jpg|webp)(?:\?.*)?$""")
+
+    /** A sharper URL for the same picture, or null when there is none to try. */
+    fun hd(url: String?): String? {
+        url ?: return null
+        ytFrame.matchEntire(url)?.let { return "https://i.ytimg.com/vi/${it.groupValues[1]}/hq720.jpg" }
+        return null
     }
 }

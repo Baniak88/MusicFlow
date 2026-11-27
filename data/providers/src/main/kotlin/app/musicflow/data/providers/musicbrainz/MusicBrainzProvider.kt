@@ -256,7 +256,7 @@ object MbIds {
     const val ARTIST = "mba"
 
     /** Cover Art Archive front image of a release group (sizes 250/500/1200). May not exist. */
-    fun cover(releaseGroupId: String, size: Int = 250) = "https://coverartarchive.org/release-group/$releaseGroupId/front-$size"
+    fun cover(releaseGroupId: String, size: Int = 500) = "https://coverartarchive.org/release-group/$releaseGroupId/front-$size"
 }
 
 internal object MbMapper {

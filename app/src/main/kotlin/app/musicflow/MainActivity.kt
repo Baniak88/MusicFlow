@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
                     navigationBarStyle = if (dark) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT) else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
                 )
             }
-            MusicFlowTheme(themeMode = s.themeMode, amoled = s.amoledBlack, dynamicColor = s.dynamicColor) {
+            MusicFlowTheme(themeMode = s.themeMode, amoled = s.amoledBlack, dynamicColor = s.dynamicColor, accent = androidx.compose.ui.graphics.Color(s.accent.argb)) {
                 MusicFlowShell(vm.events)
             }
         }

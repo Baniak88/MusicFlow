@@ -40,26 +40,35 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.graphics.SolidColor
+import app.musicflow.core.designsystem.theme.LocalAccent
 import coil3.compose.AsyncImage
 import kotlin.math.abs
 import kotlin.math.sin
 
-/** MusicFlow "glass" style: frosted panels over a dark, softly glowing backdrop. */
+/**
+ * MusicFlow surfaces: flat dark cards on a near-black background, with the accent colour the
+ * user picked (Settings → Appearance; green by default). The historical names (Violet, Magenta,
+ * Orchid, PlayBrush) now all mean "the accent".
+ */
 object Glass {
-    val Fill = Color.White.copy(alpha = 0.09f)
-    val FillStrong = Color.White.copy(alpha = 0.14f)
-    val Stroke = Color.White.copy(alpha = 0.16f)
-    val Violet = Color(0xFF8B5CF6)
-    val Magenta = Color(0xFFC026D3)
-    val Orchid = Color(0xFFC45BF6)
+    val Fill = Color(0xFF1B1C20)
+    val FillStrong = Color(0xFF24262B)
+    val Stroke = Color.White.copy(alpha = 0.06f)
+    val Violet: Color @Composable @ReadOnlyComposable get() = LocalAccent.current
+    val Magenta: Color @Composable @ReadOnlyComposable get() = LocalAccent.current
+    val Orchid: Color @Composable @ReadOnlyComposable get() = LocalAccent.current
     val Ember = Color(0xFFF97316)
     val Ocean = Color(0xFF3B5BDB)
-    /** Play button gradient: violet → magenta. */
-    val PlayBrush = Brush.linearGradient(listOf(Color(0xFF7C3AED), Color(0xFFD946EF)))
-    val PanelShape = RoundedCornerShape(28.dp)
+    /** Play button / selected chip fill: the accent. */
+    val PlayBrush: Brush @Composable @ReadOnlyComposable get() = SolidColor(LocalAccent.current)
+    /** Content (icons, text) drawn on the accent. */
+    val OnAccent: Color @Composable @ReadOnlyComposable get() = app.musicflow.core.designsystem.theme.onAccent(LocalAccent.current)
+    val PanelShape = RoundedCornerShape(20.dp)
 }
 
-/** Frosted glass panel: translucent fill, hairline light border. */
+/** Flat dark card (the former frosted panel): solid fill, a barely visible hairline. */
 fun Modifier.glass(shape: Shape = Glass.PanelShape, strong: Boolean = false): Modifier =
     this.clip(shape).background(if (strong) Glass.FillStrong else Glass.Fill, shape).border(BorderStroke(1.dp, Glass.Stroke), shape)
 
@@ -70,25 +79,18 @@ fun Modifier.glass(shape: Shape = Glass.PanelShape, strong: Boolean = false): Mo
  */
 @Composable
 fun GlassBackdrop(modifier: Modifier = Modifier, artworkUrl: String? = null, dim: Float = 0.55f, content: @Composable BoxScope.() -> Unit = {}) {
-    Box(modifier.fillMaxSize().background(Color(0xFF0B0A10))) {
-        Box(
-            Modifier.fillMaxSize().drawBehind {
-                fun glow(color: Color, cx: Float, cy: Float, r: Float) =
-                    drawCircle(Brush.radialGradient(listOf(color.copy(alpha = 0.55f), Color.Transparent), center = Offset(size.width * cx, size.height * cy), radius = size.maxDimension * r), radius = size.maxDimension * r, center = Offset(size.width * cx, size.height * cy))
-                glow(Glass.Ember, 0.05f, 0.18f, 0.45f)
-                glow(Glass.Magenta, 0.95f, 0.10f, 0.40f)
-                glow(Glass.Violet, 0.70f, 0.55f, 0.55f)
-                glow(Glass.Ocean, 0.10f, 0.80f, 0.45f)
-            },
-        )
+    val accent = LocalAccent.current
+    Box(modifier.fillMaxSize().background(Color(0xFF0E0E10))) {
+        // A faint accent light from the top, then flat near-black.
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to accent.copy(alpha = 0.16f), 0.45f to Color.Transparent)))
         if (artworkUrl != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AsyncImage(
                 model = artworkUrl, contentDescription = null, contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().blur(70.dp),
-                alpha = 0.75f,
+                modifier = Modifier.fillMaxSize().blur(80.dp),
+                alpha = 0.28f,
             )
         }
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = dim * 0.6f), Color.Black.copy(alpha = dim)))))
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = dim * 0.3f), Color.Black.copy(alpha = dim)))))
         // Always dark glass: text and icons default to white, whatever the app theme.
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Color.White) { content() }
     }
@@ -113,7 +115,7 @@ fun GradientPlayButton(icon: ImageVector, contentDescription: String?, onClick: 
         Box(
             Modifier.size(if (ring) size * 0.78f else size).clip(CircleShape).background(Glass.PlayBrush).clickable(role = Role.Button, onClick = onClick),
             contentAlignment = Alignment.Center,
-        ) { Icon(icon, contentDescription, Modifier.size(size * 0.36f), tint = Color.White) }
+        ) { Icon(icon, contentDescription, Modifier.size(size * 0.36f), tint = Glass.OnAccent) }
     }
 }
 
@@ -124,6 +126,7 @@ fun GradientPlayButton(icon: ImageVector, contentDescription: String?, onClick: 
  */
 @Composable
 fun WaveformSeekBar(fraction: Float, seed: String?, onSeek: (Float) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, bars: Int = 64) {
+    val accent = LocalAccent.current
     var scrub by remember { mutableStateOf<Float?>(null) }
     val shown by animateFloatAsState(scrub ?: fraction, label = "wave")
     val heights = remember(seed, bars) {
@@ -151,7 +154,7 @@ fun WaveformSeekBar(fraction: Float, seed: String?, onSeek: (Float) -> Unit, mod
     ) {
         val gap = size.width / bars
         val w = (gap * 0.45f).coerceAtLeast(2f)
-        val played = Brush.horizontalGradient(listOf(Color(0xFF7C3AED), Color(0xFFD946EF)), endX = size.width * shown.coerceAtLeast(0.01f))
+        val played = SolidColor(accent)
         heights.forEachIndexed { i, h ->
             val x = i * gap + (gap - w) / 2
             val barH = size.height * h

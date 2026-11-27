@@ -58,7 +58,7 @@ object YouTubeIds {
      * Requests the highest-resolution variant of YouTube/Google artwork URLs.
      * `lh3.googleusercontent.com/...=w120-h120` → `=w720-h720`; `i.ytimg.com/vi/x/hqdefault.jpg` is kept.
      */
-    fun upscaleArtwork(url: String?, size: Int = 720): String? {
+    fun upscaleArtwork(url: String?, size: Int = 1080): String? {
         if (url == null) return null
         val googleSized = Regex("""=w\d+-h\d+[^/]*$""")
         val googleS = Regex("""=s\d+[^/]*$""")

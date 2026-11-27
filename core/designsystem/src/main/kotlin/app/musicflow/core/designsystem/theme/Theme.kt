@@ -14,19 +14,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.musicflow.core.model.ThemeMode
 
-fun mfDarkScheme(amoled: Boolean): ColorScheme = darkColorScheme(
-    primary = MfColors.Accent,
-    onPrimary = Color.White,
-    primaryContainer = MfColors.AccentContainer,
-    onPrimaryContainer = MfColors.OnAccentContainer,
-    secondary = MfColors.AccentSecondary,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFF3A2352), // violet glass tint (tonal buttons, selected tab)
-    onSecondaryContainer = Color(0xFFF3DDFF),
+/** Text/icon colour on the accent: black on light accents (green, orange), white on dark ones. */
+fun onAccent(accent: Color): Color = if (accent.luminance() > 0.35f) Color.Black else Color.White
+
+/** The accent mixed into the dark background ([amount] of accent): tinted cards, mini player, tonal buttons. */
+fun accentTint(accent: Color, amount: Float, base: Color = MfColors.Background): Color =
+    androidx.compose.ui.graphics.lerp(base, accent, amount)
+
+fun mfDarkScheme(amoled: Boolean, accent: Color = MfColors.Accent): ColorScheme = darkColorScheme(
+    primary = accent,
+    onPrimary = onAccent(accent),
+    primaryContainer = accentTint(accent, 0.28f),
+    onPrimaryContainer = androidx.compose.ui.graphics.lerp(accent, Color.White, 0.55f),
+    secondary = accent,
+    onSecondary = onAccent(accent),
+    secondaryContainer = accentTint(accent, 0.22f), // tonal buttons, selected tab
+    onSecondaryContainer = androidx.compose.ui.graphics.lerp(accent, Color.White, 0.6f),
     tertiary = Color(0xFF22D3EE),
     background = if (amoled) MfColors.PureBlack else MfColors.Background,
     onBackground = MfColors.TextPrimary,
@@ -76,6 +84,9 @@ val MfShapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp),
 )
 
+/** The user's accent colour (Settings → Appearance), for components that draw it directly. */
+val LocalAccent = staticCompositionLocalOf { MfColors.Accent }
+
 @Immutable
 data class MfExtras(val isDark: Boolean, val gradientTop: Color, val success: Color, val warning: Color, val dock: Color)
 
@@ -86,6 +97,7 @@ fun MusicFlowTheme(
     themeMode: ThemeMode = ThemeMode.DARK,
     amoled: Boolean = false,
     dynamicColor: Boolean = false,
+    accent: Color = MfColors.Accent,
     content: @Composable () -> Unit,
 ) {
     val dark = when (themeMode) {
@@ -95,14 +107,14 @@ fun MusicFlowTheme(
     }
     val context = LocalContext.current
     val scheme = when {
-        // The dark theme is the "glass" design with its own violet accent; wallpaper colours would
-        // clash with it, so Material You colours apply to the light theme only.
-        dark -> mfDarkScheme(amoled)
+        // The dark theme uses the accent the user picked; wallpaper colours (Material You) apply to
+        // the light theme only.
+        dark -> mfDarkScheme(amoled, accent)
         dynamicColor && Build.VERSION.SDK_INT >= 31 -> dynamicLightColorScheme(context)
-        dark -> mfDarkScheme(amoled)
-        else -> mfLightScheme()
+        else -> mfLightScheme().copy(primary = accent, onPrimary = onAccent(accent), secondary = accent)
     }
     androidx.compose.runtime.CompositionLocalProvider(
+        LocalAccent provides (if (!dark && dynamicColor && Build.VERSION.SDK_INT >= 31) scheme.primary else accent),
         LocalMfExtras provides MfExtras(
             isDark = dark,
             gradientTop = if (dark) (if (amoled) Color.Black else MfColors.BackgroundGlow) else scheme.primaryContainer,

@@ -71,6 +71,7 @@ class SettingsViewModel @Inject constructor(
     private fun refreshCache() = viewModelScope.launch(Dispatchers.IO) { cacheUsedBytes.value = cache.usedBytes() }
 
     fun setTheme(v: ThemeMode) = viewModelScope.launch { repo.setThemeMode(v) }
+    fun setAccent(v: app.musicflow.core.model.AccentColor) = viewModelScope.launch { repo.setAccent(v) }
     fun setAmoled(v: Boolean) = viewModelScope.launch { repo.setAmoled(v) }
     fun setDynamic(v: Boolean) = viewModelScope.launch { repo.setDynamicColor(v) }
     fun setArtworkColors(v: Boolean) = viewModelScope.launch { repo.setArtworkColors(v) }

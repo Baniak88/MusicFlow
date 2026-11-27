@@ -12,6 +12,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -87,7 +89,7 @@ class PlayerNavigationTest {
         val tracks = (1..3).map { app.musicflow.core.model.Track(app.musicflow.core.model.MediaId("url:https://example.com/$it.mp3"), "Song $it", durationMs = 200_000) }
         compose.runOnUiThread { engine.play(tracks, 0) }
         compose.waitUntil(10_000) { compose.onAllNodesWithText("Song 1").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("mini_player").performClick()
+        compose.onNodeWithTag("mini_player").performTouchInput { click(androidx.compose.ui.geometry.Offset(width * 0.12f, centerY)) }
         compose.waitUntil(10_000) { compose.onAllNodes(androidx.compose.ui.test.hasTestTag("full_player")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("play_pause").performClick()
         compose.waitForIdle()

@@ -2,11 +2,22 @@ package app.musicflow.core.model
 
 enum class ThemeMode { SYSTEM, DARK, LIGHT }
 
+/** Accent colour of the app (buttons, selection, progress), chosen in Settings → Appearance. */
+enum class AccentColor(val argb: Long) {
+    GREEN(0xFF22C55E),
+    VIOLET(0xFFA855F7),
+    BLUE(0xFF3B82F6),
+    ORANGE(0xFFF97316),
+    PINK(0xFFEC4899),
+    RED(0xFFEF4444),
+}
+
 enum class RepeatMode { OFF, ALL, ONE }
 
 data class UserSettings(
     val themeMode: ThemeMode = ThemeMode.DARK,
     val amoledBlack: Boolean = false,
+    val accent: AccentColor = AccentColor.GREEN,
     val dynamicColor: Boolean = false,
     val artworkColors: Boolean = true,
     /** BCP-47 language tag, empty = follow system. */

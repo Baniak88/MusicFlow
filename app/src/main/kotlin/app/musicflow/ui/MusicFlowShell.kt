@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.background
@@ -124,23 +125,25 @@ private val tabs = listOf(
     Tab(Routes.LIBRARY, Routes.LIBRARY, R.string.nav_library, Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
 )
 
-/** One rounded card holding the mini player and the navigation, as in the app's design. */
+/** Mini player as an accent-tinted card, above a flat navigation bar (accent = selected tab). */
 @Composable
 private fun BottomDock(showMini: Boolean, mini: @Composable () -> Unit, selected: String, onSelect: (String) -> Unit) {
     androidx.compose.material3.Surface(
         color = app.musicflow.core.designsystem.theme.LocalMfExtras.current.dock,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, app.musicflow.core.designsystem.component.Glass.Stroke),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.navigationBarsPadding()) {
             if (showMini) {
-                Box(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    Box(Modifier.size(width = 36.dp, height = 4.dp).clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.colorScheme.outline))
-                }
-                mini()
+                val accent = app.musicflow.core.designsystem.theme.LocalAccent.current
+                Box(
+                    Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                        .background(app.musicflow.core.designsystem.theme.accentTint(accent, 0.22f))
+                        .padding(top = 6.dp, bottom = 2.dp),
+                ) { mini() }
             }
+            Box(Modifier.fillMaxWidth().padding(top = 6.dp).heightIn(min = 1.dp, max = 1.dp).background(app.musicflow.core.designsystem.component.Glass.Stroke))
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly,
@@ -156,18 +159,14 @@ private fun BottomDock(showMini: Boolean, mini: @Composable () -> Unit, selected
                             .padding(vertical = 4.dp),
                         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
                     ) {
-                        Box(
-                            Modifier
-                                .clip(androidx.compose.foundation.shape.CircleShape)
-                                .background(if (isSel) MaterialTheme.colorScheme.surfaceContainerHighest else androidx.compose.ui.graphics.Color.Transparent)
-                                .padding(horizontal = 18.dp, vertical = 6.dp),
-                        ) {
+                        Box(Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) {
                             Icon(if (isSel) tab.selectedIcon else tab.icon, null, Modifier.size(24.dp),
                                 tint = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(
                             stringResource(tab.label), style = MaterialTheme.typography.labelSmall,
-                            color = if (isSel) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = if (isSel) androidx.compose.ui.text.font.FontWeight.Bold else null,
                             modifier = Modifier.padding(top = 2.dp),
                         )
                     }

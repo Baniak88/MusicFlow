@@ -7,6 +7,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTextInput
 import app.musicflow.core.model.MediaId
 import app.musicflow.core.model.Track
@@ -43,7 +45,7 @@ class TrackActionsTest {
     private fun waitText(text: String) = compose.waitUntil(10_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
     private fun openTrackOptionsInPlayer() {
-        compose.onNodeWithTag("mini_player").performClick()
+        compose.onNodeWithTag("mini_player").performTouchInput { click(androidx.compose.ui.geometry.Offset(width * 0.12f, centerY)) }
         compose.waitUntil(10_000) { compose.onAllNodes(hasTestTag("full_player")).fetchSemanticsNodes().isNotEmpty() }
         compose.onAllNodes(androidx.compose.ui.test.hasContentDescription("More options"))[0].performClick()
         waitText("Track options")

@@ -76,6 +76,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -170,15 +172,17 @@ fun FullPlayer(vm: PlayerViewModel, onCollapse: () -> Unit) {
                 }
             }
 
-            // Round artwork in a glass ring; swipe sideways to change track.
+            // Round artwork on a "vinyl record" with an accent ring; swipe sideways to change track.
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 var dragX by remember { mutableFloatStateOf(0f) }
                 Box(
                     Modifier
                         .widthIn(max = 360.dp).fillMaxWidth(0.86f).aspectRatio(1f)
                         .offset { IntOffset(dragX.roundToInt() / 3, 0) }
-                        .then(Modifier.glass(CircleShape, strong = true))
-                        .padding(10.dp)
+                        .vinyl(app.musicflow.core.designsystem.theme.LocalAccent.current)
+                        .padding(34.dp)
+                        .border(5.dp, app.musicflow.core.designsystem.theme.LocalAccent.current, CircleShape)
+                        .padding(5.dp)
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures(
                                 onDragEnd = { if (dragX < -150) vm.next() else if (dragX > 150) vm.previous(); dragX = 0f },
@@ -392,4 +396,15 @@ private fun qualityHint(q: app.musicflow.core.model.AudioQuality) = when (q) {
     app.musicflow.core.model.AudioQuality.STANDARD -> R.string.player_q_standard_hint
     app.musicflow.core.model.AudioQuality.HIGH -> R.string.player_q_high_hint
     app.musicflow.core.model.AudioQuality.BEST -> R.string.player_q_best_hint
+}
+
+
+/** A dark record behind the artwork: grooves (concentric rings) and a faint accent sheen. */
+private fun Modifier.vinyl(accent: androidx.compose.ui.graphics.Color): Modifier = this.drawBehind {
+    val r = size.minDimension / 2f
+    drawCircle(androidx.compose.ui.graphics.Color(0xFF141517), r)
+    for (k in 1..5) {
+        drawCircle(androidx.compose.ui.graphics.Color.White.copy(alpha = 0.05f), r * (0.98f - k * 0.045f), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx()))
+    }
+    drawCircle(androidx.compose.ui.graphics.Brush.sweepGradient(listOf(androidx.compose.ui.graphics.Color.Transparent, accent.copy(alpha = 0.10f), androidx.compose.ui.graphics.Color.Transparent, accent.copy(alpha = 0.10f), androidx.compose.ui.graphics.Color.Transparent)), r)
 }

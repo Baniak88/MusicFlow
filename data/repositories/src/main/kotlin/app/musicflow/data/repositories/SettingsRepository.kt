@@ -29,6 +29,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
     private object K {
         val theme = stringPreferencesKey("theme")
         val amoled = booleanPreferencesKey("amoled")
+        val accent = stringPreferencesKey("accent_color")
         val dynamic = booleanPreferencesKey("dynamic_color")
         val artworkColors = booleanPreferencesKey("artwork_colors")
         val language = stringPreferencesKey("language")
@@ -64,6 +65,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
         UserSettings(
             themeMode = p.enum(K.theme, d.themeMode),
             amoledBlack = p[K.amoled] ?: d.amoledBlack,
+            accent = p.enum(K.accent, d.accent),
             dynamicColor = p[K.dynamic] ?: d.dynamicColor,
             artworkColors = p[K.artworkColors] ?: d.artworkColors,
             languageTag = p[K.language] ?: d.languageTag,
@@ -96,6 +98,7 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
 
     suspend fun setThemeMode(v: ThemeMode) { store.edit { it[K.theme] = v.name } }
     suspend fun setAmoled(v: Boolean) { store.edit { it[K.amoled] = v } }
+    suspend fun setAccent(v: app.musicflow.core.model.AccentColor) { store.edit { it[K.accent] = v.name } }
     suspend fun setDynamicColor(v: Boolean) { store.edit { it[K.dynamic] = v } }
     suspend fun setArtworkColors(v: Boolean) { store.edit { it[K.artworkColors] = v } }
     suspend fun setLanguage(tag: String) { store.edit { it[K.language] = tag } }

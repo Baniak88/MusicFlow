@@ -34,8 +34,8 @@ class YouTubeHelpersTest {
 
     @Test fun upscalesArtwork() {
         assertThat(YouTubeIds.upscaleArtwork("https://lh3.googleusercontent.com/abc=w120-h120-l90-rj"))
-            .isEqualTo("https://lh3.googleusercontent.com/abc=w720-h720-l90-rj")
-        assertThat(YouTubeIds.upscaleArtwork("https://yt3.ggpht.com/abc=s88-c-k")).isEqualTo("https://yt3.ggpht.com/abc=s720")
+            .isEqualTo("https://lh3.googleusercontent.com/abc=w1080-h1080-l90-rj")
+        assertThat(YouTubeIds.upscaleArtwork("https://yt3.ggpht.com/abc=s88-c-k")).isEqualTo("https://yt3.ggpht.com/abc=s1080")
         assertThat(YouTubeIds.upscaleArtwork("https://i.ytimg.com/vi/x/hqdefault.jpg")).isEqualTo("https://i.ytimg.com/vi/x/hqdefault.jpg")
         assertThat(YouTubeIds.cleanArtistName("Daft Punk - Topic")).isEqualTo("Daft Punk")
     }

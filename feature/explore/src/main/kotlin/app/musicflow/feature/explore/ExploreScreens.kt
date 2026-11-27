@@ -47,6 +47,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -164,21 +166,26 @@ private fun groupIcon(g: CategoryGroup) = when (g) {
 /** Glass tile: frosted panel with the category's colour glowing from one corner, icon and title. */
 @Composable
 private fun CategoryTile(label: String, color: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
+    // A solid colour card with a tilted lighter square in the corner (like an album peeking out).
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+    val base = androidx.compose.ui.graphics.lerp(color, Color.Black, 0.25f)
     Box(
         Modifier
             .fillMaxWidth()
-            .aspectRatio(1.55f)
-            .then(Modifier.glass(shape))
-            .background(Brush.radialGradient(listOf(color.copy(alpha = 0.75f), color.copy(alpha = 0.18f), Color.Transparent), center = androidx.compose.ui.geometry.Offset.Zero, radius = 520f), shape)
-            .clickable(onClick = onClick)
-            .padding(14.dp),
+            .aspectRatio(1.9f)
+            .clip(shape)
+            .background(base)
+            .clickable(onClick = onClick),
     ) {
         Box(
-            Modifier.size(38.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Color.White.copy(alpha = 0.16f)),
+            Modifier.align(Alignment.BottomEnd).offset(x = 14.dp, y = 14.dp).size(70.dp)
+                .graphicsLayer { rotationZ = 22f }
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                .background(androidx.compose.ui.graphics.lerp(color, Color.White, 0.25f)),
             contentAlignment = Alignment.Center,
-        ) { Icon(icon, null, Modifier.size(20.dp), tint = Color.White) }
-        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2, modifier = Modifier.align(Alignment.BottomStart))
+        ) { Icon(icon, null, Modifier.size(26.dp).graphicsLayer { rotationZ = -22f }, tint = Color.White.copy(alpha = 0.9f)) }
+        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = Color.White, maxLines = 2,
+            modifier = Modifier.align(Alignment.TopStart).padding(14.dp).padding(end = 40.dp))
     }
 }
 

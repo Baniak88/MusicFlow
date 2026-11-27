@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -100,17 +101,17 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp))
         }
         item {
-            // Glass tiles, two per row; "Liked songs" spans the full width.
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Shortcut(Icons.Rounded.Favorite, stringResource(R.string.lib_favorites), trackCount(favorites.size), Modifier.fillMaxWidth()) { nav.openLibrarySection(LibrarySection.FAVORITES) }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Compact cards, two per row: a square icon tile (the accent for Liked songs) and the name.
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Shortcut(Icons.Rounded.Favorite, stringResource(R.string.lib_favorites), trackCount(favorites.size), Modifier.weight(1f), highlight = true) { nav.openLibrarySection(LibrarySection.FAVORITES) }
                     Shortcut(Icons.Rounded.Schedule, stringResource(R.string.lib_recent), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.RECENT) }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Shortcut(Icons.Rounded.TrendingUp, stringResource(R.string.lib_most_played), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.MOST_PLAYED) }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Shortcut(Icons.Rounded.History, stringResource(R.string.lib_history), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.HISTORY) }
-                    Shortcut(Icons.Rounded.PhoneAndroid, stringResource(R.string.lib_local), null, Modifier.weight(1f)) { nav.openLibrarySection(LibrarySection.LOCAL) }
                 }
+                Shortcut(Icons.Rounded.PhoneAndroid, stringResource(R.string.lib_local), null, Modifier.fillMaxWidth()) { nav.openLibrarySection(LibrarySection.LOCAL) }
             }
         }
         item {
@@ -137,19 +138,20 @@ fun LibraryScreen(contentPadding: PaddingValues, vm: LibraryViewModel = hiltView
 }
 
 @Composable
-private fun Shortcut(icon: ImageVector, title: String, subtitle: String?, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
+private fun Shortcut(icon: ImageVector, title: String, subtitle: String?, modifier: Modifier = Modifier, highlight: Boolean = false, onClick: () -> Unit) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+    val accent = app.musicflow.core.designsystem.theme.LocalAccent.current
     Row(
-        modifier.heightIn(min = 68.dp).then(Modifier.glass(shape)).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier.height(64.dp).clip(shape).background(MaterialTheme.colorScheme.surfaceContainer).clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(app.musicflow.core.designsystem.component.Glass.PlayBrush),
+            Modifier.size(64.dp).background(if (highlight) accent else MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
-        ) { Icon(icon, null, Modifier.size(20.dp), tint = androidx.compose.ui.graphics.Color.White) }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        ) { Icon(icon, null, Modifier.size(24.dp), tint = if (highlight) app.musicflow.core.designsystem.theme.onAccent(accent) else accent) }
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f).padding(end = 8.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
@@ -158,10 +160,10 @@ private fun Shortcut(icon: ImageVector, title: String, subtitle: String?, modifi
 @Composable
 fun EntityRow(title: String, subtitle: String?, artwork: String?, circle: Boolean = false, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 68.dp).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Artwork(artwork, Modifier.size(56.dp), shape = if (circle) androidx.compose.foundation.shape.CircleShape else androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+        Artwork(artwork, Modifier.size(56.dp), shape = if (circle) androidx.compose.foundation.shape.CircleShape else androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
     }
