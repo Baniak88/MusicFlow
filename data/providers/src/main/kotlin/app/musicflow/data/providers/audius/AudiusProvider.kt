@@ -125,8 +125,8 @@ class AudiusProvider(
         return ResolvedStream(
             mediaId = id,
             url = url,
-            mimeType = "audio/mpeg",
-            codec = null, // the API does not state the codec/bitrate of the uploaded file
+            mimeType = null, // served as application/octet-stream; the player detects the format
+            codec = null, // the API does not state the codec/bitrate
             bitrateKbps = null,
             sampleRateHz = null,
             expiresAtMillis = null,

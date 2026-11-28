@@ -45,8 +45,13 @@ class AudiusLiveTest {
         client.newCall(Request.Builder().url(stream.url).header("Range", "bytes=0-4095").build()).execute().use { r ->
             println("audio: HTTP ${r.code} ${r.header("Content-Type")} from ${r.request.url.host}")
             assertThat(r.code).isAnyOf(200, 206)
-            assertThat(r.header("Content-Type").orEmpty()).startsWith("audio/")
-            assertThat(r.body!!.bytes().size).isGreaterThan(0)
+            // Content nodes answer with application/octet-stream, so check the bytes: an MP3
+            // (ID3 tag or MPEG frame sync), AAC/ADTS, MP4 or Ogg/FLAC container.
+            val b = r.body!!.bytes()
+            println("magic: " + b.take(12).joinToString(" ") { "%02x".format(it) })
+            val head = String(b.copyOfRange(0, 12), Charsets.ISO_8859_1)
+            val sync = (b[0].toInt() and 0xFF) == 0xFF && (b[1].toInt() and 0xE0) == 0xE0
+            assertThat(head.startsWith("ID3") || sync || head.substring(4, 8) == "ftyp" || head.startsWith("OggS") || head.startsWith("fLaC")).isTrue()
         }
     }
 }
