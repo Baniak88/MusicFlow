@@ -73,6 +73,15 @@ class StreamRepositoryTest {
         assertThat(altCalls).isEqualTo(1)
     }
 
+    @Test fun botCheckFallsBackButOtherRateLimitsDoNot() = runTest {
+        val track = Track(id, "Song", durationMs = 1000)
+        val alt: suspend (Track) -> ResolvedStream? = { stream("audius", null) }
+        val bot = StreamRepository({ _, _ -> throw ProviderError.RateLimited(botCheck = true) }, { AudioQuality.HIGH }, DiagnosticsLog(), alt)
+        assertThat(bot.resolve(id, track).url).isEqualTo("audius")
+        val limited = StreamRepository({ _, _ -> throw ProviderError.RateLimited() }, { AudioQuality.HIGH }, DiagnosticsLog(), alt)
+        assertThat(runCatching { limited.resolve(id, track) }.exceptionOrNull()).isInstanceOf(ProviderError.RateLimited::class.java)
+    }
+
     @Test fun reliableAlternativeMatching() {
         val a = Track(id, "Strobe", listOf(app.musicflow.core.model.ArtistRef(null, "deadmau5")), durationMs = 600_000)
         assertThat(StreamRepository.isReliableAlternative(a, a.copy(id = MediaId("local:1"), title = "Strobe (Original Mix)".replace(" (Original Mix)", ""), durationMs = 601_000))).isTrue()

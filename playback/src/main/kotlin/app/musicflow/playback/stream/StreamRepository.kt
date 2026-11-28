@@ -53,7 +53,7 @@ class StreamRepository(
                 resolutions++
                 resolveRemote(id, q)
             } catch (e: ProviderError) {
-                val alt = if (!e.isTransient && track != null) alternative?.invoke(track) else null
+                val alt = if (canFallBack(e) && track != null) alternative?.invoke(track) else null
                 if (alt != null) {
                     diagnostics.w("stream", "Using reliably matched alternative source for ${track?.title}")
                     alt
@@ -85,6 +85,12 @@ class StreamRepository(
     suspend fun clear() = mutex.withLock { cache.clear(); byUrl.clear() }
 
     companion object {
+        /**
+         * Another source is tried for permanent failures (removed, region-locked, unsupported) and
+         * for a "confirm you're not a bot" check, which retrying from the same IP (e.g. a VPN) won't pass.
+         */
+        fun canFallBack(e: ProviderError) = !e.isTransient || (e is ProviderError.RateLimited && e.botCheck)
+
         /** Alternative-source match policy: same recording by title, artist and duration. */
         fun isReliableAlternative(original: Track, candidate: Track) = TextMatching.isReliableMatch(
             original.title, original.primaryArtist, original.durationMs,

@@ -31,6 +31,7 @@ value class MediaId(val value: String) {
 object ProviderIds {
     const val YOUTUBE_MUSIC = "yt"
     const val SOUNDCLOUD = "sc"
+    const val AUDIUS = "au"
     const val RADIO = "radio"
     const val MUSICBRAINZ = "mbr"
     const val LOCAL = "local"

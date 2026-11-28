@@ -6,6 +6,7 @@
 | Direct audio URL | `url` | Stable | Streams (HTTPS; MP3/AAC/Opus/FLAC/WAV/HLS) | the URL's host |
 | YouTube Music (NewPipe Extractor) | `yt`, `ytpl`, `ytch` | **Experimental**, optional | Search, suggestions, albums/playlists, artists, related/radio, trending, streams | YouTube hosts |
 | SoundCloud (NewPipe Extractor) | `sc`, `scpl`, `scu` | **Experimental**, optional | Search (tracks, users, sets), suggestions, sets/albums, artists, related, links, streams (HLS) | SoundCloud hosts |
+| Audius (public API) | `au`, `aua`, `aul` | Optional, on by default | Search (tracks, artists, playlists), tracks, playlists, artists, streams (progressive) | `api.audius.co` + content nodes |
 | Radio Browser | `radio` | Stable, optional | Station search (name and genre tag), popular by country/worldwide/genre, live streams (HTTPS only), ICY now-playing | `*.api.radio-browser.info`, station hosts |
 | MusicBrainz (+ Cover Art Archive) | `mbr`, `mbrg`, `mba` | Stable, optional | Search recordings/albums/artists, album tracklists, discographies, artist facts; playback via a verified YouTube Music match | `musicbrainz.org`, `coverartarchive.org`, `archive.org` |
 | LRCLIB | — | Stable | Synced and plain lyrics | `lrclib.net` |
@@ -105,6 +106,33 @@ itself (`ios/MusicFlow/Providers/YouTubeMusic.swift`):
 * **When YouTube changes its API,** update the client version and parameters in
   `YouTubeMusic.swift`, matching the current NewPipe Extractor release. The live tests in the
   **iOS** workflow (`LiveTests`) show what broke.
+
+## Audius
+
+Audius' public REST API (`https://api.audius.co/v1`, no account, no DRM). Every request names
+the app (`app_name=MusicFlow`), as Audius asks third-party apps to.
+
+* **Search**: songs (`/tracks/search`), artists (`/users/search`), playlists and albums
+  (`/playlists/search`). Pick *Audius* in the source chips on the results screen.
+* **Ids**: `au:<track id>`, `aua:<user id>`, `aul:<playlist id>`.
+* **Streams**: `/tracks/<id>/stream` redirects to a content node serving the artist's upload.
+  The API does not report codec or bitrate, so none is shown (never "lossless").
+  Tracks marked not streamable or deleted are left out of results.
+* **Artwork**: the largest size offered (1000×1000, else 480, else 150).
+* **Live check**: `AudiusLiveTest` (opt-in), via the *Provider live tests* workflow. This
+  development environment cannot reach Audius, so the provider was written against the
+  documented API shape and checked on GitHub.
+
+## Smart fallback
+
+When a track fails with a permanent error (removed, region-locked, not supported) or with
+YouTube's bot check (`RateLimited.botCheck`, typical behind a VPN), `StreamRepository` asks for
+an alternative. `MusicService` tries, in order: an on-device copy, then SoundCloud, then Audius,
+skipping the track's own source and any switched-off source. Each online source gets one search
+(`artist title`, 15 s limit). Its result is accepted only for a reliable match:
+`StreamRepository.isReliableAlternative`, which compares title, artist and duration (±5 s).
+Diagnostics log which source played. Plain rate limits and network errors are retried instead.
+Radio, local files and direct links are never replaced.
 
 ## SoundCloud (experimental)
 

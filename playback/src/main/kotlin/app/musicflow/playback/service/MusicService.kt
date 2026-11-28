@@ -130,7 +130,7 @@ class MusicService : MediaLibraryService() {
             resolveRemote = { id, q -> registry.callFor(id, "resolve") { p -> p.streams?.resolve(id, q) ?: throw ProviderError.NotSupported() } },
             quality = ::currentQuality,
             diagnostics = diagnostics,
-            alternative = ::localAlternative,
+            alternative = { t -> localAlternative(t) ?: onlineAlternative(t) },
         )
         runtime.prefetcher = { t -> streams.resolve(t.id, t) }
 
@@ -321,6 +321,32 @@ class MusicService : MediaLibraryService() {
         return localProvider.resolve(match.id, AudioQuality.BEST)
     }
 
+    /**
+     * Smart fallback: the same recording on another enabled online source (SoundCloud, Audius),
+     * accepted only for a reliable title/artist/duration match. Diagnostics name the source used.
+     */
+    private suspend fun onlineAlternative(track: Track): ResolvedStream? {
+        if (track.id.providerId !in FALLBACK_FOR) return null // radio, local files and links have no equivalent
+        val query = listOfNotNull(track.primaryArtist, track.title).joinToString(" ").trim()
+        if (query.isEmpty()) return null
+        for (sourceId in FALLBACK_SOURCES) {
+            if (sourceId == track.id.providerId || !registry.isEnabled(sourceId)) continue
+            val source = registry.byId(sourceId) ?: continue
+            val stream = runCatching {
+                kotlinx.coroutines.withTimeoutOrNull(15_000) {
+                    val candidates = source.search?.search(query, app.musicflow.core.model.SearchFilter.SONGS, null)?.items.orEmpty()
+                        .filterIsInstance<app.musicflow.core.model.MediaItemSummary.TrackItem>().map { it.track }.take(10)
+                    val match = candidates.firstOrNull { StreamRepository.isReliableAlternative(track, it) } ?: return@withTimeoutOrNull null
+                    source.streams?.resolve(match.id, currentQuality())?.also {
+                        diagnostics.w("stream", "Fallback: ${track.id} plays from ${source.displayName} (${match.id})")
+                    }
+                }
+            }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
+            if (stream != null) return stream
+        }
+        return null
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             val now = System.currentTimeMillis()
@@ -489,6 +515,7 @@ class MusicService : MediaLibraryService() {
                 diagnostics.enabled = s.diagnosticsEnabled
                 registry.setEnabled("yt", s.youtubeProviderEnabled)
                 registry.setEnabled("sc", s.soundcloudProviderEnabled)
+                registry.setEnabled("au", s.audiusProviderEnabled)
                 registry.setEnabled("radio", s.radioProviderEnabled)
                 registry.setEnabled("mbr", s.musicbrainzEnabled)
                 if (old.skipSilence != s.skipSilence) player.skipSilenceEnabled = s.skipSilence
@@ -658,6 +685,13 @@ class MusicService : MediaLibraryService() {
     }
 
     companion object {
+        /** Sources tried, in order, when a track cannot be played from its own source. */
+        private val FALLBACK_SOURCES = listOf(app.musicflow.core.model.ProviderIds.SOUNDCLOUD, app.musicflow.core.model.ProviderIds.AUDIUS)
+        private val FALLBACK_FOR = setOf(
+            app.musicflow.core.model.ProviderIds.YOUTUBE_MUSIC, app.musicflow.core.model.ProviderIds.MUSICBRAINZ,
+            app.musicflow.core.model.ProviderIds.SOUNDCLOUD, app.musicflow.core.model.ProviderIds.AUDIUS,
+        )
+
         const val KEY_INDEX = "index"
         const val KEY_POSITION = "position"
         const val KEY_SHUFFLE = "shuffle"

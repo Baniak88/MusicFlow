@@ -36,6 +36,12 @@ object ProvidersModule {
     fun bindSoundCloud(p: SoundCloudProvider): MusicProvider = p
 
     @Provides @Singleton
+    fun audius(client: OkHttpClient, diagnostics: DiagnosticsLog) = app.musicflow.data.providers.audius.AudiusProvider(client, diagnostics)
+
+    @Provides @IntoSet
+    fun bindAudius(p: app.musicflow.data.providers.audius.AudiusProvider): MusicProvider = p
+
+    @Provides @Singleton
     fun radio(client: OkHttpClient, diagnostics: DiagnosticsLog, appInfo: AppInfo) = RadioBrowserProvider(client, diagnostics, userAgent(appInfo), networks = app.musicflow.data.providers.radio.RadioNetworks(client, diagnostics))
 
     @Provides @IntoSet

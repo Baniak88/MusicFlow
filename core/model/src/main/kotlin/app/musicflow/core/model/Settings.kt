@@ -37,6 +37,7 @@ data class UserSettings(
     val discoveryMode: Boolean = false,
     val youtubeProviderEnabled: Boolean = true,
     val soundcloudProviderEnabled: Boolean = true,
+    val audiusProviderEnabled: Boolean = true,
     val radioProviderEnabled: Boolean = true,
     /** Also play radio stations that only stream over unencrypted HTTP. */
     val radioAllowHttp: Boolean = true,

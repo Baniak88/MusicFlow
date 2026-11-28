@@ -40,11 +40,17 @@ no HTTPS, while *Radio: allow unencrypted stations* is on (see the table).
 | `open.fm`, `www.rmfon.pl`, `player.eska.pl`, `front-api.grupazprmedia.pl` | Radio enabled: opening the Open FM / RMF ON / ESKA channel lists or searching radio (each list is fetched at most every 6 h), playing an RMF ON station (its server list); while one of their stations plays, its now-playing data every 20 s | Standard request (browser User-Agent), station id; no identifiers |
 | `stream-cdn-1.open.fm` (after a playback token from `open.fm/api/user/token`), `*.rmfstream.pl`, `liveradio.timesa.pl`, logo hosts (`openfm-upload-api.wphcdn.cloud`, `www.rmfon.pl`, `cdn.music.smcloud.net`) | Playing / showing those channels | Standard streaming / image request |
 | `musicbrainz.org`, `coverartarchive.org`, `archive.org` | MusicBrainz enabled: searching it, opening its albums/artists, artist pages (artist name lookup), album covers | Search terms, artist names, MusicBrainz ids; User-Agent with the app version |
+| `api.audius.co` and the Audius content nodes it redirects to (`*.audius.co` and artist-run nodes listed by Audius) | Audius provider enabled: searching Audius, opening artists/playlists, playing Audius tracks; also the automatic fallback below | Search terms, track/user/playlist ids, the app name `MusicFlow`; no account |
 | `soundcloud.com`, `api-v2.soundcloud.com`, `api-widget.soundcloud.com`, `a-v2.sndcdn.com`, `*.sndcdn.com`, `playback.media-streaming.soundcloud.cloud` | SoundCloud provider enabled: searching SoundCloud, opening and playing SoundCloud tracks | Search terms, track/set/user links, locale; no account |
 
 Requests carry a generic browser or client User-Agent; no identifiers, cookies or tokens are
 attached. The YouTube provider can be turned off entirely in Settings; MusicFlow then makes no
-YouTube connections. The same applies to SoundCloud (separate switch).
+YouTube connections. The same applies to SoundCloud and Audius (separate switches).
+
+**Automatic fallback.** When a track cannot play from its own source (removed, region-locked,
+or YouTube's "confirm you're not a bot" check, common behind a VPN), MusicFlow searches the
+other enabled sources (on-device music, then SoundCloud, then Audius) for the same artist and
+title. Only those sources receive that search, and only while their switch is on.
 
 ## Permissions
 

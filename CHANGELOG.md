@@ -3,6 +3,21 @@
 All notable changes are documented here. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [1.0.0-beta.27] - 2026-11-28
+
+### Added
+- **Audius** as a new source:
+  - open music platform; artists publish their own tracks;
+  - search for songs, artists and playlists, with artist and playlist pages;
+  - large artwork;
+  - switch in Settings → Sources.
+- **Smart fallback.** When a track won't play from its source, MusicFlow looks for the same
+  recording elsewhere:
+  - covers removed or region-locked tracks, and YouTube's "not a bot" check behind a VPN;
+  - order: on-device copy, then SoundCloud, then Audius;
+  - only a reliable title/artist/duration match is used;
+  - diagnostics show which source played.
+
 ## [1.0.0-beta.26] - 2026-11-27
 
 ### Changed
